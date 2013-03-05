@@ -42,12 +42,12 @@
 
 /* I/O buffer */
 struct io_buf {
-	/* buffer's size */
+	/* buffer size */
 	size_t size;
-    /* buffer's capacity */
+    /* buffer capacity */
 	size_t capacity;
 	/* read position in the I/O buffer */
-	size_t readed;
+	size_t read_pos;
 	/* buffer value */
 	uint8_t *value;
 };
@@ -321,7 +321,7 @@ static bool
 io_buf_write_tuples_list(struct io_buf *buf, zval *tuples_list);
 
 /*
- * I/O buffer send/recv 
+ * I/O buffer send/recv
  */
 
 /* send administation command request */
@@ -470,7 +470,7 @@ PHP_METHOD(tarantool_class, __construct)
 									 &admin_port) == FAILURE) {
 		return;
 	}
-	
+
 	/*
 	 * validate parameters
 	 */
@@ -521,8 +521,8 @@ PHP_METHOD(tarantool_class, __construct)
 
 PHP_METHOD(tarantool_class, select)
 {
-	/* 
-	 * parse methods parameters 
+	/*
+	 * parse methods parameters
 	 */
 	zval *id;
 	long space_no = 0;
@@ -548,7 +548,7 @@ PHP_METHOD(tarantool_class, select)
 
 	/* check connection */
 	if (!tnt->stream) {
-		/* establis connection */
+		/* establish connection */
 		tnt->stream = establish_connection(tnt->host, tnt->port);
 		if (!tnt->stream)
 			return;
@@ -646,8 +646,8 @@ PHP_METHOD(tarantool_class, select)
 
 PHP_METHOD(tarantool_class, insert)
 {
-	/* 
-	 * parse methods parameters 
+	/*
+	 * parse methods parameters
 	 */
 	zval *id;
 	long space_no = 0;
@@ -731,7 +731,7 @@ PHP_METHOD(tarantool_class, insert)
 								response->return_msg);
 		return;
 	}
-	
+
 	/*
 	 * fill return value
 	 */
@@ -743,7 +743,7 @@ PHP_METHOD(tarantool_class, insert)
 	}
 
 	/* put count to result array */
-	add_assoc_long(return_value, "count", response->count);	
+	add_assoc_long(return_value, "count", response->count);
 
 	/* check "return tuple" flag */
 	if (flags & TARANTOOL_FLAGS_RETURN_TUPLE) {
@@ -761,8 +761,8 @@ PHP_METHOD(tarantool_class, insert)
 
 PHP_METHOD(tarantool_class, update_fields)
 {
-	/* 
-	 * parse methods parameters 
+	/*
+	 * parse methods parameters
 	 */
 	zval *id;
 	long space_no = 0;
@@ -978,7 +978,7 @@ PHP_METHOD(tarantool_class, update_fields)
 								response->return_msg);
 		return;
 	}
-	
+
 	/*
 	 * fill return value
 	 */
@@ -990,7 +990,7 @@ PHP_METHOD(tarantool_class, update_fields)
 	}
 
 	/* put count to result array */
-	add_assoc_long(return_value, "count", response->count);	
+	add_assoc_long(return_value, "count", response->count);
 
 	/* check "return tuple" flag */
 	if ((response->count > 0) && (flags & TARANTOOL_FLAGS_RETURN_TUPLE)) {
@@ -1008,8 +1008,8 @@ PHP_METHOD(tarantool_class, update_fields)
 
 PHP_METHOD(tarantool_class, delete)
 {
-	/* 
-	 * parse methods parameters 
+	/*
+	 * parse methods parameters
 	 */
 	zval *id;
 	long space_no = 0;
@@ -1093,7 +1093,7 @@ PHP_METHOD(tarantool_class, delete)
 								response->return_msg);
 		return;
 	}
-	
+
 	/*
 	 * fill return value
 	 */
@@ -1123,8 +1123,8 @@ PHP_METHOD(tarantool_class, delete)
 
 PHP_METHOD(tarantool_class, call)
 {
-	/* 
-	 * parse methods parameters 
+	/*
+	 * parse methods parameters
 	 */
 	zval *id;
 	char *proc_name = NULL;
@@ -1323,7 +1323,7 @@ io_buf_create()
 
 	buf->size = 0;
 	buf->capacity = io_buf_next_capacity(buf->size);
-	buf->readed = 0;
+	buf->read_pos = 0;
 	buf->value = (uint8_t *) emalloc(buf->capacity);
 	if (!buf->value) {
 		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_DC,
@@ -1396,53 +1396,53 @@ static void
 io_buf_clean(struct io_buf *buf)
 {
 	buf->size = 0;
-	buf->readed = 0;
+	buf->read_pos = 0;
 }
 
 static bool
 io_buf_read_struct(struct io_buf *buf, void **ptr, size_t n)
 {
-	size_t last = buf->size - buf->readed;
+	size_t last = buf->size - buf->read_pos;
 	if (last < n)
 		return false;
-	*ptr = buf->value + buf->readed;
-	buf->readed += n;
+	*ptr = buf->value + buf->read_pos;
+	buf->read_pos += n;
 	return true;
 }
 
 static bool
 io_buf_read_int32(struct io_buf *buf, int32_t *val)
 {
-	size_t last = buf->size - buf->readed;
+	size_t last = buf->size - buf->read_pos;
 	if (last < sizeof(int32_t))
 		return false;
-	*val = *(int32_t *)(buf->value + buf->readed);
-	buf->readed += sizeof(int32_t);
+	*val = *(int32_t *)(buf->value + buf->read_pos);
+	buf->read_pos += sizeof(int32_t);
 	return true;
 }
 
 static bool
 io_buf_read_int64(struct io_buf *buf, int64_t *val)
 {
-	size_t last = buf->size - buf->readed;
+	size_t last = buf->size - buf->read_pos;
 	if (last < sizeof(int64_t))
 		return false;
-	*val = *(int64_t *)(buf->value + buf->readed);
-	buf->readed += sizeof(int64_t);
+	*val = *(int64_t *)(buf->value + buf->read_pos);
+	buf->read_pos += sizeof(int64_t);
 	return true;
 }
 
 static bool
 io_buf_read_varint(struct io_buf *buf, int32_t *val)
 {
-	uint8_t *b = buf->value + buf->readed;
-	size_t size = buf->size - buf->readed;
+	uint8_t *b = buf->value + buf->read_pos;
+	size_t size = buf->size - buf->read_pos;
 
 	if (size < 1)
 		return false;
 
 	if (!(b[0] & 0x80)) {
-		buf->readed += 1;
+		buf->read_pos += 1;
 		*val = (b[0] & 0x7f);
 		return true;
 	}
@@ -1451,7 +1451,7 @@ io_buf_read_varint(struct io_buf *buf, int32_t *val)
 		return false;
 
 	if (!(b[1] & 0x80)) {
-		buf->readed += 2;
+		buf->read_pos += 2;
 		*val = (b[0] & 0x7f) << 7 | (b[1] & 0x7f);
 		return true;
 	}
@@ -1460,7 +1460,7 @@ io_buf_read_varint(struct io_buf *buf, int32_t *val)
 		return false;
 
 	if (!(b[2] & 0x80)) {
-		buf->readed += 3;
+		buf->read_pos += 3;
 		*val = (b[0] & 0x7f) << 14 | (b[1] & 0x7f) << 7 | (b[2] & 0x7f);
 		return true;
 	}
@@ -1469,7 +1469,7 @@ io_buf_read_varint(struct io_buf *buf, int32_t *val)
 		return false;
 
 	if (!(b[3] & 0x80)) {
-		buf->readed += 4; 
+		buf->read_pos += 4;
 		*val = (b[0] & 0x7f) << 21 | (b[1] & 0x7f) << 14 |
 			(b[2] & 0x7f) << 7 | (b[3] & 0x7f);
 		return true;
@@ -1479,7 +1479,7 @@ io_buf_read_varint(struct io_buf *buf, int32_t *val)
 		return false;
 
 	if (!(b[4] & 0x80)) {
-		buf->readed += 5;
+		buf->read_pos += 5;
 		*val = (b[0] & 0x7f) << 28 | (b[1] & 0x7f) << 21 |
 			(b[2] & 0x7f) << 14 | (b[3] & 0x7f) << 7 | (b[4] & 0x7f);
 		return true;
@@ -1491,11 +1491,11 @@ io_buf_read_varint(struct io_buf *buf, int32_t *val)
 static bool
 io_buf_read_str(struct io_buf *buf, char **str, size_t len)
 {
-	size_t last = buf->size - buf->readed;
+	size_t last = buf->size - buf->read_pos;
 	if (last < len)
 		return false;
-	*str = (char *)(buf->value + buf->readed);
-	buf->readed += len;
+	*str = (char *)(buf->value + buf->read_pos);
+	buf->read_pos += len;
 	return true;
 }
 
@@ -1520,7 +1520,7 @@ io_buf_read_field(struct io_buf *buf, zval *tuple)
 		if (!io_buf_read_int64(buf, &i64_val))
 			return false;
 		add_next_index_long(tuple, i32_val);
-		break;		
+		break;
 	default:
 		if (!io_buf_read_str(buf, &str_val, field_length))
 			return false;
@@ -1756,7 +1756,7 @@ io_buf_write_tuple(struct io_buf *buf, zval *tuple)
 	default:
 		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_DC,
 								"unsupported tuple type");
-		return false;		
+		return false;
 	}
 
 	return true;
@@ -1812,7 +1812,7 @@ io_buf_write_tuples_list(struct io_buf *buf, zval *tuples_list)
 		/* single tuple: string */
 		/* write number of tuples */
 		if (!io_buf_write_int32(buf, 1))
-			return false;		
+			return false;
 		/* write tuple */
 		if (!io_buf_write_tuple_str(buf, tuples_list))
 			return false;
@@ -1820,7 +1820,7 @@ io_buf_write_tuples_list(struct io_buf *buf, zval *tuples_list)
 	case IS_ARRAY:
 		/* array: migth be single or multi tuples array */
 		hash = Z_ARRVAL_P(tuples_list);
-		zend_hash_internal_pointer_reset_ex(hash, &itr);		
+		zend_hash_internal_pointer_reset_ex(hash, &itr);
 		if (zend_hash_get_current_data_ex(hash, (void **) &tuple, &itr) != SUCCESS) {
 			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_DC,
 									"invalid tuples list: empty array");
@@ -1855,14 +1855,14 @@ io_buf_write_tuples_list(struct io_buf *buf, zval *tuples_list)
 	default:
 		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_DC,
 								"unsupported tuple type");
-		return false;		
+		return false;
 	}
 
 	return true;
 }
 
 /*
- * I/O buffer send/recv 
+ * I/O buffer send/recv
  */
 
 static bool
@@ -1909,21 +1909,26 @@ io_buf_send_iproto(php_stream *stream, int32_t type, int32_t request_id, struct 
 	header.request_id = request_id;
 
 	size_t length = sizeof(struct iproto_header);
+
 	if (php_stream_write(stream, (char *) &header, length) != length) {
 		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_DC,
-								"send requset failed");
+								"failed to send request: could not write "
+								"request header");
 		return false;
 	}
 
-	/* send requets */
+	/* send request */
 	if (php_stream_write(stream, buf->value, buf->size) != buf->size) {
 		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_DC,
-								"send requset failed");
+								"failed to send request: could not write "
+								"request body");
 		return false;
 	}
 
 	/* flush request */
-	php_stream_flush(stream);
+	if (php_stream_flush(stream))
+		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_DC,
+								"failed to flush stream");
 
 	return true;
 }
@@ -1936,7 +1941,8 @@ io_buf_recv_iproto(php_stream *stream, struct io_buf *buf)
 	size_t length = sizeof(struct iproto_header);
 	if (php_stream_read(stream, (char *) &header, length) != length) {
 		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_DC,
-								"receive response failed");
+								"failed to receive response: eof when "
+								"reading iproto header");
 		return false;
 	}
 
@@ -1945,7 +1951,8 @@ io_buf_recv_iproto(php_stream *stream, struct io_buf *buf)
 		return false;
 	if (php_stream_read(stream, buf->value, buf->size) != buf->size) {
 		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_DC,
-								"receive response failed");
+								"failed to receive response: eof when "
+								"reading response body");
 		return false;
 	}
 
@@ -1971,10 +1978,10 @@ alloc_tarantool_object(zend_class_entry *entry TSRMLS_DC)
 	zend_object_std_init(&tnt->zo, entry TSRMLS_CC);
 	new_value.handle = zend_objects_store_put(
 		tnt,
-		(zend_objects_store_dtor_t) zend_objects_destroy_object, 
+		(zend_objects_store_dtor_t) zend_objects_destroy_object,
 		(zend_objects_free_object_storage_t) free_tarantool_object,
 		NULL TSRMLS_CC);
- 	new_value.handlers = zend_get_std_object_handlers();
+	new_value.handlers = zend_get_std_object_handlers();
 	return new_value;
 }
 
@@ -2020,19 +2027,24 @@ establish_connection(char *host, int port)
 
 	/* check result */
 	if (error_code && error_msg) {
-		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_DC,
-								"establist connection fail: %s", error_msg);
+		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
+								0 TSRMLS_DC,
+								"failed to connect: %s", error_msg);
 		goto process_error;
 	}
 
 	/* set socket flag 'TCP_NODELAY' */
 	int socketd = ((php_netstream_data_t*)stream->abstract)->socket;
 	flags = 1;
-	int result = setsockopt(socketd, IPPROTO_TCP, TCP_NODELAY, (char *) &flags, sizeof(int));
+	int result = setsockopt(socketd, IPPROTO_TCP, TCP_NODELAY,
+							(char *) &flags, sizeof(int));
 	if (result != 0) {
 		char error_buf[64];
-		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_DC,
-								"establist connection fail: setsockopt %s", strerror_r(errno, error_buf, sizeof(error_buf)));
+		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
+								0 TSRMLS_DC, "failed to connect: "
+								"setsockopt error %s",
+								strerror_r(errno, error_buf,
+										   sizeof(error_buf)));
 		goto process_error;
 	}
 
