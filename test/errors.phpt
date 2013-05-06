@@ -1,5 +1,5 @@
 --TEST--
-Tarantool/box error commands test
+Tarantool error commands test
 --FILE--
 <?php
 require_once "lib/TarantoolUTest.php";

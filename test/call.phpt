@@ -1,5 +1,5 @@
 --TEST--
-Tarantool/box call commands test
+Tarantool call commands test
 --FILE--
 <?php
 require_once "lib/TarantoolUTest.php";
@@ -158,7 +158,7 @@ freedom to the galaxy..."
 
 ---------- test begin ----------
 test call: call undefined function (expected error exception)
-catched exception: call failed: 12802(0x00003202): Procedure 'fafagaga' is not defined
+Exception: call failed: 12802(0x00003202): Procedure 'fafagaga' is not defined
 ----------- test end -----------
 
 ---------- test begin ----------

@@ -22,10 +22,10 @@ RUNNING_DIR="$TEST_HOME_DIR/var"
 # php.ini file
 PHP_INI="$RESOURCE_DIR/php.ini"
 
-# Tarantool/box configuration file
+# Tarantool configuration file
 TARANTOOL_BOX_CFG="$RESOURCE_DIR/tarantool_box.cfg"
 
-# Tarantool/box pid file
+# Tarantool pid file
 TARANTOOL_BOX_PID="$RUNNING_DIR/tarantool_box.pid"
 
 
@@ -40,7 +40,7 @@ function init_suite()
 	mkdir -p $RUNNING_DIR
 
 	#
-	# Tarantool/Box binary
+	# Tarantool binary
 	#
 
 	# check TARANTOOL_HOME variable
@@ -54,7 +54,7 @@ function init_suite()
 
 	# checking binary
 	if ! which $tarantool_box_bin > /dev/null 2>&1; then
-		echo "error: can't find Tarantool/Box binary file"
+		echo "error: can't find Tarantool binary file"
 		exit $FAILURE
 	fi
 
@@ -123,7 +123,7 @@ function init_suite()
 	ln -s $RESOURCE_DIR/init.lua $RUNNING_DIR/init.lua
 
 	echo "--------------------------------------------------------------------------"
-	echo "Tarantool/Box information"
+	echo "Tarantool information"
 	echo "--------------------------------------------------------------------------"
 	echo "Binary:   $tarantool_box_bin"
 	echo "Version: `$tarantool_box_bin --version`"

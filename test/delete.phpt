@@ -1,5 +1,5 @@
 --TEST--
-Tarantool/box delete commands test
+Tarantool delete commands test
 --FILE--
 <?php
 require_once "lib/TarantoolUTest.php";
@@ -49,17 +49,17 @@ test_clean($tarantool, 0);
 --EXPECT--
 ---------- test begin ----------
 test delete: invalid key (expected error exception)
-catched exception: unsupported tuple type
+Exception: unsupported tuple type
 ----------- test end -----------
 
 ---------- test begin ----------
 test delete: invalid key (expected error exception)
-catched exception: unsupported field type
+Exception: unsupported field type
 ----------- test end -----------
 
 ---------- test begin ----------
 test delete: invalid key (expected error exception)
-catched exception: delete failed: 12034(0x00002f02): Key part count 2 is greater than index part count 1
+Exception: delete failed: 12034(0x00002f02): Key part count 2 is greater than index part count 1
 ----------- test end -----------
 
 ---------- test begin ----------

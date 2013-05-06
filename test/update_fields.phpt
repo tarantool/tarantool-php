@@ -1,5 +1,5 @@
 --TEST--
-Tarantool/box update fields commands test
+Tarantool update fields commands test
 --FILE--
 <?php
 require_once "lib/TarantoolUTest.php";
@@ -70,12 +70,12 @@ test_clean($tarantool, 0);
 --EXPECT--
 ---------- test begin ----------
 test update fields: do update w/o operations (expected error exception)
-catched exception: update fields failed: 514(0x00000202): Illegal parameters, no operations for update
+Exception: update fields failed: 514(0x00000202): Illegal parameters, no operations for update
 ----------- test end -----------
 
 ---------- test begin ----------
 test update fields: invalid operation list (expected error exception)
-catched exception: invalid operations list
+Exception: invalid operations list
 ----------- test end -----------
 
 ---------- test begin ----------

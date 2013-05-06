@@ -1,5 +1,5 @@
 --TEST--
-Tarantool/box administation commands test
+Tarantool administation commands test
 --FILE--
 <?php
 require_once "lib/TarantoolUTest.php";

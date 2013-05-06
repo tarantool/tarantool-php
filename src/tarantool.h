@@ -67,7 +67,7 @@ enum {
  * Commands constants
  *----------------------------------------------------------------------------*/
 
-/* tarantool/box flags */
+/* tarantool flags */
 enum {
 	/* return resulting tuples */
 	TARANTOOL_FLAGS_RETURN_TUPLE = 0x01,

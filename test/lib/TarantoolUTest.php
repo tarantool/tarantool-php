@@ -106,7 +106,7 @@ function test_select($tarantool, $space_no, $index_no, $key) {
             echo "  uuid   = ", $tuples_list[$i][5], "\n";
         }
     } catch (Exception $e) {
-        echo "catched exception: ", $e->getMessage(), "\n";
+        echo "Exception: ", $e->getMessage(), "\n";
     }
 }
 
@@ -125,7 +125,7 @@ function test_insert($tarantool, $space_no, $tuple, $flags) {
             echo "  uuid   = ", $result["tuple"][5], "\n";
         }
     } catch (Exception $e) {
-        echo "catched exception: ", $e->getMessage(), "\n";
+        echo "Exception: ", $e->getMessage(), "\n";
     }
 }
 
@@ -144,7 +144,7 @@ function test_update_fields($tarantool, $space_no, $key, $ops, $flags) {
             echo "  uuid   = ", $result["tuple"][5], "\n";
         }
     } catch (Exception $e) {
-        echo "catched exception: ", $e->getMessage(), "\n";
+        echo "Exception: ", $e->getMessage(), "\n";
     }
 }
 
@@ -163,7 +163,7 @@ function test_delete($tarantool, $space_no, $key, $flags) {
             echo "  uuid   = ", $result["tuple"][5], "\n";
         }
     } catch (Exception $e) {
-        echo "catched exception: ", $e->getMessage(), "\n";
+        echo "Exception: ", $e->getMessage(), "\n";
     }
 }
 
@@ -173,7 +173,7 @@ function test_call($tarantool, $proc, $tuple_args, $flags) {
         echo "result:\n";
         var_dump($result);
     } catch (Exception $e) {
-        echo "catched exception: ", $e->getMessage(), "\n";
+        echo "Exception: ", $e->getMessage(), "\n";
     }
 }
 

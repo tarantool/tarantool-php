@@ -1,5 +1,5 @@
 --TEST--
-Tarantool/box select commands test
+Tarantool select commands test
 --FILE--
 <?php
 require_once "lib/TarantoolUTest.php";
@@ -168,7 +168,7 @@ freedom to the galaxy...
 
 ---------- test begin ----------
 test select: key is object (expected error exception)
-catched exception: unsupported tuple type
+Exception: unsupported tuple type
 ----------- test end -----------
 
 ---------- test begin ----------
@@ -254,12 +254,12 @@ freedom to the galaxy...
 
 ---------- test begin ----------
 test select: key is empty array (expected error exception)
-catched exception: invalid tuples list: empty array
+Exception: invalid tuples list: empty array
 ----------- test end -----------
 
 ---------- test begin ----------
 test select: key is array of objects (expected error exception)
-catched exception: unsupported tuple type
+Exception: unsupported tuple type
 ----------- test end -----------
 
 ---------- test begin ----------
@@ -345,12 +345,12 @@ freedom to the galaxy...
 
 ---------- test begin ----------
 test select: key is array of array of objects (expected error exception)
-catched exception: unsupported field type
+Exception: unsupported field type
 ----------- test end -----------
 
 ---------- test begin ----------
 test select: key is array of diffirent elements (expected error exception)
-catched exception: invalid tuples list: expected array of array
+Exception: invalid tuples list: expected array of array
 ----------- test end -----------
 
 ===DONE===

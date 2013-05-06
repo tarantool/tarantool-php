@@ -1,5 +1,5 @@
 --TEST--
-Tarantool/box insert command test
+Tarantool insert command test
 --FILE--
 <?php
 require_once "lib/TarantoolUTest.php";
@@ -57,12 +57,12 @@ test_clean($tarantool, 0);
 --EXPECT--
 ---------- test begin ----------
 test insert: invalid tuple (expected error exception)
-catched exception: unsupported field type
+Exception: unsupported field type
 ----------- test end -----------
 
 ---------- test begin ----------
 test insert: invalid tuple (expected error exception)
-catched exception: unsupported field type
+Exception: unsupported field type
 ----------- test end -----------
 
 ---------- test begin ----------
@@ -101,12 +101,12 @@ count = 1
 
 ---------- test begin ----------
 test insert: add existed tuple (expected error exception)
-catched exception: insert failed: 14082(0x00003702): Tuple already exists
+Exception: insert failed: 14082(0x00003702): Duplicate key exists in unique index 0
 ----------- test end -----------
 
 ---------- test begin ----------
 test insert: replace not existed tuple (expected error exception)
-catched exception: insert failed: 12546(0x00003102): Tuple doesn't exist
+Exception: insert failed: 12546(0x00003102): Tuple doesn't exist in index 0
 ----------- test end -----------
 
 ---------- test begin ----------
