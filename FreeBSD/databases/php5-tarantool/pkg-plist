@@ -1,0 +1,4 @@
+include/php/ext/php_config.h
+@dirrmtry include/php/ext
+@dirrmtry include/php
+@dirrmtry lib/php
