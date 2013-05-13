@@ -23,6 +23,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <netinet/in.h>
+#if (__FreeBSD__version < 901000)
+#include <sys/types.h>
+#endif
 #include <netinet/tcp.h>
 #include <netdb.h>
 #include <inttypes.h>
