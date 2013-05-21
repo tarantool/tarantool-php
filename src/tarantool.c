@@ -1899,6 +1899,26 @@ io_buf_recv_yaml(php_stream *stream, struct io_buf *buf)
 	return true;
 }
 
+/*
+ * php_stream_read made right
+ * See https://bugs.launchpad.net/tarantool/+bug/1182474
+ */
+static size_t
+php_stream_read_real(php_stream * stream, char *buf, size_t size)
+{
+	size_t total_size = 0;
+	while (total_size < size) {
+		size_t read_size = php_stream_read(stream, buf + total_size,
+										   size - total_size);
+		assert (read_size <= size - total_size);
+		if (read_size == 0)
+			return total_size;
+		total_size += read_size;
+	}
+
+	return total_size;
+}
+
 static bool
 io_buf_send_iproto(php_stream *stream, int32_t type, int32_t request_id, struct io_buf *buf)
 {
@@ -1939,7 +1959,7 @@ io_buf_recv_iproto(php_stream *stream, struct io_buf *buf)
 	/* receiving header */
 	struct iproto_header header;
 	size_t length = sizeof(struct iproto_header);
-	if (php_stream_read(stream, (char *) &header, length) != length) {
+	if (php_stream_read_real(stream, (char *) &header, length) != length) {
 		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_DC,
 								"failed to receive response: eof when "
 								"reading iproto header");
@@ -1949,7 +1969,7 @@ io_buf_recv_iproto(php_stream *stream, struct io_buf *buf)
 	/* receiving body */
 	if (!io_buf_resize(buf, header.length))
 		return false;
-	if (php_stream_read(stream, buf->value, buf->size) != buf->size) {
+	if (php_stream_read_real(stream, buf->value, buf->size) != buf->size) {
 		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_DC,
 								"failed to receive response: eof when "
 								"reading response body");
