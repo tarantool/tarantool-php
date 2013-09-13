@@ -82,7 +82,7 @@ Princess Leia races home aboard her
 starship, custodian of the stolen plans
 that can save her people and restore
 freedom to the galaxy....
-  uuid   = -1091633151
+  uuid   = 0xf10dbeef0001
 ----------- test end -----------
 
 ---------- test begin ----------
@@ -111,7 +111,7 @@ Princess Leia races home aboard her
 starship, custodian of the stolen plans
 that can save her people and restore
 freedom to the galaxy....
-  uuid   = -1091633151
+  uuid   = 0xf10dbeef0001
 tuple[1]:
   id     = 1
   series = Star Wars
@@ -137,7 +137,7 @@ obsessed with finding young
 Skywalker, has dispatched
 thousands of remote probes
 into the far reaches of space....
-  uuid   = -1091633150
+  uuid   = 0xf10dbeef0002
 tuple[2]:
   id     = 2
   series = Star Wars
@@ -163,7 +163,7 @@ weapon will spell certain
 doom for the small band of
 rebels struggling to restore
 freedom to the galaxy...
-  uuid   = -1091633149
+  uuid   = 0xf10dbeef0003
 ----------- test end -----------
 
 ---------- test begin ----------
@@ -197,7 +197,7 @@ Princess Leia races home aboard her
 starship, custodian of the stolen plans
 that can save her people and restore
 freedom to the galaxy....
-  uuid   = -1091633151
+  uuid   = 0xf10dbeef0001
 tuple[1]:
   id     = 1
   series = Star Wars
@@ -223,7 +223,7 @@ obsessed with finding young
 Skywalker, has dispatched
 thousands of remote probes
 into the far reaches of space....
-  uuid   = -1091633150
+  uuid   = 0xf10dbeef0002
 tuple[2]:
   id     = 2
   series = Star Wars
@@ -249,7 +249,7 @@ weapon will spell certain
 doom for the small band of
 rebels struggling to restore
 freedom to the galaxy...
-  uuid   = -1091633149
+  uuid   = 0xf10dbeef0003
 ----------- test end -----------
 
 ---------- test begin ----------
@@ -288,7 +288,7 @@ Princess Leia races home aboard her
 starship, custodian of the stolen plans
 that can save her people and restore
 freedom to the galaxy....
-  uuid   = -1091633151
+  uuid   = 0xf10dbeef0001
 tuple[1]:
   id     = 1
   series = Star Wars
@@ -314,7 +314,7 @@ obsessed with finding young
 Skywalker, has dispatched
 thousands of remote probes
 into the far reaches of space....
-  uuid   = -1091633150
+  uuid   = 0xf10dbeef0002
 tuple[2]:
   id     = 2
   series = Star Wars
@@ -340,7 +340,7 @@ weapon will spell certain
 doom for the small band of
 rebels struggling to restore
 freedom to the galaxy...
-  uuid   = -1091633149
+  uuid   = 0xf10dbeef0003
 ----------- test end -----------
 
 ---------- test begin ----------

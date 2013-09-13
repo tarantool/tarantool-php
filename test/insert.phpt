@@ -90,7 +90,7 @@ Princess Leia races home aboard her
 starship, custodian of the stolen plans
 that can save her people and restore
 freedom to the galaxy....
-  uuid   = -1091633151
+  uuid   = 0xf10dbeef0001
 ----------- test end -----------
 
 ---------- test begin ----------
@@ -138,7 +138,7 @@ obsessed with finding young
 Skywalker, has dispatched
 thousands of remote probes
 into the far reaches of space....
-  uuid   = -1091633150
+  uuid   = 0xf10dbeef0002
 ----------- test end -----------
 
 ---------- test begin ----------
@@ -170,7 +170,7 @@ obsessed with finding young
 Skywalker, has dispatched
 thousands of remote probes
 into the far reaches of space....
-  uuid   = -1091633150
+  uuid   = 0xf10dbeef0002
 ----------- test end -----------
 
 ===DONE===

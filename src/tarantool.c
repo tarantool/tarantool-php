@@ -1727,7 +1727,12 @@ io_buf_write_tuple_array(struct io_buf *buf, zval *tuple)
 		case IS_LONG:
 			/* integer field */
 			long_value = Z_LVAL_PP(field);
-			io_buf_write_field_str(buf, (uint8_t *)&long_value, sizeof(int32_t));
+			/* write field */
+			if ((unsigned long)long_value <= 0xffffffffllu) {
+				io_buf_write_field_int32(buf, (uint32_t)long_value);
+			} else {
+				io_buf_write_field_int64(buf, (uint64_t)long_value);
+			}
 			break;
 		default:
 			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_DC,

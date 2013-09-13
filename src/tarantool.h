@@ -117,7 +117,7 @@ enum {
  *----------------------------------------------------------------------------*/
 
 /* admin protocol separator */
-#define ADMIN_SEPARATOR "\r\n"
+#define ADMIN_SEPARATOR "\n"
 /* admin command begin token */
 #define ADMIN_TOKEN_BEGIN "---"ADMIN_SEPARATOR
 /* admin command end token */

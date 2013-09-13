@@ -9,7 +9,7 @@ test_init($tarantool, 0);
 
 echo "---------- test begin ----------\n";
 echo "test call: myselect by primary index\n";
-test_call($tarantool, "box.select", array(0, 0, 2), 0);
+test_call($tarantool, "box.select", array("0", "0", 2), 0);
 echo "----------- test end -----------\n\n";
 
 echo "---------- test begin ----------\n";
@@ -150,7 +150,7 @@ doom for the small band of
 rebels struggling to restore
 freedom to the galaxy..."
       [5]=>
-      int(-1091633149)
+      int(265041340203011)
     }
   }
 }

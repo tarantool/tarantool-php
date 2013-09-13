@@ -59,7 +59,7 @@ Exception: unsupported field type
 
 ---------- test begin ----------
 test delete: invalid key (expected error exception)
-Exception: delete failed: 12034(0x00002f02): Key part count 2 is greater than index part count 1
+Exception: delete failed: 11522(0x00002d02): Invalid key part count in an exact match (expected 1, got 2)
 ----------- test end -----------
 
 ---------- test begin ----------
@@ -88,7 +88,7 @@ Princess Leia races home aboard her
 starship, custodian of the stolen plans
 that can save her people and restore
 freedom to the galaxy....
-  uuid   = -1091633151
+  uuid   = 0xf10dbeef0001
 ----------- test end -----------
 
 ---------- test begin ----------
@@ -120,7 +120,7 @@ obsessed with finding young
 Skywalker, has dispatched
 thousands of remote probes
 into the far reaches of space....
-  uuid   = -1091633150
+  uuid   = 0xf10dbeef0002
 ----------- test end -----------
 
 ---------- test begin ----------

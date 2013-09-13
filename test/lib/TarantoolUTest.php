@@ -103,7 +103,7 @@ function test_select($tarantool, $space_no, $index_no, $key) {
             echo "  year   = ", $tuples_list[$i][2], "\n";
             echo "  name   = ", $tuples_list[$i][3], "\n";
             echo "  crawl  = ", $tuples_list[$i][4], "\n";
-            echo "  uuid   = ", $tuples_list[$i][5], "\n";
+            echo "  uuid   = 0x", dechex($tuples_list[$i][5]), "\n";
         }
     } catch (Exception $e) {
         echo "Exception: ", $e->getMessage(), "\n";
@@ -122,7 +122,7 @@ function test_insert($tarantool, $space_no, $tuple, $flags) {
             echo "  year   = ", $result["tuple"][2], "\n";
             echo "  name   = ", $result["tuple"][3], "\n";
             echo "  crawl  = ", $result["tuple"][4], "\n";
-            echo "  uuid   = ", $result["tuple"][5], "\n";
+            echo "  uuid   = 0x", dechex($result["tuple"][5]), "\n";
         }
     } catch (Exception $e) {
         echo "Exception: ", $e->getMessage(), "\n";
@@ -141,7 +141,7 @@ function test_update_fields($tarantool, $space_no, $key, $ops, $flags) {
             echo "  year   = ", $result["tuple"][2], "\n";
             echo "  name   = ", $result["tuple"][3], "\n";
             echo "  crawl  = ", $result["tuple"][4], "\n";
-            echo "  uuid   = ", $result["tuple"][5], "\n";
+            echo "  uuid   = 0x", dechex($result["tuple"][5]), "\n";
         }
     } catch (Exception $e) {
         echo "Exception: ", $e->getMessage(), "\n";
@@ -160,7 +160,7 @@ function test_delete($tarantool, $space_no, $key, $flags) {
             echo "  year   = ", $result["tuple"][2], "\n";
             echo "  name   = ", $result["tuple"][3], "\n";
             echo "  crawl  = ", $result["tuple"][4], "\n";
-            echo "  uuid   = ", $result["tuple"][5], "\n";
+            echo "  uuid   = 0x", dechex($result["tuple"][5]), "\n";
         }
     } catch (Exception $e) {
         echo "Exception: ", $e->getMessage(), "\n";

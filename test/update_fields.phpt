@@ -103,7 +103,7 @@ Princess Leia races home aboard her
 starship, custodian of the stolen plans
 that can save her people and restore
 freedom to the galaxy....
-  uuid   = -1091633151
+  uuid   = 0xf10dbeef0001
 ----------- test end -----------
 
 ---------- test begin ----------
