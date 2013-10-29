@@ -1266,7 +1266,7 @@ PHP_METHOD(tarantool_class, admin)
 	/* check admin port */
 	if (!tnt->admin_port) {
 		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_DC,
-								"admin command not allowed for this commection");
+								"admin command not allowed for this connection");
 		return;
 	}
 
