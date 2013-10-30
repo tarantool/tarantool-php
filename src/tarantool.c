@@ -23,6 +23,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <netinet/in.h>
+#include <sys/types.h>
 #include <netinet/tcp.h>
 #include <netdb.h>
 #include <inttypes.h>
