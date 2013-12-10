@@ -5,7 +5,7 @@ Build-Depends: cdbs, debhelper (>= 8),
  cmake,
  php5-dev
 Section: database
-Standards-Version: 3.9.3
+Standards-Version: 3.9.4
 Homepage: http://tarantool.org/
 VCS-Browser: https://github.com/tarantool/tarantool
 VCS-Git: git://github.com/tarantool/tarantool.git
