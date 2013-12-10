@@ -1,0 +1,32 @@
+#!/usr/bin/make -f
+
+include /usr/share/cdbs/1/rules/debhelper.mk
+# include /usr/share/cdbs/1/class/cmake.mk
+# include /usr/share/cdbs/1/class/autotools.mk
+#include /usr/share/cdbs/1/class/makefile.mk
+
+makebuilddir/tarantool-php::
+	phpize
+	./configure
+	make
+
+install/tarantool-php::
+	install -m 0755 -d debian/tarantool-php/usr/lib/php5/20121212/
+	install -m 0755 modules/tarantool.so \
+		debian/tarantool-php/usr/lib/php5/20121212/
+
+clean::
+	phpize --clean
+
+
+version = $(shell dpkg-parsechangelog \
+	|grep ^Version|awk '{print $$2}'|sed 's/-.*//')
+
+tarball: clean
+	cd .. \
+	&& tar \
+		--exclude=debian \
+		--exclude=.git \
+		-czvf tarantool-php_$(version).orig.tar.gz \
+		tarantool-php-$(version)
+

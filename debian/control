@@ -1,0 +1,21 @@
+Source: tarantool-php
+Priority: optional
+Maintainer: Dmitry E. Oboukhov <unera@debian.org>
+Build-Depends: cdbs, debhelper (>= 8),
+ cmake,
+ php5-dev
+Section: database
+Standards-Version: 3.9.3
+Homepage: http://tarantool.org/
+VCS-Browser: https://github.com/tarantool/tarantool
+VCS-Git: git://github.com/tarantool/tarantool.git
+
+Package: tarantool-php
+Architecture: any
+Priority: optional
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Suggests: tarantool
+Description: PECL PHP driver for Tarantool/Box
+ Tarantool is an in-memory database and Lua application server.
+ This package provides PECL PHP driver for Tarantool/Box.
+
