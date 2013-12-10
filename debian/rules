@@ -1,28 +1,27 @@
 #!/usr/bin/make -f
 
 include /usr/share/cdbs/1/rules/debhelper.mk
-# include /usr/share/cdbs/1/class/cmake.mk
-# include /usr/share/cdbs/1/class/autotools.mk
-#include /usr/share/cdbs/1/class/makefile.mk
+
+phpapi	= $(shell php-config5 --phpapi)
+version = $(shell dpkg-parsechangelog \
+	|grep ^Version|awk '{print $$2}'|sed 's/-.*//')
 
 makebuilddir/tarantool-php::
 	phpize
 	./configure
 	make
-	echo "php:Depends=phpapi-$$(php-config5 --phpapi)" > debian/substvars
+	echo "php:Depends=phpapi-$(phpapi)" > debian/substvars
 
 install/tarantool-php::
-	install -m 0755 -d debian/tarantool-php/usr/lib/php5/$$(php-config5 --phpapi)/
+	install -m 0755 -d debian/tarantool-php/usr/lib/php5/$(phpapi)/
 	install -m 0755 modules/tarantool.so \
-		debian/tarantool-php/usr/lib/php5/20121212/
+		debian/tarantool-php/usr/lib/php5/$(phpapi)/
 
 clean::
 	phpize --clean
 	rm -f debian/debhelper.log debian/substvars
 
 
-version = $(shell dpkg-parsechangelog \
-	|grep ^Version|awk '{print $$2}'|sed 's/-.*//')
 
 tarball: clean
 	cd .. \
