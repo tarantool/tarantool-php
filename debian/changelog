@@ -1,5 +1,5 @@
 tarantool-php (1.0-1) unstable; urgency=low
 
-  * Initial release. (Closes: #XXXXXX)
+  * Initial release. (Closes: #731850)
 
  -- Dmitry E. Oboukhov <unera@debian.org>  Mon, 09 Dec 2013 18:38:37 +0400
