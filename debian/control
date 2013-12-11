@@ -4,7 +4,7 @@ Maintainer: Dmitry E. Oboukhov <unera@debian.org>
 Build-Depends: cdbs,
  debhelper (>= 8),
  php5-dev
-Section: database
+Section: php
 Standards-Version: 3.9.4
 Homepage: https://github.com/tarantool/tarantool-php
 VCS-Browser: https://github.com/tarantool/tarantool-php
