@@ -2052,7 +2052,7 @@ establish_connection(char *host, int port)
 	efree(dest_addr);
 
 	/* check result */
-	if (error_code && error_msg) {
+	if (error_code || !stream) {
 		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
 								0 TSRMLS_DC,
 								"failed to connect: %s", error_msg);
