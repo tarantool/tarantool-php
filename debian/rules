@@ -24,6 +24,8 @@ clean::
 	phpize --clean
 	rm -f debian/debhelper.log
 	rm -f debian/*.substvars
+	rm -fr src/.libs
+	rm -f src/tarantool.lo
 
 
 
