@@ -17,15 +17,15 @@ $ make install
 
 ## Test
 
-To run tests Taranool/Box server and PHP/pecl package are requred.
+To run tests Taranool/Box server and PHP/PECL package are requred.
 
 ```sh
 $ cd test
 $ ./run-tests
 ```
 
-If Tarantool/Box doesn't define in PATH variable, you may define it in
-TARANTOOL_BOX_BIN enviroment variable.
+If Tarantool/Box doesn't define in `PATH` variable, you may define it in
+`TARANTOOL_BOX_BIN` enviroment variable.
 
 ```sh
 $ TARANTOOL_BOX_BIN=/path/to/tarantool/bin/tarantool_box ./run-tests
