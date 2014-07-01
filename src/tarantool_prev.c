@@ -35,7 +35,6 @@
 #include <zend_exceptions.h>
 
 #include "tarantool.h"
-#include "lib/tp.h"
 
 
 /*============================================================================*
@@ -44,21 +43,99 @@
 
 /* I/O buffer */
 struct io_buf {
+	/* buffer size */
 	size_t size;
+    /* buffer capacity */
 	size_t capacity;
+	/* read position in the I/O buffer */
 	size_t read_pos;
+	/* buffer value */
 	uint8_t *value;
 };
 
 /* tarantool object */
 typedef struct tarantool_object {
 	zend_object zo;
+	/* host name */
 	char *host;
+	/* tarantool primary port */
 	int port;
+	/* tarantool admin port */
+	int admin_port;
+	/* tarantool primary connection */
 	php_stream *stream;
+	/* tarantool admin connecion */
+	php_stream *admin_stream;
+	/* I/O buffer */
 	struct io_buf *io_buf;
+	/* additional buffer for splice args */
 	struct io_buf *splice_field;
 } tarantool_object;
+
+/* iproto header */
+struct iproto_header {
+	/* command code */
+	uint32_t type;
+	/* command length */
+	uint32_t length;
+	/* request id */
+	uint32_t request_id;
+} __attribute__((packed));
+
+/* tarantool select command request */
+struct tnt_select_request {
+	/* space number */
+	int32_t space_no;
+	/* index number */
+	int32_t index_no;
+	/* select offset from begining */
+	int32_t offset;
+	/* maximail number tuples in responce */
+	int32_t limit;
+} __attribute__((packed));
+
+/* tarantool insert command request */
+struct tnt_insert_request {
+	/* space number */
+	int32_t space_no;
+	/* flags */
+	int32_t flags;
+} __attribute__((packed));
+
+/* tarantool update fields command request */
+struct tnt_update_fields_request {
+	/* space number */
+	int32_t space_no;
+	/* flags */
+	int32_t flags;
+} __attribute__((packed));
+
+/* tarantool delete command request */
+struct tnt_delete_request {
+	/* space number */
+	int32_t space_no;
+	/* flags */
+	int32_t flags;
+} __attribute__((packed));
+
+/* tarantool call command request */
+struct tnt_call_request {
+	/* flags */
+	int32_t flags;
+} __attribute__((packed));
+
+/* tarantool command response */
+struct tnt_response {
+	/* return code */
+	int32_t return_code;
+	union {
+		/* count */
+		int32_t count;
+		/* error message */
+		char return_msg[0];
+	};
+} __attribute__((packed));
+
 
 /*============================================================================*
  * Global variables definition
@@ -88,7 +165,7 @@ zend_module_entry tarantool_module_entry = {
 	NULL,
 	PHP_MINFO(tarantool),
 #if ZEND_MODULE_API_NO >= 20010901
-	"0.1",
+	"1.0",
 #endif
 	STANDARD_MODULE_PROPERTIES
 };
@@ -127,6 +204,126 @@ zend_class_entry *tarantool_class_ptr;
 /*----------------------------------------------------------------------------*
  * I/O buffer interface
  *----------------------------------------------------------------------------*/
+
+/* create I/O buffer instance */
+static struct io_buf *
+io_buf_create(TSRMLS_D);
+
+/* destroy I/O buffer */
+static void
+io_buf_destroy(struct io_buf *buf);
+
+/* reserve I/O buffer space */
+inline static bool
+io_buf_reserve(struct io_buf *buf, size_t n TSRMLS_DC);
+
+/* resize I/O buffer */
+inline static bool
+io_buf_resize(struct io_buf *buf, size_t n TSRMLS_DC);
+
+/* calculate next capacity for I/O buffer */
+inline static size_t
+io_buf_next_capacity(size_t n);
+
+/* clean I/O buffer */
+static void
+io_buf_clean(struct io_buf *buf);
+
+/* read struct from buffer */
+static bool
+io_buf_read_struct(struct io_buf *buf, void **ptr, size_t n);
+
+/* read 32-bit integer from buffer */
+static bool
+io_buf_read_int32(struct io_buf *buf, int32_t *val);
+
+/* read 64-bit integer from buffer */
+static bool
+io_buf_read_int64(struct io_buf *buf, int64_t *val);
+
+/* read var integer from buffer */
+static bool
+io_buf_read_varint(struct io_buf *buf, int32_t *val);
+
+/* read string from buffer */
+static bool
+io_buf_read_str(struct io_buf *buf, char **str, size_t len);
+
+/* read fied from buffer */
+static bool
+io_buf_read_field(struct io_buf *buf, zval *tuple);
+
+/* read tuple from buffer */
+static bool
+io_buf_read_tuple(struct io_buf *buf, zval **tuple);
+
+/*
+ * Write to I/O buffer functions
+ */
+
+/* write struct to I/O buffer */
+static void *
+io_buf_write_struct(struct io_buf *buf, size_t n TSRMLS_DC);
+
+/* write byte to I/O buffer */
+static bool
+io_buf_write_byte(struct io_buf *buf, int8_t value TSRMLS_DC);
+
+/* write 32-bit integer to I/O buffer */
+static bool
+io_buf_write_int32(struct io_buf *buf, int32_t value TSRMLS_DC);
+
+/* write 64-bit integer to I/O buffer */
+static bool
+io_buf_write_int64(struct io_buf *buf, int64_t value TSRMLS_DC);
+
+/* write varint to I/O buffer */
+static bool
+io_buf_write_varint(struct io_buf *buf, int32_t value TSRMLS_DC);
+
+/* write string to I/O buffer */
+static bool
+io_buf_write_str(struct io_buf *buf, uint8_t *str, size_t len TSRMLS_DC);
+
+/* write 32-bit integer as tuple's field to I/O buffer */
+static bool
+io_buf_write_field_int32(struct io_buf *buf, uint32_t value TSRMLS_DC);
+
+/* write 64-bit integer as tuple's field to I/O buffer */
+static bool
+io_buf_write_field_int64(struct io_buf *buf, uint64_t value TSRMLS_DC);
+
+/* write string tuple's field to I/O buffer */
+static bool
+io_buf_write_field_str(struct io_buf *buf, uint8_t *val, size_t len TSRMLS_DC);
+
+/* write tuple to I/O buffer */
+static bool
+io_buf_write_tuple_int(struct io_buf *buf, zval *tuple TSRMLS_DC);
+
+/* write tuple (string) to I/O buffer */
+static bool
+io_buf_write_tuple_str(struct io_buf *buf, zval *tuple TSRMLS_DC);
+
+/* write tuple (array) to I/O buffer */
+static bool
+io_buf_write_tuple_array(struct io_buf *buf, zval *tuple TSRMLS_DC);
+
+/* write tuple to I/O buffer */
+static bool
+io_buf_write_tuple(struct io_buf *buf, zval *tuple TSRMLS_DC);
+
+/* write array of tuples to I/O buffer */
+static bool
+io_buf_write_tuples_list_array(struct io_buf *buf, zval *tuples_list TSRMLS_DC);
+
+/* write tuples list to I/O buffer */
+static bool
+io_buf_write_tuples_list(struct io_buf *buf, zval *tuples_list TSRMLS_DC);
+
+/*
+ * I/O buffer send/recv
+ */
 
 /* send administration command request */
 static bool
@@ -186,6 +383,44 @@ hash_fing_scalar(HashTable *hash, char *key, zval ***value);
 /* initialize module function */
 PHP_MINIT_FUNCTION(tarantool)
 {
+	/* register constants */
+
+	/* register tarantool flags */
+	REGISTER_LONG_CONSTANT("TARANTOOL_FLAGS_RETURN_TUPLE",
+						   TARANTOOL_FLAGS_RETURN_TUPLE,
+						   CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("TARANTOOL_FLAGS_ADD",
+						   TARANTOOL_FLAGS_ADD,
+						   CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("TARANTOOL_FLAGS_REPLACE",
+						   TARANTOOL_FLAGS_REPLACE,
+						   CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("TARANTOOL_FLAGS_NOT_STORE",
+						   TARANTOOL_FLAGS_NOT_STORE,
+						   CONST_CS | CONST_PERSISTENT);
+
+	/* register tarantool update fields operations */
+	REGISTER_LONG_CONSTANT("TARANTOOL_OP_ASSIGN",
+						   TARANTOOL_OP_ASSIGN,
+						   CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("TARANTOOL_OP_ADD",
+						   TARANTOOL_OP_ADD,
+						   CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("TARANTOOL_OP_AND",
+						   TARANTOOL_OP_AND,
+						   CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("TARANTOOL_OP_XOR",
+						   TARANTOOL_OP_XOR,
+						   CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("TARANTOOL_OP_OR",
+						   TARANTOOL_OP_OR,
+						   CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("TARANTOOL_OP_SPLICE",
+						   TARANTOOL_OP_SPLICE,
+						   CONST_CS | CONST_PERSISTENT);
+
+	/* register classes */
+
 	/* register tarantool class */
 	zend_class_entry tarantool_class;
 	INIT_CLASS_ENTRY(tarantool_class, "Tarantool", tarantool_class_methods);
@@ -217,54 +452,23 @@ PHP_MINFO_FUNCTION(tarantool)
 
 PHP_METHOD(tarantool_class, __construct)
 {
-	zval *id;
-	char *host = NULL;
-	int host_len = 0;
-	long port = 0;
-	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
-					 getThis(),
-					 "O|sl",
-					 &id,
-					 tarantool_class_ptr,
-					 &host,
-					 &host_len,
-					 &port) == FAILURE) {
-		return;
-	}
-	
-	if (host == NULL || host_len == 0)
-		host = TARANTOOL_DEFAULT_HOST;
-	if (port <= 0 || port >= 65536)
-		port = TARANTOOL_DEFAULT_PORT;
-	tarantool_object *object = \
-		(tarantool_object *) zend_object_store_get_object(id TSRMLS_CC);
-	object->host = estrdup(host);
-	object->port = port;
-	object->stream = NULL;
-
-	return;
-}
-
-
-PHP_METHOD(tarantool_class, __construct)
-{
 	/*
 	 * parse method's parameters
 	 */
 	zval *id;
-		char *host = NULL;
+	char *host = NULL;
 	int host_len = 0;
 	long port = 0;
 	long admin_port = 0;
 	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
-					 getThis(),
-					 "Osl|l",
-					 &id,
-					 tarantool_class_ptr,
-					 &host,
-					 &host_len,
-					 &port,
-					 &admin_port) == FAILURE) {
+									 getThis(),
+									 "Osl|l",
+									 &id,
+									 tarantool_class_ptr,
+									 &host,
+									 &host_len,
+									 &port,
+									 &admin_port) == FAILURE) {
 		return;
 	}
 
@@ -1917,3 +2121,13 @@ hash_fing_scalar(HashTable *hash, char *key, zval ***value)
 		return false;
 	return true;
 }
+
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: noet sw=4 ts=4 fdm=marker
+ * vim<600: noet sw=4 ts=4
+ */

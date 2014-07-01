@@ -1,0 +1,4 @@
+[submodule "src/third_party/connector-c"]
+	path = src/third_party/connector-c
+	url = https://github.com/tarantool/tarantool-c.git
+	branch = add-1-6-protocol
