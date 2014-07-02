@@ -55,9 +55,7 @@ typedef struct tarantool_object {
 	zend_object zo;
 	char *host;
 	int port;
-	php_stream *stream;
-	struct io_buf *io_buf;
-	struct io_buf *splice_field;
+	struct tp tp;
 } tarantool_object;
 
 /*============================================================================*
@@ -118,23 +116,13 @@ const zend_function_entry tarantool_class_methods[] = {
 /* tarantool class */
 zend_class_entry *tarantool_class_ptr;
 
-
 /*============================================================================*
  * local functions declaration
  *============================================================================*/
 
-
 /*----------------------------------------------------------------------------*
  * I/O buffer interface
  *----------------------------------------------------------------------------*/
-
-/* send administration command request */
-static bool
-io_buf_send_yaml(php_stream *stream, struct io_buf *buf TSRMLS_DC);
-
-/* receive administration command response */
-static bool
-io_buf_recv_yaml(php_stream *stream, struct io_buf *buf TSRMLS_DC);
 
 /* send request by iproto */
 static bool
@@ -215,12 +203,68 @@ PHP_MINFO_FUNCTION(tarantool)
  * Tarantool class interface
  *----------------------------------------------------------------------------*/
 
+char *tp_reserve_function(struct tp *p, size_t req, size_t *size) {
+	size_t toalloc = tp_size(p) * TPBUF_CAPACITY_FACTOR;
+	if (tpunlikely(toalloc < required))
+		toalloc = tp_size(p) + required;
+	*size = toalloc;
+	return erealloc(p->s, toalloc);
+
+}
+
+void tp_free_function(struct tp *p) {
+	efree(p->s);
+}
+
+void tp_reset(struct tp *p) {
+	tp_init(p, tp_buf(p), tp_size(p), tp_reserve_function, NULL);
+}
+
+void tp_php_encode_array(struct tp *p, zval *value) {
+	
+}
+
+void tp_php_encode(struct tp *p, zval *value) {
+	switch (Z_TYPE_P(tuple)) {
+	case IS_NULL:
+		tp_encode_nil(p);
+		break;
+	case IS_LONG:
+		long val = Z_LVAL_P(value);
+		tp_encode_int(p, val);
+		break;
+	case IS_DOUBLE:
+		double val = Z_DVAL_P(value);
+		tp_encode_double(p, val);
+		break;
+	case IS_STRING:
+		size_t lval =  Z_STRLEN_P(value)
+		char *val = Z_STRVAL_P(value);
+		tp_encode_str(p, val, lval);
+		break;
+	case IS_BOOL:
+		int val = Z_LVAL_P(value);
+		tp_encode_bool(p, val);
+		break;
+	case IS_ARRAY:
+		break;
+	case IS_OBJECT:
+		break;
+	case IS_RESOURCE:
+		break;
+	case IS_CONSTANT:
+		break;
+	default:
+		return tp_encode_nil(p);
+	}
+}
+
 PHP_METHOD(tarantool_class, __construct)
 {
 	zval *id;
-	char *host = NULL;
-	int host_len = 0;
-	long port = 0;
+	char *host = TARANTOOL_DEFAULT_HOST;
+	int host_len = strlen(host);
+	long port = TARANTOOL_DEFAULT_PORT;
 	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
 					 getThis(),
 					 "O|sl",
@@ -232,87 +276,19 @@ PHP_METHOD(tarantool_class, __construct)
 		return;
 	}
 	
-	if (host == NULL || host_len == 0)
-		host = TARANTOOL_DEFAULT_HOST;
-	if (port <= 0 || port >= 65536)
-		port = TARANTOOL_DEFAULT_PORT;
-	tarantool_object *object = \
-		(tarantool_object *) zend_object_store_get_object(id TSRMLS_CC);
-	object->host = estrdup(host);
-	object->port = port;
-	object->stream = NULL;
-
-	return;
-}
-
-
-PHP_METHOD(tarantool_class, __construct)
-{
-	/*
-	 * parse method's parameters
-	 */
-	zval *id;
-		char *host = NULL;
-	int host_len = 0;
-	long port = 0;
-	long admin_port = 0;
-	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
-					 getThis(),
-					 "Osl|l",
-					 &id,
-					 tarantool_class_ptr,
-					 &host,
-					 &host_len,
-					 &port,
-					 &admin_port) == FAILURE) {
-		return;
-	}
-
-	/*
-	 * validate parameters
-	 */
-
-	/* check host name */
-	if (host == NULL || host_len == 0) {
-		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC,
-								"invalid tarantool's hostname");
-		return;
-	}
-
-	/* validate port value */
 	if (port <= 0 || port >= 65536) {
 		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC,
 								"invalid primary port value: %li", port);
 		return;
 	}
-
-	/* check admin port */
-	if (admin_port) {
-		/* validate port value */
-		if (admin_port < 0 || admin_port >= 65536) {
-			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC,
-									"invalid admin port value: %li", admin_port);
-			return;
-		}
-	}
-
-	/* initialzie object structure */
-	tarantool_object *object = (tarantool_object *) zend_object_store_get_object(
-		id TSRMLS_CC);
+	tarantool_object *object = \
+		(tarantool_object *) zend_object_store_get_object(id TSRMLS_CC);
 	object->host = estrdup(host);
 	object->port = port;
-	object->admin_port = admin_port;
-	object->stream = NULL;
-	object->admin_stream = NULL;
-	object->io_buf = io_buf_create(TSRMLS_C);
-	if (!object->io_buf) {
-		return;
-	}
-	object->splice_field = io_buf_create(TSRMLS_C);
-	if (!object->splice_field) {
-		return;
-	}
-
+	struct tp tpinst = emalloc(sizeof(struct tp));
+	void *buffer = emalloc(TPBUF_CAPACITY_MIN);
+	tp_init(object->tp, buffer, TPBUF_CAPACITY_MIN, *tp_reserve_function, NULL);
+	object->tp = tpinst;
 	return;
 }
 
@@ -328,35 +304,27 @@ PHP_METHOD(tarantool_class, select)
 	long limit = -1;
 	long offset = 0;
 	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
-									 getThis(),
-									 "Ollz|ll",
-									 &id,
-									 tarantool_class_ptr,
-									 &space_no,
-									 &index_no,
-									 &keys_list,
-									 &limit,
-									 &offset) == FAILURE) {
+					 getThis(),
+					 "Ollz|ll",
+					 &id,
+					 tarantool_class_ptr,
+					 &space_no,
+					 &index_no,
+					 &keys_list,
+					 &limit,
+					 &offset) == FAILURE) {
 		return;
 	}
-
+	
 	tarantool_object *tnt = (tarantool_object *) zend_object_store_get_object(
 		id TSRMLS_CC);
+	
+	tp_select(tnt->tp, space_no, index_no, offset, limit);
+	tp_key(tnt-tp, 1);
+	tp_encode_array(tnt->tp, zend_hash_num_elements(keys_list));
+	HashTable *hash = Z_ARRVAL_P(keys_list);
 
-	/* check connection */
-	if (!tnt->stream) {
-		/* establish connection */
-		tnt->stream = establish_connection(tnt->host, tnt->port TSRMLS_CC);
-		if (!tnt->stream)
-			return;
-	}
-
-	/*
-	 * send request
-	 */
-
-	/* clean-up buffer */
-	io_buf_clean(tnt->io_buf);
+	
 
 	/* fill select command */
 	/* fill command header */
@@ -1468,7 +1436,22 @@ io_buf_write_tuple_int(struct io_buf *buf, zval *tuple TSRMLS_DC)
 	/* single field tuple: (int) */
 	long long_value = Z_LVAL_P(tuple);
 	/* write tuple cardinality */
-	if (!io_buf_write_int32(buf, 1 TSRMLS_CC))
+	i	/* check connection */
+	if (!tnt->stream) {
+		/* establish connection */
+		tnt->stream = establish_connection(tnt->host, tnt->port TSRMLS_CC);
+		if (!tnt->stream)
+			return;
+	}
+
+	/*
+	 * send request
+	 */
+
+	/* clean-up buffer */
+	io_buf_clean(tnt->io_buf);
+
+f (!io_buf_write_int32(buf, 1 TSRMLS_CC))
 		return false;
 	/* write field */
 	if ((unsigned long)long_value <= 0xffffffffllu) {
