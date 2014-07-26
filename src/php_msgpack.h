@@ -1,3 +1,6 @@
+#ifndef PHP_MSGPACK_H
+#define PHP_MSGPACK_H
+
 #include <msgpuck.h>
 #include <zend.h>
 #include <zend_API.h>
@@ -339,3 +342,5 @@ char *php_mp_unpack(zval *oval, char **str) {
 	}
 	return str;
 }
+
+#endif /* PHP_MSGPACK_H */

@@ -1,7 +1,6 @@
 #ifndef    PHP_TARANTOOL_H
 #define    PHP_TARANTOOL_H
 
-
 extern zend_module_entry tarantool_module_entry;
 #define phpext_tarantool_ptr &tarantool_module_entry
 
@@ -19,6 +18,14 @@ extern zend_module_entry tarantool_module_entry;
 
 #define PHP_TARANTOOL_VERSION "0.1"
 #define PHP_TARANTOOL_EXTNAME "tarantool"
+
+PHP_MINIT_FUNCTION(tarantool);
+PHP_MSHUTDOWN_FUNCTION(tarantool);
+PHP_MINFO_FUNCTION(tarantool);
+
+PHP_METHOD(tarantool_class, __construct);
+PHP_METHOD(tarantool_class, connect);
+PHP_METHOD(tarantool_class, authenticate);
 
 ZEND_BEGIN_MODULE_GLOBALS(tarantool)
 long sync_counter;

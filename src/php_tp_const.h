@@ -1,3 +1,6 @@
+#ifndef PHP_TP_CONST_H
+#define PHP_TP_CONST_H
+
 #define SALT64_SIZE   44
 #define SALT_SIZE     64
 #define SCRAMBLE_SIZE 64
@@ -39,3 +42,5 @@ enum tnt_request_type {
 	TNT_AUTH = 7,
 	TNT_PING = 64
 };
+
+#endif /* PHP_TP_CONST_H */
