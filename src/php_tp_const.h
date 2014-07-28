@@ -32,7 +32,7 @@ enum tnt_response_key_t {
 
 /* request types */
 enum tnt_request_type {
-	TNT_OK = 0
+	TNT_OK = 0,
 	TNT_SELECT = 1,
 	TNT_INSERT = 2,
 	TNT_REPLACE = 3,
