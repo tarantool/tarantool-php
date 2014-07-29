@@ -3,7 +3,7 @@
 
 #define SALT64_SIZE   44
 #define SALT_SIZE     64
-#define SCRAMBLE_SIZE 64
+#define SCRAMBLE_SIZE 20
 
 /* header */
 enum tnt_header_key_t {

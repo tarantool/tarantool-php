@@ -22,6 +22,13 @@ extern zend_module_entry tarantool_module_entry;
 #include "TSRM.h"
 #endif
 
+#define SSTR_BEG(str) (str->c)
+#define SSTR_END(str) (str->c + str->a)
+#define SSTR_AWA(str) (str->a)
+#define SSTR_LEN(str) (str->len)
+#define SSTR_POS(str) (str->c + str->len)
+#define SSTR_DIF(str, end) (end - str->c)
+
 PHP_MINIT_FUNCTION(tarantool);
 PHP_MSHUTDOWN_FUNCTION(tarantool);
 PHP_MINFO_FUNCTION(tarantool);
@@ -29,10 +36,13 @@ PHP_MINFO_FUNCTION(tarantool);
 PHP_METHOD(tarantool_class, __construct);
 PHP_METHOD(tarantool_class, connect);
 PHP_METHOD(tarantool_class, authenticate);
+PHP_METHOD(tarantool_class, ping);
 
 ZEND_BEGIN_MODULE_GLOBALS(tarantool)
 	long sync_counter;
 ZEND_END_MODULE_GLOBALS(tarantool)
+
+ZEND_EXTERN_MODULE_GLOBALS(tarantool)
 
 #ifdef ZTS
 #  define TARANTOOL_G(v) TSRMG(tarantool_globals_id, zend_tarantool_globals *, v)
