@@ -117,7 +117,7 @@ tarantool_stream_send(tarantool_object *obj TSRMLS_DC) {
 
 	printf("Sent:");
 	for (i = 0; i < SSTR_LEN(obj->value); ++i) {
-		printf("\\x%02x", (unsigned char)SSTR_BEG(obj->value)[i]);
+		printf(" %02X", (unsigned char)SSTR_BEG(obj->value)[i]);
 	} printf("\n");
 
 	if (php_stream_write(obj->stream,
@@ -154,6 +154,10 @@ static size_t tarantool_stream_read(tarantool_object *obj,
 			break;
 		total_size += read_size;
 	}
+	printf("Received:");
+	for (i = 0; i < total_size; ++i) {
+		printf(" %02X", (unsigned char)buf[i]);
+	} printf("\n");
 	return total_size;
 }
 
@@ -179,15 +183,6 @@ static zend_object_value tarantool_create(zend_class_entry *entry TSRMLS_DC) {
 			NULL TSRMLS_CC);
 	new_value.handlers = zend_get_std_object_handlers();
 	return new_value;
-}
-
-static inline void
-xor(unsigned char *to, unsigned const char *left,
-    unsigned const char *right, uint32_t len)
-{
-	const uint8_t *end = to + len;
-	while (to < end)
-		*to++= *left++ ^ *right++;
 }
 
 static int64_t tarantool_step_recv(
@@ -368,35 +363,61 @@ PHP_METHOD(tarantool_class, connect) {
 	RETURN_TRUE;
 }
 
+static void
+xor(unsigned char *to, const unsigned char *left,
+    const unsigned char *right, unsigned int len)
+{
+	const unsigned char *left_end = left + len;
+	while (left < left_end)
+		*to++ = *left++ ^ *right++;
+}
+
+
 static inline void
-scramble_prepare(void *out, void * const salt,
-		 void * const password, size_t password_len) {
+scramble_prepare(void *out, void * const salt, unsigned int salt_len,
+		 void * const password, unsigned int password_len) {
 	unsigned char hash1[SCRAMBLE_SIZE];
 	unsigned char hash2[SCRAMBLE_SIZE];
+	unsigned char hash3[SCRAMBLE_SIZE];
+
 	PHP_SHA1_CTX ctx;
+	int i = 0;
 
 	PHP_SHA1Init(&ctx);
-	PHP_SHA1Update(&ctx, password, password_len);
+	PHP_SHA1Update(&ctx, (const unsigned char *) password, password_len);
 	PHP_SHA1Final(hash1, &ctx);
+	printf("H1:");
+	for (i = 0; i < SCRAMBLE_SIZE; ++i) {
+		printf(" %02X", (unsigned char)hash1[i]);
+	} printf("\n");
 
 	PHP_SHA1Init(&ctx);
 	PHP_SHA1Update(&ctx, hash1, SCRAMBLE_SIZE);
 	PHP_SHA1Final(hash2, &ctx);
+	printf("H2:");
+	for (i = 0; i < SCRAMBLE_SIZE; ++i) {
+		printf(" %02X", (unsigned char)hash2[i]);
+	} printf("\n");
 
 	PHP_SHA1Init(&ctx);
-	PHP_SHA1Update(&ctx, salt, 32);
+	PHP_SHA1Update(&ctx, (const unsigned char *) salt, SCRAMBLE_SIZE);
 	PHP_SHA1Update(&ctx, hash2, SCRAMBLE_SIZE);
-	PHP_SHA1Final(out, &ctx);
+	PHP_SHA1Final((unsigned char *) hash3, &ctx);
+	printf("H3:");
+	for (i = 0; i < SCRAMBLE_SIZE; ++i) {
+		printf(" %02X", (unsigned char)hash3[i]);
+	} printf("\n");
 
-	xor(out, hash1, out, SCRAMBLE_SIZE);
+	xor(out, (const unsigned char *)hash1, (const unsigned char *)hash3, SCRAMBLE_SIZE);
 }
 
 PHP_METHOD(tarantool_class, authenticate) {
 	zval *id;
 	char *login;
-	int login_len;
+	unsigned int login_len;
 	char *passwd;
-	int passwd_len;
+	unsigned int passwd_len;
+	int i = 0;
 
 	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
 			getThis(), "Oss", &id, tarantool_class_ptr,
@@ -410,10 +431,19 @@ PHP_METHOD(tarantool_class, authenticate) {
 	salt = php_base64_decode(obj->salt, SALT64_SIZE, (int *)&salt_len);
 	printf("SALT_LEN: %d\n", salt_len);
 	salt_len = SCRAMBLE_SIZE;
+	printf("SALT:");
+	for (i = 0; i < salt_len; ++i) {
+		printf(" %02X", (unsigned char)salt[i]);
+	} printf("\n");
 	assert(salt); /* TODO: REWRITE CHECK */
-	char scramble[SCRAMBLE_SIZE] = {0};
+	char scramble[SCRAMBLE_SIZE]; memset(scramble, 0, SCRAMBLE_SIZE);
 
-	scramble_prepare(scramble, salt, passwd, passwd_len);
+	scramble_prepare(scramble, salt, salt_len, passwd, passwd_len);
+
+	printf("SCRAMBLE:");
+	for (i = 0; i < SCRAMBLE_SIZE; ++i) {
+		printf(" %02X", (unsigned char)scramble[i]);
+	} printf("\n");
 
 	long sync = TARANTOOL_G(sync_counter)++;
 	php_tp_encode_auth(obj->value, sync, login, login_len, scramble);
