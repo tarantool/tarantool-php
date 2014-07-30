@@ -15,9 +15,8 @@
 
 #include "php_tarantool.h"
 
-#include "php_tp_const.h"
-#include "php_msgpack.h"
-#include "php_tp.h"
+#include "tarantool_msgpack.h"
+#include "tarantool_proto.h"
 
 ZEND_DECLARE_MODULE_GLOBALS(tarantool)
 

@@ -4,5 +4,5 @@ PHP_ARG_WITH(tarantool, for tarantool support,
 
 if test "$PHP_TARANTOOL" != "no"; then
    PHP_ADD_INCLUDE([$ext_builddir/src/third_party])
-   PHP_NEW_EXTENSION(tarantool, src/php_tarantool.c src/php_msgpack.c src/php_tp.c src/third_party/msgpuck.c, $ext_shared)
+   PHP_NEW_EXTENSION(tarantool, src/tarantool.c src/tarantool_msgpack.c src/tarantool_proto.c src/third_party/msgpuck.c, $ext_shared)
 fi

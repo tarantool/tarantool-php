@@ -2,7 +2,7 @@
 #include <zend_API.h>
 
 #include "php_tarantool.h"
-#include "php_msgpack.h"
+#include "tarantool_msgpack.h"
 #include "third_party/msgpuck.h"
 
 /* UTILITES */

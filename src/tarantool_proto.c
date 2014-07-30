@@ -1,5 +1,5 @@
-#include "php_tp_const.h"
-#include "php_msgpack.h"
+#include "tarantool_proto.h"
+#include "tarantool_msgpack.h"
 
 #include "third_party/msgpuck.h"
 

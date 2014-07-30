@@ -9,7 +9,6 @@ Makefile.in
 /install-sh
 /missing
 /.deps
-/.libs
 /Makefile
 /Makefile.fragments
 /Makefile.global
@@ -29,7 +28,7 @@ Makefile.in
 /mkinstalldirs
 /modules/
 /run-tests.php
-/src/.libs/
-/src/tarantool.lo
 /tarantool.la
 /test/var/
+*.lo
+*.libs

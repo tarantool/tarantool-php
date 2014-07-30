@@ -1,9 +1,12 @@
-#ifndef PHP_TP_CONST_H
-#define PHP_TP_CONST_H
+#ifndef PHP_TP_H
+#define PHP_TP_H
 
 #define SALT64_SIZE   44
 #define SALT_SIZE     64
 #define SCRAMBLE_SIZE 20
+
+#include <stdint.h>
+#include <ext/standard/php_smart_str.h>
 
 /* header */
 enum tnt_header_key_t {
@@ -43,4 +46,10 @@ enum tnt_request_type {
 	TNT_PING = 64
 };
 
-#endif /* PHP_TP_CONST_H */
+size_t php_tp_sizeof_auth(uint32_t sync, size_t ulen);
+size_t php_tp_sizeof_ping(uint32_t sync);
+
+void php_tp_encode_auth(smart_str *str, uint32_t sync, char * const username, size_t username_len, char * const scramble);
+void php_tp_encode_ping(smart_str *str, uint32_t sync);
+
+#endif /* PHP_TP_H */
