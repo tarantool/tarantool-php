@@ -81,7 +81,8 @@ static int tarantool_stream_open(tarantool_object *obj TSRMLS_DC) {
 	php_stream *stream = php_stream_xport_create(dest_addr, dest_addr_len,
 						     options, flags,
 						     NULL, &timeout, NULL,
-						     &errstr, &errcode);
+						     &errstr, &errcode
+						     TSRMLS_CC);
 	efree(dest_addr);
 	if (errcode || !stream) {
 		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
@@ -96,16 +97,20 @@ static int tarantool_stream_open(tarantool_object *obj TSRMLS_DC) {
 	if (result) {
 		char errbuf[64];
 		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
-					0 TSRMLS_CC, "failed to connect. code %d: %s",
-					errcode, errstr);
+					0 TSRMLS_CC, "failed to connect: "
+					"setsockopt error %s",
+					strerror_r(errno,
+						   errbuf,
+						   sizeof(errbuf)));
 		goto process_error;
 	}
 	obj->stream = stream;
-	return 0;
+	return SUCCESS;
 
 process_error:
 	if (errstr) efree(errstr);
 	if (stream) php_stream_close(stream);
+	return FAILURE;
 }
 
 #include <stdio.h>
@@ -114,11 +119,6 @@ static int
 tarantool_stream_send(tarantool_object *obj TSRMLS_DC) {
 	int i = 0;
 	TSRMLS_FETCH();
-
-	printf("Sent:");
-	for (i = 0; i < SSTR_LEN(obj->value); ++i) {
-		printf(" %02X", (unsigned char)SSTR_BEG(obj->value)[i]);
-	} printf("\n");
 
 	if (php_stream_write(obj->stream,
 			SSTR_BEG(obj->value),
@@ -154,10 +154,6 @@ static size_t tarantool_stream_read(tarantool_object *obj,
 			break;
 		total_size += read_size;
 	}
-	printf("Received:");
-	for (i = 0; i < total_size; ++i) {
-		printf(" %02X", (unsigned char)buf[i]);
-	} printf("\n");
 	return total_size;
 }
 
@@ -174,6 +170,7 @@ static void tarantool_free(tarantool_object *obj TSRMLS_DC) {
 
 static zend_object_value tarantool_create(zend_class_entry *entry TSRMLS_DC) {
 	zend_object_value new_value;
+	TSRMLS_FETCH();
 
 	tarantool_object *obj = (tarantool_object *)ecalloc(sizeof(tarantool_object), 1);
 	zend_object_std_init(&obj->zo, entry TSRMLS_CC);
@@ -337,7 +334,7 @@ PHP_METHOD(tarantool_class, __construct) {
 	obj->stream = NULL;
 	obj->value = (smart_str *)ecalloc(sizeof(smart_str), 1);
 	obj->auth = 0;
-	obj->greeting = (char *)ecalloc(sizeof(char), 64);
+	obj->greeting = (char *)ecalloc(sizeof(char), 128);
 	obj->salt = NULL;
 	smart_str_ensure(obj->value, 128);
 	smart_str_0(obj->value);
@@ -355,69 +352,60 @@ PHP_METHOD(tarantool_class, connect) {
 	}
 	tarantool_object *object = (tarantool_object *) \
 				   zend_object_store_get_object(id TSRMLS_CC);
-	tarantool_stream_open(object);
-	tarantool_stream_read(object, object->greeting, 128);
+	if (tarantool_stream_open(object) == FAILURE)
+		RETURN_FALSE;
+	if (tarantool_stream_read(object, object->greeting, 128) != 128) {
+		zend_throw_exception_ex(
+				zend_exception_get_default(TSRMLS_C),
+				0 TSRMLS_CC,
+				"can't read greeting from server");
+		RETURN_FALSE;
+	}
 	object->salt = object->greeting + 64;
-	printf("GREETING:\n%s",     object->greeting);
-	printf("SALT:    \n%.*s\n", SALT64_SIZE, object->salt);
 	RETURN_TRUE;
 }
 
 static void
-xor(unsigned char *to, const unsigned char *left,
-    const unsigned char *right, unsigned int len)
+xor(unsigned char *to, unsigned const char *left,
+    unsigned const char *right, uint32_t len)
 {
-	const unsigned char *left_end = left + len;
-	while (left < left_end)
-		*to++ = *left++ ^ *right++;
+	const uint8_t *end = to + len;
+	while (to < end)
+		*to++= *left++ ^ *right++;
 }
 
-
-static inline void
-scramble_prepare(void *out, void * const salt, unsigned int salt_len,
-		 void * const password, unsigned int password_len) {
+void
+scramble_prepare(void *out, const void *salt,
+		 const void *password, int password_len)
+{
 	unsigned char hash1[SCRAMBLE_SIZE];
 	unsigned char hash2[SCRAMBLE_SIZE];
-	unsigned char hash3[SCRAMBLE_SIZE];
-
 	PHP_SHA1_CTX ctx;
-	int i = 0;
 
 	PHP_SHA1Init(&ctx);
-	PHP_SHA1Update(&ctx, (const unsigned char *) password, password_len);
+	PHP_SHA1Update(&ctx, (const unsigned char *)password, password_len);
 	PHP_SHA1Final(hash1, &ctx);
-	printf("H1:");
-	for (i = 0; i < SCRAMBLE_SIZE; ++i) {
-		printf(" %02X", (unsigned char)hash1[i]);
-	} printf("\n");
 
 	PHP_SHA1Init(&ctx);
-	PHP_SHA1Update(&ctx, hash1, SCRAMBLE_SIZE);
+	PHP_SHA1Update(&ctx, (const unsigned char *)hash1, SCRAMBLE_SIZE);
 	PHP_SHA1Final(hash2, &ctx);
-	printf("H2:");
-	for (i = 0; i < SCRAMBLE_SIZE; ++i) {
-		printf(" %02X", (unsigned char)hash2[i]);
-	} printf("\n");
 
 	PHP_SHA1Init(&ctx);
-	PHP_SHA1Update(&ctx, (const unsigned char *) salt, SCRAMBLE_SIZE);
-	PHP_SHA1Update(&ctx, hash2, SCRAMBLE_SIZE);
-	PHP_SHA1Final((unsigned char *) hash3, &ctx);
-	printf("H3:");
-	for (i = 0; i < SCRAMBLE_SIZE; ++i) {
-		printf(" %02X", (unsigned char)hash3[i]);
-	} printf("\n");
+	PHP_SHA1Update(&ctx, (const unsigned char *)salt,  SCRAMBLE_SIZE);
+	PHP_SHA1Update(&ctx, (const unsigned char *)hash2, SCRAMBLE_SIZE);
+	PHP_SHA1Final((unsigned char *)out, &ctx);
 
-	xor(out, (const unsigned char *)hash1, (const unsigned char *)hash3, SCRAMBLE_SIZE);
+	xor((unsigned char *)out, (const unsigned char *)hash1, (const unsigned char *)out, SCRAMBLE_SIZE);
 }
 
 PHP_METHOD(tarantool_class, authenticate) {
 	zval *id;
 	char *login;
-	unsigned int login_len;
+	int login_len;
 	char *passwd;
-	unsigned int passwd_len;
+	int passwd_len;
 	int i = 0;
+	TSRMLS_FETCH();
 
 	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
 			getThis(), "Oss", &id, tarantool_class_ptr,
@@ -427,33 +415,19 @@ PHP_METHOD(tarantool_class, authenticate) {
 	tarantool_object *obj = (tarantool_object *) \
 				   zend_object_store_get_object(id TSRMLS_CC);
 
-	char *salt; int salt_len;
-	salt = php_base64_decode(obj->salt, SALT64_SIZE, (int *)&salt_len);
-	printf("SALT_LEN: %d\n", salt_len);
-	salt_len = SCRAMBLE_SIZE;
-	printf("SALT:");
-	for (i = 0; i < salt_len; ++i) {
-		printf(" %02X", (unsigned char)salt[i]);
-	} printf("\n");
-	assert(salt); /* TODO: REWRITE CHECK */
+	char *salt = php_base64_decode(obj->salt, SALT64_SIZE, NULL);
 	char scramble[SCRAMBLE_SIZE]; memset(scramble, 0, SCRAMBLE_SIZE);
 
-	scramble_prepare(scramble, salt, salt_len, passwd, passwd_len);
-
-	printf("SCRAMBLE:");
-	for (i = 0; i < SCRAMBLE_SIZE; ++i) {
-		printf(" %02X", (unsigned char)scramble[i]);
-	} printf("\n");
+	scramble_prepare(scramble, salt, passwd, passwd_len);
 
 	long sync = TARANTOOL_G(sync_counter)++;
 	php_tp_encode_auth(obj->value, sync, login, login_len, scramble);
 	tarantool_stream_send(obj);
 
 	zval *header = NULL, *body = NULL;
-	if (tarantool_step_recv(obj, sync, &header, &body) == FAILURE) {
-		return;
-	}
-	return;
+	if (tarantool_step_recv(obj, sync, &header, &body) == FAILURE)
+		RETURN_FALSE;
+	RETURN_TRUE;
 }
 
 PHP_METHOD(tarantool_class, ping) {
@@ -473,10 +447,9 @@ PHP_METHOD(tarantool_class, ping) {
 	tarantool_stream_send(obj);
 
 	zval *header, *body;
-	if (tarantool_step_recv(obj, sync, &header, &body) == FAILURE) {
-		return;
-	}
-	return;
+	if (tarantool_step_recv(obj, sync, &header, &body) == FAILURE)
+		RETURN_FALSE;
+	RETURN_TRUE;
 }
 
 /*
