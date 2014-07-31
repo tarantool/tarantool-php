@@ -37,6 +37,12 @@ PHP_METHOD(tarantool_class, __construct);
 PHP_METHOD(tarantool_class, connect);
 PHP_METHOD(tarantool_class, authenticate);
 PHP_METHOD(tarantool_class, ping);
+PHP_METHOD(tarantool_class, select);
+PHP_METHOD(tarantool_class, insert);
+PHP_METHOD(tarantool_class, replace);
+PHP_METHOD(tarantool_class, call);
+PHP_METHOD(tarantool_class, delete);
+PHP_METHOD(tarantool_class, update);
 
 ZEND_BEGIN_MODULE_GLOBALS(tarantool)
 	long sync_counter;

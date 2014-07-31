@@ -7,22 +7,19 @@
 
 /* UTILITES */
 
-void smart_str_ensure(smart_str *str, size_t len) {
+int smart_str_ensure(smart_str *str, size_t len) {
 	if (SSTR_AWA(str) > SSTR_LEN(str) + len)
-		return;
+		return 0;
 	size_t needed = str->a * 2;
 	if (SSTR_LEN(str) + len > needed)
 		needed = SSTR_LEN(str) + len;
 	register size_t __n1;
 	smart_str_alloc4(str, needed, 0, __n1);
+	return 0;
 }
 
 inline void smart_str_nullify(smart_str *str) {
-#ifdef PHP_TARANTOOL_DEBUG
 	memset(SSTR_BEG(str), 0, SSTR_AWA(str));
-#else
-	return;
-#endif
 }
 
 /* PACKING ROUTINES */
@@ -119,9 +116,9 @@ void php_mp_pack_array_recursively(smart_str *str, zval *val) {
 	size_t key_index = 0;
 	for (; key_index < n; ++key_index) {
 		int status = zend_hash_index_find(ht, key_index,
-						  (void *)&(data));
+						  (void **)&data);
 		if (status != SUCCESS || !data || data == &val ||
-				(Z_TYPE_PP(data) && \
+				(Z_TYPE_PP(data) == IS_ARRAY && \
 				 Z_ARRVAL_PP(data)->nApplyCount > 1)) {
 			php_mp_pack_nil(str);
 		} else {
@@ -347,6 +344,147 @@ size_t php_mp_unpack(zval **oval, char **str) {
 	case MP_EXT:
 		break;
 	default:
+		break;
+	}
+}
+
+/* SIZEOF ROUTINES */
+size_t php_mp_sizeof_nil() {
+	return mp_sizeof_nil();
+}
+
+size_t php_mp_sizeof_long_pos(long val) {
+	return mp_sizeof_uint(val);
+}
+
+size_t php_mp_sizeof_long_neg(long val) {
+	return mp_sizeof_int(val);
+}
+
+size_t php_mp_sizeof_long(long val) {
+	if (val >= 0)
+		return php_mp_sizeof_long_pos(val);
+	return php_mp_sizeof_long_neg(val);
+}
+
+size_t php_mp_sizeof_double(double val) {
+	return mp_sizeof_double(val);
+}
+
+size_t php_mp_sizeof_bool(unsigned char val) {
+	return mp_sizeof_bool(val);
+}
+
+size_t php_mp_sizeof_string(size_t len) {
+	return mp_sizeof_str(len);
+}
+
+size_t php_mp_sizeof_hash(size_t len) {
+	return mp_sizeof_map(len);
+}
+
+size_t php_mp_sizeof_array(size_t len) {
+	return mp_sizeof_array(len);
+}
+
+size_t php_mp_sizeof_array_recursively(zval *val) {
+	HashTable *ht = HASH_OF(val);
+	size_t n = zend_hash_num_elements(ht);
+	size_t needed = php_mp_sizeof_array(n);
+
+	zval **data;
+
+	size_t key_index = 0;
+	for (; key_index < n; ++key_index) {
+		int status = zend_hash_index_find(ht, key_index,
+						  (void **)&data);
+		if (status != SUCCESS || !data || data == &val ||
+				(Z_TYPE_PP(data) == IS_ARRAY && \
+				 Z_ARRVAL_PP(data)->nApplyCount > 1)) {
+			needed += php_mp_sizeof_nil();
+		} else {
+			if (Z_TYPE_PP(data) == IS_ARRAY)
+				Z_ARRVAL_PP(data)->nApplyCount++;
+			needed += php_mp_sizeof(*data);
+			if (Z_TYPE_PP(data) == IS_ARRAY)
+				Z_ARRVAL_PP(data)->nApplyCount--;
+		}
+	}
+	return needed;
+}
+
+size_t php_mp_sizeof_hash_recursively(zval *val) {
+	HashTable *ht = HASH_OF(val);
+	size_t n = zend_hash_num_elements(ht);
+	size_t needed = php_mp_sizeof_hash(n);
+
+	char *key;
+	uint key_len;
+	int key_type;
+	ulong key_index;
+	zval **data;
+	HashPosition pos;
+
+	zend_hash_internal_pointer_reset_ex(ht, &pos);
+	for (;; zend_hash_move_forward_ex(ht, &pos)) {
+		key_type = zend_hash_get_current_key_ex(
+			ht, &key, &key_len, &key_index, 0, &pos);
+		if (key_type == HASH_KEY_NON_EXISTENT)
+			break;
+		switch (key_type) {
+		case HASH_KEY_IS_LONG:
+			needed += php_mp_sizeof_long(key_index);
+			break;
+		case HASH_KEY_IS_STRING:
+			needed += php_mp_sizeof_string(key_len);
+			break;
+		default:
+			/* TODO: THROW EXCEPTION */
+			needed += php_mp_sizeof_string(strlen(""));
+			break;
+		}
+		int status = zend_hash_get_current_data_ex(ht,
+				(void *)&data, &pos);
+		if (status != SUCCESS || !data || data == &val ||
+				(Z_TYPE_PP(data) == IS_ARRAY &&
+				 Z_ARRVAL_PP(data)->nApplyCount > 1)) {
+			needed += php_mp_sizeof_nil();
+		} else {
+			if (Z_TYPE_PP(data) == IS_ARRAY)
+				Z_ARRVAL_PP(data)->nApplyCount++;
+			needed += php_mp_sizeof(*data);
+			if (Z_TYPE_PP(data) == IS_ARRAY)
+				Z_ARRVAL_PP(data)->nApplyCount--;
+		}
+	}
+}
+
+
+size_t php_mp_sizeof(zval *val) {
+	switch(Z_TYPE_P(val)) {
+	case IS_NULL:
+		return php_mp_sizeof_nil();
+		break;
+	case IS_LONG:
+		return php_mp_sizeof_long(Z_LVAL_P(val));
+		break;
+	case IS_DOUBLE:
+		return php_mp_sizeof_double((double )Z_DVAL_P(val));
+		break;
+	case IS_BOOL:
+		return php_mp_sizeof_bool(Z_BVAL_P(val));
+		break;
+	case IS_ARRAY:
+		if (php_mp_is_hash(val))
+			return php_mp_sizeof_hash_recursively(val);
+		return php_mp_sizeof_array_recursively(val);
+		break;
+	case IS_STRING:
+		return php_mp_sizeof_string(Z_STRLEN_P(val));
+		break;
+	default:
+		/* TODO: THROW EXCEPTION */
+		return php_mp_sizeof_nil();
 		break;
 	}
 }
