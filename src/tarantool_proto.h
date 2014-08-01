@@ -7,17 +7,10 @@
 #define GREETING_SIZE    128
 #define SALT_PREFIX_SIZE 64
 
-#define TNT_SPACE_SCHEMA  272
-#define TNT_SPACE_SPACE   280
-#define TNT_SPACE_INDEX   288
-#define TNT_SPACE_FUNC    296
-#define TNT_SPACE_USER    304
-#define TNT_SPACE_PRIV    312
-#define TNT_SPACE_CLUSTER 320
+#define SPACE_SPACE   280
+#define SPACE_INDEX   288
 
-#define INDEX_SPACE_PRIMARY 0
 #define INDEX_SPACE_NAME    2
-#define INDEX_INDEX_PRIMARY 0
 #define INDEX_INDEX_NAME    2
 
 #include <stdint.h>

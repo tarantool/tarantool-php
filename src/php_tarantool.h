@@ -43,6 +43,7 @@ PHP_METHOD(tarantool_class, replace);
 PHP_METHOD(tarantool_class, call);
 PHP_METHOD(tarantool_class, delete);
 PHP_METHOD(tarantool_class, update);
+PHP_METHOD(tarantool_class, flush_schema);
 
 ZEND_BEGIN_MODULE_GLOBALS(tarantool)
 	long sync_counter;
