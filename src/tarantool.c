@@ -280,11 +280,11 @@ const zend_function_entry tarantool_class_methods[] = {
 /* ####################### HELPERS ####################### */
 
 /* TODO: BEFORE EXCEPTION - CLEANUP BUFFER */
-/* TODO: SPACE_NO/INDEX_NO TO SPACE/INDEX (SCHEMA) "l" -> "z" */
+/* TODO: SPACE_NO/INDEX_NO TO SPACE/INDEX (SCHEMA) + "l" -> "z" */
 
 static void
 xor(unsigned char *to, unsigned const char *left,
-    unsigned const char *right, uint32_t len)
+	unsigned const char *right, uint32_t len)
 {
 	const uint8_t *end = to + len;
 	while (to < end)
@@ -327,146 +327,159 @@ zval *pack_key(zval *args, char select) {
 	return arr;
 }
 
-int tarantool_update_verify_op(zval *op, long position) {
+zval *tarantool_update_verify_op(zval *op, long position) {
 	if (Z_TYPE_P(op) != IS_ARRAY || !php_mp_is_hash(op)) {
 		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
 				0 TSRMLS_CC, "Op must be Map at position %d",
 				position);
-		return FAILURE;
+		return NULL;
 	}
 	HashTable *ht = HASH_OF(op);
 	size_t n = zend_hash_num_elements(ht);
+	zval *arr; ALLOC_INIT_ZVAL(arr); array_init(arr);
 	zval **opstr, **oppos;
-	if (zend_hash_find(ht, "op", 2, (void **)&opstr) == FAILURE ||
+	if (zend_hash_find(ht, "op", 3, (void **)&opstr) == FAILURE ||
 			!opstr || Z_TYPE_PP(opstr) != IS_STRING ||
 			Z_STRLEN_PP(opstr) != 1) {
 		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
 				0 TSRMLS_CC, "Field OP must be provided"
 				" and must be STRING with length=1 at position %d", position);
-		return FAILURE;
+		return NULL;
 	}
-	if (zend_hash_find(ht, "field", 5, (void **)&oppos) == FAILURE ||
+	if (zend_hash_find(ht, "field", 6, (void **)&oppos) == FAILURE ||
 			!oppos || Z_TYPE_PP(oppos) != IS_LONG) {
 		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
 				0 TSRMLS_CC, "Field FIELD must be provided"
 				" and must be LONG at position %d", position);
-		return FAILURE;
+		return NULL;
 
 	}
 	zval **oparg, **splice_len, **splice_val;
 	switch(Z_STRVAL_PP(opstr)[0]) {
-	case '|':
-		if (zend_hash_find(ht, "offset", 6,
+	case ':':
+		if (zend_hash_find(ht, "offset", 7,
 				(void **)&oparg) == FAILURE ||
 				!oparg || Z_TYPE_PP(oparg) != IS_LONG) {
 			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
 						0 TSRMLS_CC, "Field OFFSET must be provided"
 						" and must be LONG for splice at position %d",
 						position);
-			return FAILURE;
+			return NULL;
 		}
-		if (zend_hash_find(ht, "length", 6, (void **)&splice_len) == FAILURE ||
+		if (zend_hash_find(ht, "length", 7, (void **)&splice_len) == FAILURE ||
 				!oparg || Z_TYPE_PP(splice_len) != IS_LONG) {
 			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
 						0 TSRMLS_CC, "Field LENGTH must be provided"
 						" and must be LONG for splice at position %d",
 						position);
-			return FAILURE;
+			return NULL;
 		}
-		if (zend_hash_find(ht, "list", 4, (void **)&splice_val) == FAILURE ||
+		if (zend_hash_find(ht, "list", 5, (void **)&splice_val) == FAILURE ||
 				!oparg || Z_TYPE_PP(splice_val) != IS_STRING) {
 			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
 						0 TSRMLS_CC, "Field LIST must be provided"
 						" and must be STRING for splice at position %d",
 						position);
-			return FAILURE;
+			return NULL;
 		}
 		if (n != 5) {
 			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
 						0 TSRMLS_CC, "Five fields must be provided for"
 						" splice at position %d", position);
-			return FAILURE;
+			return NULL;
 		}
+		add_next_index_stringl(arr, Z_STRVAL_PP(opstr), 1, 1);
+		add_next_index_long(arr, Z_LVAL_PP(oppos));
+		add_next_index_long(arr, Z_LVAL_PP(oparg));
+		add_next_index_long(arr, Z_LVAL_PP(splice_len));
+		add_next_index_stringl(arr, Z_STRVAL_PP(splice_val),
+				Z_STRLEN_PP(splice_val), 0);
 		break;
 	case '+':
 	case '-':
 	case '&':
 	case '^':
-		if (zend_hash_find(ht, "arg", 3, (void **)&oparg) == FAILURE ||
+	case '#':
+		if (zend_hash_find(ht, "arg", 4, (void **)&oparg) == FAILURE ||
 				!oparg || Z_TYPE_PP(oparg) != IS_LONG) {
 			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
 						0 TSRMLS_CC, "Field ARG must be provided"
 						" and must be LONG for '%s' at position %d",
 						Z_STRVAL_PP(opstr), position);
-			return FAILURE;
+			return NULL;
 		}
 		if (n != 3) {
 			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
 						0 TSRMLS_CC, "Three fields must be provided "
 						"for '%s' at position %d",
 						Z_STRVAL_PP(opstr), position);
-			return FAILURE;
+			return NULL;
 		}
+		add_next_index_stringl(arr, Z_STRVAL_PP(opstr), 1, 1);
+		add_next_index_long(arr, Z_LVAL_PP(oppos));
+		add_next_index_long(arr, Z_LVAL_PP(oparg));
 		break;
 	case '=':
 	case '!':
-		if (zend_hash_find(ht, "arg", 3, (void **)&oparg) == FAILURE ||
+		if (zend_hash_find(ht, "arg", 4, (void **)&oparg) == FAILURE ||
 				!oparg || !PHP_MP_SERIALIZABLE_PP(oparg)) {
 			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
 						0 TSRMLS_CC, "Field ARG must be provided"
 						" and must be SERIALIZABLE for '%s' at position %d",
 						Z_STRVAL_PP(opstr), position);
-			return FAILURE;
+			return NULL;
 		}
 		if (n != 3) {
 			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
 						0 TSRMLS_CC, "Three fields must be provided "
 						"for '%s' at position %d",
 						Z_STRVAL_PP(opstr), position);
-			return FAILURE;
+			return NULL;
 		}
-		break;
-	case '#':
-		if (n != 2) {
-			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
-						0 TSRMLS_CC, "Two fields must be provided "
-						"for delete at position %d", position);
-			return FAILURE;
-		}
+		add_next_index_stringl(arr, Z_STRVAL_PP(opstr), 1, 1);
+		add_next_index_long(arr, Z_LVAL_PP(oppos));
+		add_next_index_zval(arr, *oparg);
 		break;
 	default:
 		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
 					0 TSRMLS_CC, "Unknown operation '%s' at position %d",
 					Z_STRVAL_PP(opstr), position);
-		return FAILURE;
+		return NULL;
 
 	}
-	return SUCCESS;
+	return arr;
 }
 
-int tarantool_update_verify_args(zval *args) {
+zval *tarantool_update_verify_args(zval *args) {
 	if (Z_TYPE_P(args) != IS_ARRAY || php_mp_is_hash(args)) {
 		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
 					0 TSRMLS_CC, "Provided value for update ops must ");
-		return FAILURE;
+		return NULL;
 	}
 	HashTable *ht = HASH_OF(args);
 	size_t n = zend_hash_num_elements(ht);
 
-	zval **op;
+	zval **op, *arr;
+	ALLOC_INIT_ZVAL(arr); array_init(arr);
 	size_t key_index = 0;
 	for(; key_index < n; ++key_index) {
-		int status = zend_hash_index_find(ht, key_index, 
+		int status = zend_hash_index_find(ht, key_index,
 				                  (void **)&op);
 		if (status != SUCCESS || !op) {
 			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
 						0 TSRMLS_CC, "Internal HASH Error");
-			return FAILURE;
+			return NULL;
 		}
-		if (tarantool_update_verify_op(*op, key_index) == FAILURE)
-			return FAILURE;
+		zval *op_arr = tarantool_update_verify_op(*op, key_index);
+		if (!op_arr)
+			return NULL;
+		if (add_next_index_zval(arr, op_arr) == FAILURE) {
+			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
+						0 TSRMLS_CC, "Internal HASH Error");
+			return NULL;
+		}
 	}
-	return SUCCESS;
+	return arr;
 }
 
 char connect_on_demand(tarantool_object *obj, zval *id) {
@@ -765,7 +778,7 @@ PHP_METHOD(tarantool_class, delete)
 
 	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
 					 getThis(),
-					 "Ola",
+					 "Olz",
 					 &id, tarantool_class_ptr,
 					 &space_no, &key) == FAILURE) {
 		return;
@@ -815,7 +828,7 @@ PHP_METHOD(tarantool_class, call)
 		RETURN_FALSE;
 
 	long sync = TARANTOOL_G(sync_counter)++;
-	php_tp_encode_call(obj->value, proc, proc_len, tuple);
+	php_tp_encode_call(obj->value, sync, proc, proc_len, tuple);
 	tarantool_stream_send(obj);
 
 	zval *header, *body;
@@ -842,7 +855,7 @@ PHP_METHOD(tarantool_class, update)
 
 	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
 					 getThis(),
-					 "Olaa",
+					 "Olza",
 					 &id, tarantool_class_ptr,
 					 &space_no, &key, &args) == FAILURE) {
 		return;
@@ -853,11 +866,11 @@ PHP_METHOD(tarantool_class, update)
 		RETURN_FALSE;
 
 	key = pack_key(key, 0);
-
-	if (tarantool_update_verify_args(args) == FAILURE)
+	args = tarantool_update_verify_args(args);
+	if (!args)
 		RETURN_FALSE;
 	long sync = TARANTOOL_G(sync_counter)++;
-	php_tp_encode_update(obj->value, space_no, key, args);
+	php_tp_encode_update(obj->value, sync, space_no, key, args);
 	tarantool_stream_send(obj);
 
 	zval *header, *body;

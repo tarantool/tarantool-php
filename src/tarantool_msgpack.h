@@ -5,12 +5,12 @@
 
 #include <ext/standard/php_smart_str.h>
 
-#define PHP_MP_SERIALIZABLE_PP(v) Z_TYPE_PP(v) == IS_NULL   || \
+#define PHP_MP_SERIALIZABLE_PP(v) (Z_TYPE_PP(v) == IS_NULL  || \
 				  Z_TYPE_PP(v) == IS_LONG   || \
 				  Z_TYPE_PP(v) == IS_DOUBLE || \
 				  Z_TYPE_PP(v) == IS_BOOL   || \
 				  Z_TYPE_PP(v) == IS_ARRAY  || \
-				  Z_TYPE_PP(v) == IS_STRING
+				  Z_TYPE_PP(v) == IS_STRING)
 
 size_t php_mp_check  (const char *str,  size_t str_size);
 void   php_mp_pack   (smart_str  *buf,  zval   *val    );

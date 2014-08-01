@@ -177,122 +177,6 @@ void php_tp_encode_call(smart_str *str, uint32_t sync,
 	php_mp_pack_long(str, TNT_TUPLE);
 	php_mp_pack(str, tuple);
 }
-
-size_t php_tp_sizeof_update_ops(zval *ops) {
-	HashTable *hops = Z_ARRVAL_P(ops);
-	size_t n = zend_hash_num_elements(hops);
-	size_t needed = php_mp_sizeof_array(n);
-	zval **op;
-	size_t key_index = 0;
-	for(; key_index < n; ++key_index) {
-		zend_hash_index_find(hops, key_index, (void **)&op);
-		HashTable *hop = Z_ARRVAL_PP(op);
-		size_t n = zend_hash_num_elements(hop);
-		zval **opstr, **oppos;
-		zend_hash_find(hop, "op", 2, (void **)&opstr);
-		zend_hash_find(hop, "field", 5, (void **)&oppos);
-		zval **oparg, **splice_len, **splice_val;
-
-		switch(Z_STRVAL_PP(opstr)[0]) {
-		case '|':
-			zend_hash_find(hop, "offset", 6, (void **)&oparg);
-			zend_hash_find(hop, "length", 6, (void **)&splice_len);
-			zend_hash_find(hop, "list", 4, (void **)&splice_val);
-			needed += php_mp_sizeof_array(5) +
-				  php_mp_sizeof_string(1) +
-				  php_mp_sizeof_long(Z_LVAL_PP(oppos)) +
-				  php_mp_sizeof_long(Z_LVAL_PP(oparg)) +
-				  php_mp_sizeof_long(Z_LVAL_PP(splice_len)) +
-				  php_mp_sizeof_string(Z_STRLEN_PP(splice_val));
-			break;
-		case '+':
-		case '-':
-		case '&':
-		case '^':
-			zend_hash_find(hop, "arg", 3, (void **)&oparg);
-			needed += php_mp_sizeof_array(3) +
-				  php_mp_sizeof_string(1);
-				  php_mp_sizeof_long(Z_LVAL_PP(oppos));
-				  php_mp_sizeof_long(Z_LVAL_PP(oparg));
-			break;
-		case '=':
-		case '!':
-			zend_hash_find(hop, "arg", 3, (void **)&oparg);
-			needed += php_mp_sizeof_array(3) +
-				  php_mp_sizeof_string(1) +
-				  php_mp_sizeof_long(Z_LVAL_PP(oppos)) +
-				  php_mp_sizeof(*oparg);
-			break;
-		case '#':
-			needed += php_mp_sizeof_array(2) +
-				  php_mp_sizeof_string(1) +
-			          php_mp_sizeof_long(Z_LVAL_PP(oppos));
-			//php_mp_sizeof_long(0);
-			break;
-		default:
-			break;
-		}
-	}
-	return needed;
-}
-
-void php_tp_encode_update_ops(smart_str *str, zval *ops) {
-	HashTable *hops = Z_ARRVAL_P(ops);
-	size_t n = zend_hash_num_elements(hops);
-	zval **op;
-	size_t key_index = 0;
-	php_mp_pack_array(str, n);
-	for(; key_index < n; ++key_index) {
-		zend_hash_index_find(hops, key_index, (void **)&op);
-		HashTable *hop = Z_ARRVAL_PP(op);
-		size_t n = zend_hash_num_elements(hop);
-		zval **opstr, **oppos;
-		zend_hash_find(hop, "op", 2, (void **)&opstr);
-		zend_hash_find(hop, "field", 5, (void **)&oppos);
-		zval **oparg, **splice_len, **splice_val;
-
-		switch(Z_STRVAL_PP(opstr)[0]) {
-		case '|':
-			zend_hash_find(hop, "offset", 6, (void **)&oparg);
-			zend_hash_find(hop, "length", 6, (void **)&splice_len);
-			zend_hash_find(hop, "list", 4, (void **)&splice_val);
-			php_mp_pack_array(str, 5);
-			php_mp_pack_string(str, Z_STRVAL_PP(opstr), 1);
-			php_mp_pack_long(str, Z_LVAL_PP(oppos));
-			php_mp_pack_long(str, Z_LVAL_PP(oparg));
-			php_mp_pack_long(str, Z_LVAL_PP(splice_len));
-			php_mp_pack_string(str, Z_STRVAL_PP(splice_val), Z_STRLEN_PP(splice_val));
-			break;
-		case '+':
-		case '-':
-		case '&':
-		case '^':
-			zend_hash_find(hop, "arg", 3, (void **)&oparg);
-			php_mp_pack_array(str, 3);
-			php_mp_pack_string(str, Z_STRVAL_PP(opstr), 1);
-			php_mp_pack_long(str, Z_LVAL_PP(oppos));
-			php_mp_pack_long(str, Z_LVAL_PP(oparg));
-			break;
-		case '=':
-		case '!':
-			zend_hash_find(hop, "arg", 3, (void **)&oparg);
-			php_mp_pack_array(str, 3);
-			php_mp_pack_string(str, Z_STRVAL_PP(opstr), 1);
-			php_mp_pack_long(str, Z_LVAL_PP(oppos));
-			php_mp_pack(str, *oparg);
-			break;
-		case '#':
-			php_mp_pack_array(str, 2);
-			php_mp_pack_string(str, Z_STRVAL_PP(opstr), 1);
-			php_mp_pack_long(str, Z_LVAL_PP(oppos));
-			//php_mp_pack_long(str, 0);
-			break;
-		default:
-			break;
-		}
-	}
-}
-
 size_t php_tp_sizeof_update(uint32_t sync,
 		uint32_t space_no, zval *key, zval *args) {
 	return  php_tp_sizeof_header(TNT_UPDATE, sync) +
@@ -302,7 +186,7 @@ size_t php_tp_sizeof_update(uint32_t sync,
 		php_mp_sizeof_long(TNT_KEY)   +
 		php_mp_sizeof(key)            +
 		php_mp_sizeof_long(TNT_TUPLE) +
-		php_tp_sizeof_update_ops(args);
+		php_mp_sizeof(args);
 }
 
 void php_tp_encode_update(smart_str *str, uint32_t sync,
@@ -311,11 +195,11 @@ void php_tp_encode_update(smart_str *str, uint32_t sync,
 			space_no, key, args);
 	smart_str_ensure(str, packet_size + 5);
 	php_tp_pack_header(str, packet_size, TNT_UPDATE, sync);
-	php_mp_pack_hash(str, 2);
+	php_mp_pack_hash(str, 3);
 	php_mp_pack_long(str, TNT_SPACE);
 	php_mp_pack_long(str, space_no);
 	php_mp_pack_long(str, TNT_KEY);
 	php_mp_pack(str, key);
 	php_mp_pack_long(str, TNT_TUPLE);
-	php_tp_encode_update_ops(str, args);
+	php_mp_pack(str, args);
 }
