@@ -359,7 +359,7 @@ zval *pack_key(zval *args, char select) {
 		return args;
 	zval *arr = NULL;
 	ALLOC_INIT_ZVAL(arr);
-	if (select && !args) {
+	if (select && (!args || Z_TYPE_P(args) == IS_NULL)) {
 		array_init_size(arr, 0);
 		return arr;
 	}
@@ -610,7 +610,7 @@ int get_spaceno_by_name(tarantool_object *obj, zval *id, zval *name) {
 	ALLOC_INIT_ZVAL(indexno); ZVAL_LONG(indexno, INDEX_SPACE_NAME);
 	add_next_index_zval(key, name);
 	zval *retval; ALLOC_INIT_ZVAL(retval);
-	zval *args[] = {id, spaceno, indexno, key};
+	zval *args[] = {id, spaceno, key, indexno};
 	call_user_function(NULL, &obj, fname, retval, 4, args TSRMLS_CC);
 	if (Z_TYPE_P(retval) == IS_BOOL && !Z_BVAL_P(retval))
 		return FAILURE;
@@ -661,9 +661,9 @@ int get_indexno_by_name(tarantool_object *obj, zval *id,
 	zval *retval; ALLOC_INIT_ZVAL(retval);
 	add_next_index_long(key, space_no);
 	add_next_index_zval(key, name);
-	zval *args[] = {id, spaceno, indexno, key};
+	zval *args[] = {id, spaceno, key, indexno};
 	call_user_function(NULL, &obj, fname, retval, 4, args TSRMLS_CC);
-	if (Z_TYPE_P(retval) == IS_BOOL && !Z_BVAL_P(retval))
+	if (Z_TYPE_P(retval) == IS_BOOL)
 		return FAILURE;
 	zval **tuple, **field;
 	if (zend_hash_index_find(HASH_OF(retval), 0, (void **)&tuple) == FAILURE) {
@@ -810,20 +810,23 @@ PHP_METHOD(tarantool_class, ping) {
 }
 
 PHP_METHOD(tarantool_class, select) {
-	zval *space, *index, *key = NULL;
+	zval *space, *index = NULL, *key = NULL;
 	long limit = -1, offset = 0, iterator = 0;
 
-	TARANTOOL_PARSE_PARAMS(id, "zz|zlll", &space, &index,
-			&key, &limit, &offset, &iterator);
+	TARANTOOL_PARSE_PARAMS(id, "z|zzlll", &space, &key,
+			&index, &limit, &offset, &iterator);
 	TARANTOOL_FETCH_OBJECT(obj, id);
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
 
 	long space_no = get_spaceno_by_name(obj, id, space);
 	if (space_no == FAILURE)
 		RETURN_FALSE;
-	long index_no = get_indexno_by_name(obj, id, space_no, index);
-	if (index_no == FAILURE)
-		RETURN_FALSE;
+	long index_no = 0;
+	if (index) {
+		index_no = get_indexno_by_name(obj, id, space_no, index);
+		if (index_no == FAILURE)
+			RETURN_FALSE;
+	}
 	key = pack_key(key, 1);
 
 	long sync = TARANTOOL_G(sync_counter)++;
