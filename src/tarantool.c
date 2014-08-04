@@ -45,7 +45,7 @@ ZEND_DECLARE_MODULE_GLOBALS(tarantool)
 		zend_exception_get_default(TSRMLS_C),\
 		0 TSRMLS_CC, __VA_ARGS__)
 
-#define TARANTOOL_RETURN_DATA(HT)\
+#define TARANTOOL_RETURN_DATA(HT, HEAD, BODY)\
 		HashTable *ht_ ## HT = HASH_OF(HT);\
 		zval **answer = NULL;\
 		if (zend_hash_index_find(ht_ ## HT, TNT_DATA,\
@@ -53,7 +53,10 @@ ZEND_DECLARE_MODULE_GLOBALS(tarantool)
 			THROW_EXC("No field DATA in body");\
 			RETURN_FALSE;\
 		}\
-		RETURN_ZVAL(*answer, 1, 0);
+		RETVAL_ZVAL(*answer, 1, 0);\
+		zval_ptr_dtor(&HEAD);\
+		zval_ptr_dtor(&BODY);\
+		return;
 
 typedef struct tarantool_object {
 	zend_object zo;
@@ -68,7 +71,7 @@ typedef struct tarantool_object {
 } tarantool_object;
 
 zend_function_entry tarantool_module_functions[] = {
-	PHP_ME(tarantool_class, __construct, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(tarantool_class, __construct, NULL, ZEND_ACC_CTOR | ZEND_ACC_PUBLIC)
 	PHP_ME(tarantool_class, connect, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(tarantool_class, flush_schema, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(tarantool_class, authenticate, NULL, ZEND_ACC_PUBLIC)
@@ -201,7 +204,9 @@ static void tarantool_stream_close(tarantool_object *obj TSRMLS_DC) {
 static void tarantool_free(tarantool_object *obj TSRMLS_DC) {
 	if (!obj) return;
 	tarantool_stream_close(obj TSRMLS_CC);
-	smart_str_free(obj->value);
+	smart_str_free(obj->value); efree(obj->value);
+	efree(obj->greeting); efree(obj->host);
+	zval_ptr_dtor(&obj->schema_hash);
 	efree(obj);
 }
 
@@ -260,7 +265,6 @@ static int64_t tarantool_step_recv(
 		zval **errstr = NULL;
 		long errcode = Z_LVAL_PP(val) & (1 << 15 - 1);
 		if (zend_hash_index_find(hash, TNT_ERROR, (void **)&errstr) == FAILURE) {
-			errstr = (zval **)ecalloc(sizeof(zval **), 1);
 			ALLOC_INIT_ZVAL(*errstr);
 			ZVAL_STRING(*errstr, "empty", 1);
 		}
@@ -269,6 +273,7 @@ static int64_t tarantool_step_recv(
 				0 TSRMLS_CC,
 				"Query Error %d: %s", errcode,
 				Z_STRVAL_PP(errstr), Z_STRLEN_PP(errstr));
+		zval_ptr_dtor(errstr);
 		goto error;
 	}
 	zend_throw_exception_ex(
@@ -288,6 +293,8 @@ error_check:
 			0 TSRMLS_CC,
 			"failed verifying msgpack");
 error:
+	if (header) zval_ptr_dtor(header);
+	if (body) zval_ptr_dtor(body);
 	SSTR_LEN(obj->value) = 0;
 	smart_str_nullify(obj->value);
 	return FAILURE;
@@ -351,10 +358,12 @@ zval *pack_key(zval *args, char select) {
 	if (args && Z_TYPE_P(args) == IS_ARRAY)
 		return args;
 	zval *arr = NULL;
-	MAKE_STD_ZVAL(arr);
-	array_init(arr);
-	if (select && !args)
+	ALLOC_INIT_ZVAL(arr);
+	if (select && !args) {
+		array_init_size(arr, 0);
 		return arr;
+	}
+	array_init_size(arr, 1);
 	add_next_index_zval(arr, args);
 	return arr;
 }
@@ -368,7 +377,7 @@ zval *tarantool_update_verify_op(zval *op, long position) {
 	}
 	HashTable *ht = HASH_OF(op);
 	size_t n = zend_hash_num_elements(ht);
-	zval *arr; ALLOC_INIT_ZVAL(arr); array_init(arr);
+	zval *arr; ALLOC_INIT_ZVAL(arr); array_init_size(arr, n);
 	zval **opstr, **oppos;
 	if (zend_hash_find(ht, "op", 3, (void **)&opstr) == FAILURE ||
 			!opstr || Z_TYPE_PP(opstr) != IS_STRING ||
@@ -492,7 +501,7 @@ zval *tarantool_update_verify_args(zval *args) {
 	size_t n = zend_hash_num_elements(ht);
 
 	zval **op, *arr;
-	ALLOC_INIT_ZVAL(arr); array_init(arr);
+	ALLOC_INIT_ZVAL(arr); array_init_size(arr, n);
 	size_t key_index = 0;
 	for(; key_index < n; ++key_index) {
 		int status = zend_hash_index_find(ht, key_index,
@@ -515,23 +524,23 @@ zval *tarantool_update_verify_args(zval *args) {
 }
 
 char connect_on_demand(tarantool_object *obj, zval *id) {
-	zval *name; ALLOC_INIT_ZVAL(name);
-	ZVAL_STRING(name, "connect", 1);
+	zval *fname; ALLOC_INIT_ZVAL(fname);
+	ZVAL_STRING(fname, "connect", 1);
 	zval *retval; ALLOC_INIT_ZVAL(retval);
-	zval *args[1] = {id};
+	zval *args[] = {id};
 
-	call_user_function(NULL, &obj, name, retval, 1, args TSRMLS_CC);
-	if (!Z_BVAL_P(retval))
+	call_user_function(NULL, &obj, fname, retval, 1, args TSRMLS_CC);
+	if (!retval || !Z_TYPE_P(retval) || !Z_BVAL_P(retval))
 		return FAILURE;
+
+	zval_ptr_dtor(&fname);
+	zval_ptr_dtor(&retval);
+	return SUCCESS;
 }
 
 void schema_flush(tarantool_object *obj) {
-	zval *schema_hash;
-	ALLOC_INIT_ZVAL(schema_hash); array_init(schema_hash);
-	HashTable *ht = HASH_OF(obj->schema_hash);
-	zend_hash_destroy(ht); FREE_HASHTABLE(ht);
-	zval_dtor(obj->schema_hash);
-	obj->schema_hash = schema_hash;
+	zval_ptr_dtor(&obj->schema_hash);
+	ALLOC_INIT_ZVAL(obj->schema_hash); array_init(obj->schema_hash);
 }
 
 int schema_add_space(tarantool_object *obj, uint32_t space_no,
@@ -589,36 +598,46 @@ int get_spaceno_by_name(tarantool_object *obj, zval *id, zval *name) {
 		THROW_EXC("Space ID must be String or Long");
 		return FAILURE;
 	}
-	uint32_t space_no = schema_get_space(obj, Z_STRVAL_P(name), Z_STRLEN_P(name));
+	uint32_t space_no = schema_get_space(obj,
+			Z_STRVAL_P(name), Z_STRLEN_P(name));
 	if (space_no != FAILURE)
 		return space_no;
 
-	zval *fname, *spaceno, *indexno;
+	zval *fname, *spaceno, *indexno, *key;
+	ALLOC_INIT_ZVAL(key); array_init_size(key, 1);
 	ALLOC_INIT_ZVAL(fname); ZVAL_STRING(fname, "select", 1);
 	ALLOC_INIT_ZVAL(spaceno); ZVAL_LONG(spaceno, SPACE_SPACE);
 	ALLOC_INIT_ZVAL(indexno); ZVAL_LONG(indexno, INDEX_SPACE_NAME);
+	add_next_index_zval(key, name);
 	zval *retval; ALLOC_INIT_ZVAL(retval);
-	zval *args[] = {id, spaceno, indexno, name};
+	zval *args[] = {id, spaceno, indexno, key};
 	call_user_function(NULL, &obj, fname, retval, 4, args TSRMLS_CC);
 	if (Z_TYPE_P(retval) == IS_BOOL && !Z_BVAL_P(retval))
 		return FAILURE;
 	zval **tuple, **field;
-	if (zend_hash_index_find(HASH_OF(retval), 0, (void **)&tuple) == FAILURE) {
+	if (zend_hash_index_find(HASH_OF(retval), 0,
+				(void **)&tuple) == FAILURE) {
 		THROW_EXC("No space '%s' defined", Z_STRVAL_P(name));
 		return FAILURE;
 	}
-	if (zend_hash_index_find(HASH_OF(*tuple), 0, (void **)&field) == FAILURE ||
+	if (zend_hash_index_find(HASH_OF(*tuple), 0,
+				(void **)&field) == FAILURE ||
 			!field || Z_TYPE_PP(field) != IS_LONG) {
 		THROW_EXC("Bad data came from server");
 		return FAILURE;
 	}
-
 	if (schema_add_space(obj, Z_LVAL_PP(field),
 			Z_STRVAL_P(name), Z_STRLEN_P(name)) == FAILURE) {
 		THROW_EXC("Internal Error");
 		return FAILURE;
 	}
-	return Z_LVAL_PP(field);
+	long space = Z_LVAL_PP(field);
+	zval_ptr_dtor(&key);
+	zval_dtor(fname);
+	zval_dtor(spaceno);
+	zval_dtor(indexno);
+	zval_ptr_dtor(&retval);
+	return space;
 }
 
 int get_indexno_by_name(tarantool_object *obj, zval *id,
@@ -634,15 +653,15 @@ int get_indexno_by_name(tarantool_object *obj, zval *id,
 	if (index_no != FAILURE)
 		return index_no;
 
-	zval *fname, *spaceno, *indexno, *arr;
-	ALLOC_INIT_ZVAL(arr); array_init(arr);
+	zval *fname, *spaceno, *indexno, *key;
+	ALLOC_INIT_ZVAL(key); array_init_size(key, 2);
 	ALLOC_INIT_ZVAL(fname); ZVAL_STRING(fname, "select", 1);
 	ALLOC_INIT_ZVAL(spaceno); ZVAL_LONG(spaceno, SPACE_INDEX);
 	ALLOC_INIT_ZVAL(indexno); ZVAL_LONG(indexno, INDEX_INDEX_NAME);
 	zval *retval; ALLOC_INIT_ZVAL(retval);
-	add_next_index_long(arr, space_no);
-	add_next_index_zval(arr, name);
-	zval *args[] = {id, spaceno, indexno, arr};
+	add_next_index_long(key, space_no);
+	add_next_index_zval(key, name);
+	zval *args[] = {id, spaceno, indexno, key};
 	call_user_function(NULL, &obj, fname, retval, 4, args TSRMLS_CC);
 	if (Z_TYPE_P(retval) == IS_BOOL && !Z_BVAL_P(retval))
 		return FAILURE;
@@ -661,7 +680,13 @@ int get_indexno_by_name(tarantool_object *obj, zval *id,
 		THROW_EXC("Internal Error");
 		return FAILURE;
 	}
-	return Z_LVAL_PP(field);
+	long index = Z_LVAL_PP(field);
+	zval_ptr_dtor(&key);
+	zval_ptr_dtor(&fname);
+	zval_ptr_dtor(&retval);
+	zval_ptr_dtor(&spaceno);
+	zval_ptr_dtor(&indexno);
+	return index;
 }
 
 /* ####################### METHODS ####################### */
@@ -715,7 +740,6 @@ PHP_METHOD(tarantool_class, __construct) {
 	obj->salt = NULL;
 	ALLOC_INIT_ZVAL(obj->schema_hash); array_init(obj->schema_hash);
 	smart_str_ensure(obj->value, GREETING_SIZE);
-	smart_str_0(obj->value);
 	return;
 }
 
@@ -748,9 +772,10 @@ PHP_METHOD(tarantool_class, authenticate) {
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
 
 	char *salt = php_base64_decode(obj->salt, SALT64_SIZE, NULL);
-	char scramble[SCRAMBLE_SIZE]; memset(scramble, 0, SCRAMBLE_SIZE);
+	char scramble[SCRAMBLE_SIZE];
 
 	scramble_prepare(scramble, salt, passwd, passwd_len);
+	efree(salt);
 
 	long sync = TARANTOOL_G(sync_counter)++;
 	php_tp_encode_auth(obj->value, sync, login, login_len, scramble);
@@ -810,7 +835,7 @@ PHP_METHOD(tarantool_class, select) {
 	if (tarantool_step_recv(obj, sync, &header, &body) == FAILURE)
 		RETURN_FALSE;
 
-	TARANTOOL_RETURN_DATA(body);
+	TARANTOOL_RETURN_DATA(body, header, body);
 }
 
 PHP_METHOD(tarantool_class, insert) {
@@ -833,7 +858,7 @@ PHP_METHOD(tarantool_class, insert) {
 	if (tarantool_step_recv(obj, sync, &header, &body) == FAILURE)
 		RETURN_FALSE;
 
-	TARANTOOL_RETURN_DATA(body);
+	TARANTOOL_RETURN_DATA(body, header, body);
 }
 
 PHP_METHOD(tarantool_class, replace) {
@@ -856,7 +881,7 @@ PHP_METHOD(tarantool_class, replace) {
 	if (tarantool_step_recv(obj, sync, &header, &body) == FAILURE)
 		RETURN_FALSE;
 
-	TARANTOOL_RETURN_DATA(body);
+	TARANTOOL_RETURN_DATA(body, header, body);
 }
 
 PHP_METHOD(tarantool_class, delete) {
@@ -880,7 +905,7 @@ PHP_METHOD(tarantool_class, delete) {
 	if (tarantool_step_recv(obj, sync, &header, &body) == FAILURE)
 		RETURN_FALSE;
 
-	TARANTOOL_RETURN_DATA(body);
+	TARANTOOL_RETURN_DATA(body, header, body);
 }
 
 PHP_METHOD(tarantool_class, call) {
@@ -901,7 +926,7 @@ PHP_METHOD(tarantool_class, call) {
 	if (tarantool_step_recv(obj, sync, &header, &body) == FAILURE)
 		RETURN_FALSE;
 
-	TARANTOOL_RETURN_DATA(body);
+	TARANTOOL_RETURN_DATA(body, header, body);
 }
 
 PHP_METHOD(tarantool_class, update)
@@ -925,9 +950,10 @@ PHP_METHOD(tarantool_class, update)
 	php_tp_encode_update(obj->value, sync, space_no, key, args);
 	tarantool_stream_send(obj);
 
+	zval_ptr_dtor(&args);
 	zval *header, *body;
 	if (tarantool_step_recv(obj, sync, &header, &body) == FAILURE)
 		RETURN_FALSE;
 
-	TARANTOOL_RETURN_DATA(body);
+	TARANTOOL_RETURN_DATA(body, header, body);
 }

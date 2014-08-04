@@ -276,7 +276,7 @@ ptrdiff_t php_mp_unpack_double(zval **oval, char **str) {
 ptrdiff_t php_mp_unpack_map(zval **oval, char **str) {
 	ALLOC_INIT_ZVAL(*oval);
 	size_t len = mp_decode_map((const char **)str);
-	array_init(*oval);
+	array_init_size(*oval, len);
 	while (len-- > 0) {
 		zval *key = {0};
 		php_mp_unpack(&key, str);
@@ -287,7 +287,8 @@ ptrdiff_t php_mp_unpack_map(zval **oval, char **str) {
 			add_index_zval(*oval, Z_LVAL_P(key), value);
 			break;
 		case IS_STRING:
-			add_assoc_zval_ex(*oval, Z_STRVAL_P(key), Z_STRLEN_P(key), value);
+			add_assoc_zval_ex(*oval, Z_STRVAL_P(key),
+					Z_STRLEN_P(key), value);
 			break;
 		default:
 			/* TODO: THROW EXCEPTION */
@@ -300,7 +301,7 @@ ptrdiff_t php_mp_unpack_map(zval **oval, char **str) {
 ptrdiff_t php_mp_unpack_array(zval **oval, char **str) {
 	ALLOC_INIT_ZVAL(*oval);
 	size_t len = mp_decode_array((const char **)str);
-	array_init(*oval);
+	array_init_size(*oval, len);
 	while (len-- > 0) {
 		zval *value = {0};
 		php_mp_unpack(&value, str);
