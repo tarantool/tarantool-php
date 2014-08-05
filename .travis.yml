@@ -1,0 +1,20 @@
+language: php 
+
+branches:
+  only:
+    - nextgen
+    - master
+
+php:
+  - 5.2
+  - 5.3
+  - 5.4
+  - 5.5
+
+notifications:
+  email: false
+  irc: false
+
+script:
+  - phpize && ./configure
+  - make
