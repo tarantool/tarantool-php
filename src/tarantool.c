@@ -58,6 +58,11 @@ ZEND_DECLARE_MODULE_GLOBALS(tarantool)
 		zval_ptr_dtor(&BODY);\
 		return;
 
+#define CHECK_RETVAL_P(RETVAL) \
+	if (!RETVAL || (Z_TYPE_P(RETVAL) == IS_BOOL && !Z_BVAL_P(RETVAL)) || \
+		       (Z_TYPE_P(RETVAL) == IS_NULL)) \
+		return FAILURE;
+
 typedef struct tarantool_object {
 	zend_object zo;
 	char *host;
@@ -530,8 +535,7 @@ char connect_on_demand(tarantool_object *obj, zval *id) {
 	zval *args[] = {id};
 
 	call_user_function(NULL, &obj, fname, retval, 1, args TSRMLS_CC);
-	if (!retval || !Z_TYPE_P(retval) || !Z_BVAL_P(retval))
-		return FAILURE;
+	CHECK_RETVAL_P(retval);
 
 	zval_ptr_dtor(&fname);
 	zval_ptr_dtor(&retval);
@@ -571,7 +575,7 @@ uint32_t schema_get_space(tarantool_object *obj,
 	if (zend_hash_find(ht, space_name, space_len,
 			   (void **)&stuple) == FAILURE || !stuple)
 		return FAILURE;
-	if (zend_hash_index_find(ht, 0, (void **)&sid) == FAILURE || !sid)
+	if (zend_hash_index_find(HASH_OF(*stuple), 0, (void **)&sid) == FAILURE || !sid)
 		return FAILURE;
 	return Z_LVAL_PP(sid);
 }
@@ -583,9 +587,10 @@ uint32_t schema_get_index(tarantool_object *obj, uint32_t space_no,
 	if (zend_hash_index_find(ht, space_no,
 			   (void **)&stuple) == FAILURE || !stuple)
 		return FAILURE;
-	if (zend_hash_index_find(ht, 2, (void **)&ituple) == FAILURE || !ituple)
+	if (zend_hash_index_find(HASH_OF(*stuple), 2,
+				(void **)&ituple) == FAILURE || !ituple)
 		return FAILURE;
-	if (zend_hash_find(ht, index_name, index_len,
+	if (zend_hash_find(HASH_OF(*ituple), index_name, index_len,
 				(void **)&iid) == FAILURE || !iid)
 		return FAILURE;
 	return Z_LVAL_PP(iid);
@@ -612,8 +617,7 @@ int get_spaceno_by_name(tarantool_object *obj, zval *id, zval *name) {
 	zval *retval; ALLOC_INIT_ZVAL(retval);
 	zval *args[] = {id, spaceno, key, indexno};
 	call_user_function(NULL, &obj, fname, retval, 4, args TSRMLS_CC);
-	if (Z_TYPE_P(retval) == IS_BOOL && !Z_BVAL_P(retval))
-		return FAILURE;
+	CHECK_RETVAL_P(retval);
 	zval **tuple, **field;
 	if (zend_hash_index_find(HASH_OF(retval), 0,
 				(void **)&tuple) == FAILURE) {
@@ -663,8 +667,7 @@ int get_indexno_by_name(tarantool_object *obj, zval *id,
 	add_next_index_zval(key, name);
 	zval *args[] = {id, spaceno, key, indexno};
 	call_user_function(NULL, &obj, fname, retval, 4, args TSRMLS_CC);
-	if (Z_TYPE_P(retval) == IS_BOOL)
-		return FAILURE;
+	CHECK_RETVAL_P(retval);
 	zval **tuple, **field;
 	if (zend_hash_index_find(HASH_OF(retval), 0, (void **)&tuple) == FAILURE) {
 		THROW_EXC("No index '%s' defined", Z_STRVAL_P(name));

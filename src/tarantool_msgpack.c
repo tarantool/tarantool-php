@@ -5,6 +5,10 @@
 #include "tarantool_msgpack.h"
 #include "third_party/msgpuck.h"
 
+#ifndef    ZEND_HASH_KEY_NON_EXISTENT
+#define ZEND_HASH_KEY_NON_EXISTENT ZEND_HASH_KEY_NON_EXISTANT
+#endif  /* ZEND_HASH_KEY_NON_EXISTENT */
+
 /* UTILITES */
 
 int smart_str_ensure(smart_str *str, size_t len) {
