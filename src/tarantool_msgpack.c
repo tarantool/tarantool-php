@@ -5,9 +5,9 @@
 #include "tarantool_msgpack.h"
 #include "third_party/msgpuck.h"
 
-#ifndef    ZEND_HASH_KEY_NON_EXISTENT
-#define ZEND_HASH_KEY_NON_EXISTENT ZEND_HASH_KEY_NON_EXISTANT
-#endif  /* ZEND_HASH_KEY_NON_EXISTENT */
+#ifndef    HASH_KEY_NON_EXISTENT
+#define    HASH_KEY_NON_EXISTENT HASH_KEY_NON_EXISTANT
+#endif  /* HASH_KEY_NON_EXISTENT */
 
 /* UTILITES */
 
@@ -174,14 +174,14 @@ void php_mp_pack_hash_recursively(smart_str *str, zval *val) {
 		} else {
 			if (Z_TYPE_PP(data) == IS_ARRAY)
 				Z_ARRVAL_PP(data)->nApplyCount++;
-			php_mp_pack(str, *data TSRMLS_DC);
+			php_mp_pack(str, *data);
 			if (Z_TYPE_PP(data) == IS_ARRAY)
 				Z_ARRVAL_PP(data)->nApplyCount--;
 		}
 	}
 }
 
-void php_mp_pack(smart_str *str, zval *val TSRMLS_DC) {
+void php_mp_pack(smart_str *str, zval *val) {
 	switch(Z_TYPE_P(val)) {
 	case IS_NULL:
 		php_mp_pack_nil(str);
@@ -256,10 +256,11 @@ ptrdiff_t php_mp_unpack_bin(zval **oval, char **str) {
 
 ptrdiff_t php_mp_unpack_bool(zval **oval, char **str) {
 	ALLOC_INIT_ZVAL(*oval);
-	if (mp_decode_bool((const char **)str))
+	if (mp_decode_bool((const char **)str)) {
 		ZVAL_TRUE(*oval);
-	else
+	} else {
 		ZVAL_FALSE(*oval);
+	}
 	return mp_sizeof_bool(str);
 }
 
@@ -393,15 +394,16 @@ size_t php_mp_sizeof_array(size_t len) {
 }
 
 size_t php_mp_sizeof_array_recursively(zval *val) {
+	TSRMLS_FETCH();
 	HashTable *ht = HASH_OF(val);
 	size_t n = zend_hash_num_elements(ht);
 	size_t needed = php_mp_sizeof_array(n);
-
+	size_t key_index = 0;
+	int status = 0;
 	zval **data;
 
-	size_t key_index = 0;
 	for (; key_index < n; ++key_index) {
-		int status = zend_hash_index_find(ht, key_index,
+		status = zend_hash_index_find(ht, key_index,
 						  (void **)&data);
 		if (status != SUCCESS || !data || data == &val ||
 				(Z_TYPE_PP(data) == IS_ARRAY && \
@@ -419,6 +421,7 @@ size_t php_mp_sizeof_array_recursively(zval *val) {
 }
 
 size_t php_mp_sizeof_hash_recursively(zval *val) {
+	TSRMLS_FETCH();
 	HashTable *ht = HASH_OF(val);
 	size_t n = zend_hash_num_elements(ht);
 	size_t needed = php_mp_sizeof_hash(n);
