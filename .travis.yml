@@ -15,6 +15,15 @@ notifications:
   email: false
   irc: false
 
+before_script:
+  - uname -a
+  - lsb_release -a
+  - curl http://tarantool.org/dist/public.key | sudo apt-key add -
+  - echo "deb http://tarantool.org/dist/master/ubuntu `lsb-release -c -s`"
+  - sudo apt-get update
+  - sudo apt-get -y install tarantool
+
 script:
   - phpize && ./configure
   - make
+  - ./test-run.py

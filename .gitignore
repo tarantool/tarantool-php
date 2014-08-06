@@ -32,3 +32,4 @@ Makefile.in
 /test/var/
 *.lo
 *.libs
+*.pyc

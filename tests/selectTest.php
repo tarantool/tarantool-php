@@ -6,7 +6,7 @@ class SelectTest extends PHPUnit_Framework_TestCase
      */
     public function setUp()
     {
-        $this->tarantool = new Tarantool();
+        $this->tarantool = new Tarantool('localhost', getenv('LISTEN'));
         $this->assertTrue($this->tarantool->ping());
         $this->tarantool->authenticate('test', 'test');
     }

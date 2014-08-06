@@ -809,7 +809,7 @@ PHP_METHOD(tarantool_class, close) {
 	TARANTOOL_PARSE_PARAMS(id, "", id);
 	TARANTOOL_FETCH_OBJECT(obj, id);
 
-	tarantool_stream_close(obj);
+	tarantool_stream_close(obj TSRMLS_CC);
 	RETURN_TRUE;
 }
 
