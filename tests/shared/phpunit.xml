@@ -1,0 +1,11 @@
+<phpunit
+  colors ="true"
+	verbose="true"
+>
+  <testsuites>
+    <testsuite name="Basic PHP Tests">
+      <file>tests/SelectTest.php</file>
+      <file>tests/CreateTest.php</file>
+    </testsuite>
+  </testsuites>
+</phpunit>
