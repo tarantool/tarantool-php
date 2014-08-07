@@ -23,17 +23,10 @@ before_script:
   - sudo apt-get update
   - sudo apt-get -y install tarantool tarantool-dev
   - sudo apt-get -y install python-yaml
-#  - phpenv config-add tests/shared/tarantool.ini
+  - phpenv config-add tests/shared/tarantool.ini
 
 script:
   - phpize && ./configure
   - make
-  - cp modules/tarantool.so ./ && cp tests/shared/php.ini ./ && cp tests/shared/box.lua ./
-  - LISTEN=3301 ADMIN=3302 tarantool box.lua
-  - sleep 1
-  - cat tarantool.log
-  - ps aux | grep tarantool
-  - LISTEN=3301 ADMIN=3302 php -c php.ini tests/phpunit.phar tests/
-#  - ./test-run.py
-#  - make install
-#  - ./test-run.py global
+  - make install
+  - ./test-run.py global

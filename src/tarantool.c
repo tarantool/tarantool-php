@@ -40,7 +40,6 @@ ZEND_DECLARE_MODULE_GLOBALS(tarantool)
 		if (!CON->stream && connect_on_demand(CON, ID TSRMLS_CC) == FAILURE)\
 			RETURN_FALSE;
 
-
 #define THROW_EXC(...) zend_throw_exception_ex(\
 		zend_exception_get_default(TSRMLS_C),\
 		0 TSRMLS_CC, __VA_ARGS__)
@@ -209,16 +208,16 @@ static void tarantool_stream_close(tarantool_object *obj TSRMLS_DC) {
 static void tarantool_free(tarantool_object *obj TSRMLS_DC) {
 	if (!obj) return;
 	tarantool_stream_close(obj TSRMLS_CC);
-	smart_str_free(obj->value); efree(obj->value);
-	efree(obj->greeting); efree(obj->host);
+	smart_str_free(obj->value); pefree(obj->value, 1);
+	pefree(obj->greeting, 1); pefree(obj->host, 1);
 	zval_ptr_dtor(&obj->schema_hash);
-	efree(obj);
+	pefree(obj, 1);
 }
 
 static zend_object_value tarantool_create(zend_class_entry *entry TSRMLS_DC) {
 	zend_object_value new_value;
 
-	tarantool_object *obj = (tarantool_object *)ecalloc(sizeof(tarantool_object), 1);
+	tarantool_object *obj = (tarantool_object *)pecalloc(sizeof(tarantool_object), 1, 1);
 	zend_object_std_init(&obj->zo, entry TSRMLS_CC);
 	new_value.handle = zend_objects_store_put(obj,
 			(zend_objects_store_dtor_t )zend_objects_destroy_object,
@@ -703,7 +702,18 @@ int get_indexno_by_name(tarantool_object *obj, zval *id,
 
 zend_class_entry *tarantool_class_ptr;
 
+PHP_RINIT_FUNCTION(tarantool) {
+	TARANTOOL_G(sync_counter) = 0;
+	return SUCCESS;
+}
+
+static void
+php_tarantool_init_globals(zend_tarantool_globals *tarantool_globals) {
+}
+
 PHP_MINIT_FUNCTION(tarantool) {
+	ZEND_INIT_MODULE_GLOBALS(tarantool, php_tarantool_init_globals, NULL);
+	//REGISTER_INI_ENTRIES();
 	zend_class_entry tarantool_class;
 	INIT_CLASS_ENTRY(tarantool_class, "Tarantool", tarantool_class_methods);
 	tarantool_class.create_object = tarantool_create;
@@ -741,12 +751,12 @@ PHP_METHOD(tarantool_class, __construct) {
 	if (port == 0) port = 3301;
 
 	/* initialzie object structure */
-	obj->host = estrdup(host);
+	obj->host = pestrdup(host, 1);
 	obj->port = port;
 	obj->stream = NULL;
-	obj->value = (smart_str *)ecalloc(sizeof(smart_str), 1);
+	obj->value = (smart_str *)pecalloc(sizeof(smart_str), 1, 1);
 	obj->auth = 0;
-	obj->greeting = (char *)ecalloc(sizeof(char), GREETING_SIZE);
+	obj->greeting = (char *)pecalloc(sizeof(char), GREETING_SIZE, 1);
 	obj->salt = NULL;
 	ALLOC_INIT_ZVAL(obj->schema_hash); array_init(obj->schema_hash);
 	smart_str_ensure(obj->value, GREETING_SIZE);

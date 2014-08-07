@@ -30,6 +30,7 @@ extern zend_module_entry tarantool_module_entry;
 #define SSTR_DIF(str, end) (end - str->c)
 
 PHP_MINIT_FUNCTION(tarantool);
+PHP_RINIT_FUNCTION(tarantool);
 PHP_MSHUTDOWN_FUNCTION(tarantool);
 PHP_MINFO_FUNCTION(tarantool);
 
