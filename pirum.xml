@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <server>
-  <name>tarantool.github.com/tarantool-php</name>
+  <name>tarantool.github.io/tarantool-php</name>
   <summary>Tarantool-PHP PEAR Channel</summary>
   <alias>Tarantool-PHP</alias>
-  <url>http://tarantool.github.com/tarantool-php</url>
+  <url>http://tarantool.github.io/tarantool-php</url>
 </server>
