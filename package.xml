@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+<package packagerversion="1.4.11" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0
+http://pear.php.net/dtd/tasks-1.0.xsd
+http://pear.php.net/dtd/package-2.0
+http://pear.php.net/dtd/package-2.0.xsd">
+  <name>Tarantool</name>
+  <channel>tarantool.github.io/tarantool-php</channel>
+  <summary>PHP extension for Tarantool/Box</summary>
+  <description>
+    PECL PHP driver for Tarantool/Box
+    Tarantool is an in-memory database and Lua application server.
+    This package provides PECL PHP driver for Tarantool/Box.
+  </description>
+  <lead>
+    <name>Eugine Blikh</name>
+    <user>bigbes</user>
+    <email>bigbes@gmail.com</email>
+    <active>yes</active>
+  </lead>
+  <date>2014-08-07</date>
+  <version>
+    <release>0.0.2</release>
+    <api>0.0.2</api>
+  </version>
+  <stability>
+    <release>beta</release>
+    <api>beta</api>
+  </stability>
+  <license uri="http://opensource.org/licenses/mit-license.php">MIT</license>
+  <notes>-</notes>
+  <contents>
+    <dir name="/">
+      <file role='src' name='config.m4'/>
+      <dir name='src'>
+        <file role='src' name='php_tarantool.h'/>
+        <file role='src' name='tarantool.c'/>
+        <file role='src' name='tarantool_msgpack.c'/>
+        <file role='src' name='tarantool_msgpack.h'/>
+        <file role='src' name='tarantool_proto.c'/>
+        <file role='src' name='tarantool_proto.h'/>
+        <dir name='third_party'>
+          <file role='src' name='msgpuck.c'/>
+          <file role='src' name='msgpuck.h'/>
+        </dir> <!-- third_party -->
+      </dir> <!-- src -->
+      <file role='test' name='test-run.py'/>
+      <dir name='lib'>
+        <file role='test' name='__init__.py'/>
+        <file role='test' name='tarantool_server.py'/>
+      </dir> <!-- lib -->
+      <dir name='tests'>
+        <file role='test' name='CreateTest.php'/>
+        <file role='test' name='SelectTest.php'/>
+        <file role='test' name='phpunit.phar'/>
+        <file role='test' name='phpunit'/>
+        <dir name='shared'>
+          <file role='test' name='box.lua'/>
+          <file role='test' name='php.ini'/>
+          <file role='test' name='tarantool.ini'/>
+          <file role='test' name='phpunit.xml'/>
+        </dir> <!-- shared -->
+      </dir> <!-- tests -->
+    </dir> <!-- / -->
+  </contents>
+  <dependencies>
+    <required>
+      <php>
+        <min>5.2.0</min>
+        <max>6.0.0</max>
+        <exclude>6.0.0</exclude>
+      </php>
+      <pearinstaller>
+        <min>1.4.0</min>
+      </pearinstaller>
+    </required>
+  </dependencies>
+  <providesextension>tarantool</providesextension>
+  <extsrcrelease/>
+  <changelog>
+    <release>
+      <stability><release>beta</release><api>beta</api></stability>
+      <version><release>0.0.2</release><api>0.0.2</api></version>
+      <date>2014-08-07</date>
+      <notes>
+        tarantool-php 0.0.2
+
+        Initial Release
+      </notes>
+    </release>
+ </changelog>
+</package>
+
