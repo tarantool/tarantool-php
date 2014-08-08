@@ -1,1 +1,40 @@
-[]
+{
+    "pear-Tarantool-PHP\/Tarantool": {
+        "versions": {
+            "0.0.2": {
+                "name": "pear-Tarantool-PHP\/Tarantool",
+                "description": "PHP extension for Tarantool\/Box",
+                "dist": {
+                    "type": "pear",
+                    "url": "http:\/\/tarantool.github.io\/tarantool-php\/get\/Tarantool-0.0.2.tgz"
+                },
+                "version": "0.0.2",
+                "time": "2014-08-08T06:38:42+00:00",
+                "require": {
+                    "php": ">=5.2.0,<=6.0.0"
+                },
+                "authors": [
+                    {
+                        "name": "Eugine Blikh",
+                        "email": "bigbes@gmail.com",
+                        "homepage": ""
+                    }
+                ],
+                "autoload": {
+                    "classmap": [
+                        ""
+                    ]
+                }
+            }
+        },
+        "name": "pear-Tarantool-PHP\/Tarantool",
+        "description": "PHP extension for Tarantool\/Box",
+        "maintainers": [
+            {
+                "name": "Eugine Blikh",
+                "email": "bigbes@gmail.com",
+                "homepage": ""
+            }
+        ]
+    }
+}
