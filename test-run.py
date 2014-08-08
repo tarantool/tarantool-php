@@ -10,6 +10,23 @@ from lib.tarantool_server import TarantoolServer
 
 from pprint import pprint
 
+def read_popen(cmd):
+    path = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    path.wait()
+    return path.stdout.read()
+
+def find_php_bin():
+    path = read_popen('which php')
+    if (path.find('phpenv') != -1):
+        version = read_popen('phpenv global')
+        if (version.find('system') != -1):
+            return '/usr/bin/php'
+        return '~/.phpenv/versions/{0}/bin/php'.format(version)
+    return path
+
+def build_gdb_cmd(unit):
+    return "gdb {0} --ex 'set args -c php.ini {1}' --ex 'set env MALLOC_CHECK_=3' --ex 'r' --ex 'bt full' --ex 'c' --ex 'quit'".format(find_php_bin(), unit)
+
 def main():
     path = os.path.dirname(sys.argv[0])
     if not path:
@@ -21,9 +38,10 @@ def main():
     srv.start()
     test_dir_path = os.path.abspath(os.path.join(os.getcwd(), 'tests'))
     test_cwd = os.path.dirname(srv.vardir)
+    test_lib_path = ""
     try:
         shutil.copy('tests/shared/phpunit.xml', test_cwd)
-        if len(sys.argv) > 1 and sys.argv[1] == 'global':
+        if 'global' in sys.argv:
             cmd = 'phpunit -v'
         else:
             test_lib_path = os.path.join(test_dir_path, 'phpunit.phar')
@@ -50,7 +68,10 @@ def main():
             version += ', With Debug'
         print('Running against ' + version)
         proc = subprocess.Popen(cmd, shell=True, cwd=test_cwd)
-        return proc.wait()
+        f = proc.wait()
+        if (f == 245 or f == 139):
+            proc = subprocess.Popen(build_gdb_cmd(test_lib_path), shell=True, cwd=test_cwd)
+            f = proc.wait()
     finally:
         a = [
                 os.path.join(test_cwd, 'php.ini'),

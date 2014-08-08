@@ -36,8 +36,8 @@ ZEND_DECLARE_MODULE_GLOBALS(tarantool)
 		tarantool_object *NAME = (tarantool_object *)\
 				zend_object_store_get_object(ID TSRMLS_CC)
 
-#define TARANTOOL_CONNECT_ON_DEMAND(CON, ID)\
-		if (!CON->stream && connect_on_demand(CON, ID TSRMLS_CC) == FAILURE)\
+#define TARANTOOL_CONNECT_ON_DEMAND(CON)\
+		if (!CON->stream && __tarantool_connect(CON TSRMLS_CC) == FAILURE)\
 			RETURN_FALSE;
 
 #define THROW_EXC(...) zend_throw_exception_ex(\
@@ -62,6 +62,9 @@ ZEND_DECLARE_MODULE_GLOBALS(tarantool)
 	if (!RETVAL || (Z_TYPE_P(RETVAL) == IS_BOOL && !Z_BVAL_P(RETVAL)) || \
 		       (Z_TYPE_P(RETVAL) == IS_NULL)) \
 		return FAILURE;
+#define RLCI(NAME) \
+	REGISTER_LONG_CONSTANT("ITER_" # NAME, ITERATOR_ ## NAME, \
+			CONST_CS | CONST_PERSISTENT)
 
 typedef struct tarantool_object {
 	zend_object zo;
@@ -203,6 +206,27 @@ static size_t tarantool_stream_read(tarantool_object *obj,
 static void tarantool_stream_close(tarantool_object *obj TSRMLS_DC) {
 	if (obj->stream) php_stream_close(obj->stream);
 	obj->stream = NULL;
+}
+
+int __tarantool_connect(tarantool_object *obj TSRMLS_CC) {
+	if (tarantool_stream_open(obj TSRMLS_CC) == FAILURE)
+		return FAILURE;
+	if (tarantool_stream_read(obj, obj->greeting,
+				GREETING_SIZE TSRMLS_CC) != GREETING_SIZE) {
+		THROW_EXC("Can't read Greeting from server");
+		zend_throw_exception_ex(
+				zend_exception_get_default(TSRMLS_C),
+				0 TSRMLS_CC,
+				"can't read greeting from server");
+		return FAILURE;
+	}
+	obj->salt = obj->greeting + SALT_PREFIX_SIZE;
+	return SUCCESS;
+}
+
+int __tarantool_reconnect(tarantool_object *obj TSRMLS_CC) {
+	tarantool_stream_close(obj);
+	return __tarantool_connect(obj);
 }
 
 static void tarantool_free(tarantool_object *obj TSRMLS_DC) {
@@ -527,20 +551,6 @@ zval *tarantool_update_verify_args(zval *args TSRMLS_DC) {
 	return arr;
 }
 
-char connect_on_demand(tarantool_object *obj, zval *id TSRMLS_DC) {
-	zval *fname; ALLOC_INIT_ZVAL(fname);
-	ZVAL_STRING(fname, "connect", 1);
-	zval *retval; ALLOC_INIT_ZVAL(retval);
-	zval *args[] = {id};
-
-	call_user_function(NULL, &obj, fname, retval, 1, args TSRMLS_CC);
-	CHECK_RETVAL_P(retval);
-
-	zval_ptr_dtor(&fname);
-	zval_ptr_dtor(&retval);
-	return SUCCESS;
-}
-
 void schema_flush(tarantool_object *obj) {
 	zval_ptr_dtor(&obj->schema_hash);
 	ALLOC_INIT_ZVAL(obj->schema_hash); array_init(obj->schema_hash);
@@ -713,6 +723,16 @@ php_tarantool_init_globals(zend_tarantool_globals *tarantool_globals) {
 
 PHP_MINIT_FUNCTION(tarantool) {
 	ZEND_INIT_MODULE_GLOBALS(tarantool, php_tarantool_init_globals, NULL);
+	RLCI(EQ);
+	RLCI(REQ);
+	RLCI(ALL);
+	RLCI(LT);
+	RLCI(LE);
+	RLCI(GE);
+	RLCI(GT);
+	RLCI(BITSET_ALL_SET);
+	RLCI(BITSET_ANY_SET);
+	RLCI(BITSET_ALL_NOT_SET);
 	//REGISTER_INI_ENTRIES();
 	zend_class_entry tarantool_class;
 	INIT_CLASS_ENTRY(tarantool_class, "Tarantool", tarantool_class_methods);
@@ -767,18 +787,8 @@ PHP_METHOD(tarantool_class, connect) {
 	TARANTOOL_PARSE_PARAMS(id, "", id);
 	TARANTOOL_FETCH_OBJECT(obj, id);
 
-	if (tarantool_stream_open(obj TSRMLS_CC) == FAILURE)
+	if (__tarantool_connect(obj) == FAILURE)
 		RETURN_FALSE;
-	if (tarantool_stream_read(obj, obj->greeting,
-				GREETING_SIZE TSRMLS_CC) != GREETING_SIZE) {
-		THROW_EXC("Can't read Greeting from server");
-		zend_throw_exception_ex(
-				zend_exception_get_default(TSRMLS_C),
-				0 TSRMLS_CC,
-				"can't read greeting from server");
-		RETURN_FALSE;
-	}
-	obj->salt = obj->greeting + SALT_PREFIX_SIZE;
 	RETURN_TRUE;
 }
 
@@ -789,7 +799,7 @@ PHP_METHOD(tarantool_class, authenticate) {
 	TARANTOOL_PARSE_PARAMS(id, "ss", &login, &login_len,
 			&passwd, &passwd_len);
 	TARANTOOL_FETCH_OBJECT(obj, id);
-	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
+	TARANTOOL_CONNECT_ON_DEMAND(obj);
 
 	char *salt = php_base64_decode(obj->salt, SALT64_SIZE, NULL);
 	char scramble[SCRAMBLE_SIZE];
@@ -826,7 +836,7 @@ PHP_METHOD(tarantool_class, close) {
 PHP_METHOD(tarantool_class, ping) {
 	TARANTOOL_PARSE_PARAMS(id, "", id);
 	TARANTOOL_FETCH_OBJECT(obj, id);
-	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
+	TARANTOOL_CONNECT_ON_DEMAND(obj);
 
 	long sync = TARANTOOL_G(sync_counter)++;
 	php_tp_encode_ping(obj->value, sync);
@@ -845,7 +855,7 @@ PHP_METHOD(tarantool_class, select) {
 	TARANTOOL_PARSE_PARAMS(id, "z|zzlll", &space, &key,
 			&index, &limit, &offset, &iterator);
 	TARANTOOL_FETCH_OBJECT(obj, id);
-	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
+	TARANTOOL_CONNECT_ON_DEMAND(obj);
 
 	long space_no = get_spaceno_by_name(obj, id, space TSRMLS_CC);
 	if (space_no == FAILURE)
@@ -875,7 +885,7 @@ PHP_METHOD(tarantool_class, insert) {
 
 	TARANTOOL_PARSE_PARAMS(id, "za", &space, &tuple);
 	TARANTOOL_FETCH_OBJECT(obj, id);
-	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
+	TARANTOOL_CONNECT_ON_DEMAND(obj);
 
 	long space_no = get_spaceno_by_name(obj, id, space TSRMLS_CC);
 	if (space_no == FAILURE)
@@ -898,7 +908,7 @@ PHP_METHOD(tarantool_class, replace) {
 
 	TARANTOOL_PARSE_PARAMS(id, "za", &space, &tuple);
 	TARANTOOL_FETCH_OBJECT(obj, id);
-	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
+	TARANTOOL_CONNECT_ON_DEMAND(obj);
 
 	long space_no = get_spaceno_by_name(obj, id, space TSRMLS_CC);
 	if (space_no == FAILURE)
@@ -921,7 +931,7 @@ PHP_METHOD(tarantool_class, delete) {
 
 	TARANTOOL_PARSE_PARAMS(id, "zz", &space, &key);
 	TARANTOOL_FETCH_OBJECT(obj, id);
-	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
+	TARANTOOL_CONNECT_ON_DEMAND(obj);
 
 	key = pack_key(key, 0);
 
@@ -946,7 +956,7 @@ PHP_METHOD(tarantool_class, call) {
 
 	TARANTOOL_PARSE_PARAMS(id, "s|z", &proc, &proc_len, &tuple);
 	TARANTOOL_FETCH_OBJECT(obj, id);
-	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
+	TARANTOOL_CONNECT_ON_DEMAND(obj);
 
 	tuple = pack_key(tuple, 1);
 
@@ -966,7 +976,7 @@ PHP_METHOD(tarantool_class, update) {
 
 	TARANTOOL_PARSE_PARAMS(id, "zza", &space, &key, &args);
 	TARANTOOL_FETCH_OBJECT(obj, id);
-	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
+	TARANTOOL_CONNECT_ON_DEMAND(obj);
 
 	long space_no = get_spaceno_by_name(obj, id, space TSRMLS_CC);
 	if (space_no == FAILURE)
