@@ -260,7 +260,8 @@ class TarantoolServer(object):
         self.start()
 
     def clean(self):
-        shutil.rmtree(self.vardir)
+        if os.path.exists(self.vardir):
+            shutil.rmtree(self.vardir)
 
     def __del__(self):
         self.stop()

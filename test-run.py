@@ -25,7 +25,15 @@ def find_php_bin():
     return path
 
 def build_gdb_cmd(unit):
-    return "gdb {0} --ex 'set args -c php.ini {1}' --ex 'set env MALLOC_CHECK_=3' --ex 'r' --ex 'bt full' --ex 'c' --ex 'quit'".format(find_php_bin(), unit)
+    cmds = [
+        "set args -c php.ini " + unit,
+        "set env MALLOC_CHECK_=3",
+        "run",
+        "bt full",
+        "continue",
+        "quit"
+    ]
+    return 'gdb ' + find_php_bin() + ''.join([' --ex ' + repr(cmd) for cmd in cmds])
 
 def main():
     path = os.path.dirname(sys.argv[0])
@@ -50,29 +58,17 @@ def main():
             os.environ['PATH'] += os.pathsep + test_dir_path
             cmd = 'php -c php.ini {0}'.format(test_lib_path)
         print('Running ' + repr(cmd))
-        version = subprocess.Popen('php-config --version',
-                shell=True, stdout=subprocess.PIPE)
-        version.wait()
-        version = version.stdout.read().strip(' \n\t') + '.'
-        version1 = subprocess.Popen('php-config --extension-dir',
-                shell=True, stdout=subprocess.PIPE)
-        version1.wait()
-        version1 = version1.stdout.read().strip(' \n\t')
-        if version1.find('non-zts') != -1:
-            version += ' Without ZTS'
-        else:
-            version += ' With ZTS'
-        if version1.find('no-debug') != -1:
-            version += ', Without Debug'
-        else:
-            version += ', With Debug'
+        version = read_popen('php-config --version').strip(' \n\t') + '.'
+        version1 = read_popen('php-config --extension-dir').strip(' \n\t')
+        version += ' ' + ('With' if version1.find('non-zts') == -1 else 'Without') + ' ZTS'
+        version += ' ' + ('With' if version1.find('no-debug') == -1 else 'Without') + ' Debug'
         print('Running against ' + version)
         proc = subprocess.Popen(cmd, shell=True, cwd=test_cwd)
-        f = proc.wait()
-        if (f == 245 or f == 139):
+        cmd_stat = proc.wait()
+        if (cmd_stat in [245, 139] and 'global' not in sys.argv):
             proc = subprocess.Popen(build_gdb_cmd(test_lib_path), shell=True, cwd=test_cwd)
-            f = proc.wait()
     finally:
+        del srv
         a = [
                 os.path.join(test_cwd, 'php.ini'),
                 os.path.join(test_cwd, 'phpunit.xml'),

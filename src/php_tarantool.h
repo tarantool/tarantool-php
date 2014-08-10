@@ -49,6 +49,8 @@ PHP_METHOD(tarantool_class, flush_schema);
 
 ZEND_BEGIN_MODULE_GLOBALS(tarantool)
 	long sync_counter;
+	long retry_count;
+	double retry_sleep;
 ZEND_END_MODULE_GLOBALS(tarantool)
 
 ZEND_EXTERN_MODULE_GLOBALS(tarantool)

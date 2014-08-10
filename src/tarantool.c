@@ -1,6 +1,9 @@
 #include <sys/socket.h>
 #include <netinet/tcp.h>
 
+#include <sys/time.h>
+#include <time.h>
+
 #include <php.h>
 #include <php_ini.h>
 #include <php_network.h>
@@ -63,8 +66,9 @@ ZEND_DECLARE_MODULE_GLOBALS(tarantool)
 		       (Z_TYPE_P(RETVAL) == IS_NULL)) \
 		return FAILURE;
 #define RLCI(NAME) \
-	REGISTER_LONG_CONSTANT("ITER_" # NAME, ITERATOR_ ## NAME, \
-			CONST_CS | CONST_PERSISTENT)
+	REGISTER_LONG_CONSTANT("TARANTOOL_ITER_" # NAME, \
+			ITERATOR_ ## NAME, CONST_CS | CONST_PERSISTENT)
+
 
 typedef struct tarantool_object {
 	zend_object zo;
@@ -93,36 +97,38 @@ zend_function_entry tarantool_module_functions[] = {
 };
 
 zend_module_entry tarantool_module_entry = {
-#if ZEND_MODULE_API_NO >= 20010901
 	STANDARD_MODULE_HEADER,
-#endif
 	"tarantool",
 	tarantool_module_functions,
 	PHP_MINIT(tarantool),
 	PHP_MSHUTDOWN(tarantool),
-	NULL,
+	PHP_RINIT(tarantool),
 	NULL,
 	PHP_MINFO(tarantool),
-#if ZEND_MODULE_API_NO >= 20010901
 	"1.0",
-#endif
 	STANDARD_MODULE_PROPERTIES
 };
 
+PHP_INI_BEGIN()
+	PHP_INI_ENTRY("tarantool.timeout",     "10.0", PHP_INI_ALL, NULL)
+	PHP_INI_ENTRY("tarantool.retry_count", "1"   , PHP_INI_ALL, NULL)
+	PHP_INI_ENTRY("tarantool.retry_sleep", "0.1" , PHP_INI_ALL, NULL)
+PHP_INI_END()
 
 #ifdef COMPILE_DL_TARANTOOL
 ZEND_GET_MODULE(tarantool)
 #endif
 
-static int tarantool_stream_open(tarantool_object *obj TSRMLS_DC) {
+static int tarantool_stream_open(tarantool_object *obj, int count TSRMLS_DC) {
 	char *dest_addr = NULL;
 	size_t dest_addr_len = spprintf(&dest_addr, 0, "tcp://%s:%d",
 					obj->host, obj->port);
 	int options = ENFORCE_SAFE_MODE | REPORT_ERRORS;
 	int flags = STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT;
+	long time = floor(INI_FLT("tarantool.timeout"));
 	struct timeval timeout = {
-		.tv_sec = TARANTOOL_TIMEOUT_SEC,
-		.tv_usec = TARANTOOL_TIMEOUT_USEC,
+		.tv_sec = time,
+		.tv_usec = (INI_FLT("tarantool.timeout") - time) * pow(10, 6),
 	};
 	char *errstr = NULL;
 	int errcode = 0;
@@ -133,29 +139,26 @@ static int tarantool_stream_open(tarantool_object *obj TSRMLS_DC) {
 						     &errstr, &errcode);
 	efree(dest_addr);
 	if (errcode || !stream) {
-		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
-					0 TSRMLS_CC, "failed to connect. code %d: %s",
-					errcode, errstr);
-		goto process_error;
+		if (!count)
+			THROW_EXC("Failed to connect. Code %d: %s", errcode, errstr);
+		goto error;
 	}
 	int socketd = ((php_netstream_data_t* )stream->abstract)->socket;
 	flags = 1;
 	int result = setsockopt(socketd, IPPROTO_TCP, TCP_NODELAY,
 			        (char *) &flags, sizeof(int));
 	if (result) {
-		char errbuf[64];
-		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
-					0 TSRMLS_CC, "failed to connect: "
-					"setsockopt error %s",
-					strerror_r(errno,
-						   errbuf,
-						   sizeof(errbuf)));
-		goto process_error;
+		char errbuf[128];
+		if (!count)
+			THROW_EXC("Failed to connect. Setsockopt error %s",
+					strerror_r(errno, errbuf, sizeof(errbuf)));
+		goto error;
 	}
 	obj->stream = stream;
 	return SUCCESS;
-
-process_error:
+error:
+	if (count)
+		php_error(E_NOTICE, "Connection failed. %d attempts left", count);
 	if (errstr) efree(errstr);
 	if (stream) php_stream_close(stream);
 	return FAILURE;
@@ -209,19 +212,27 @@ static void tarantool_stream_close(tarantool_object *obj TSRMLS_DC) {
 }
 
 int __tarantool_connect(tarantool_object *obj TSRMLS_CC) {
-	if (tarantool_stream_open(obj TSRMLS_CC) == FAILURE)
-		return FAILURE;
-	if (tarantool_stream_read(obj, obj->greeting,
-				GREETING_SIZE TSRMLS_CC) != GREETING_SIZE) {
-		THROW_EXC("Can't read Greeting from server");
-		zend_throw_exception_ex(
-				zend_exception_get_default(TSRMLS_C),
-				0 TSRMLS_CC,
-				"can't read greeting from server");
-		return FAILURE;
+	long count = TARANTOOL_G(retry_count);
+	long sec = TARANTOOL_G(retry_sleep);
+	struct timespec sleep_time = {
+		.tv_sec = sec,
+		.tv_nsec = (TARANTOOL_G(retry_sleep) - sec) * pow(10, 9)
+	};
+	while (1) {
+		if (tarantool_stream_open(obj, count TSRMLS_CC) == SUCCESS) {
+			if(tarantool_stream_read(obj, obj->greeting,
+						GREETING_SIZE TSRMLS_CC) == GREETING_SIZE) {
+				obj->salt = obj->greeting + SALT_PREFIX_SIZE;
+				return SUCCESS;
+			}
+			if (count < 0)
+				THROW_EXC("Can't read Greeting from server");
+		}
+		--count;
+		if (count < 0)
+			return FAILURE;
+		nanosleep(&sleep_time, NULL);
 	}
-	obj->salt = obj->greeting + SALT_PREFIX_SIZE;
-	return SUCCESS;
 }
 
 int __tarantool_reconnect(tarantool_object *obj TSRMLS_CC) {
@@ -257,23 +268,33 @@ static int64_t tarantool_step_recv(
 		zval **header,
 		zval **body TSRMLS_DC) {
 	char pack_len[5] = {0, 0, 0, 0, 0};
-	if (tarantool_stream_read(obj, pack_len, 5 TSRMLS_CC) != 5)
-		goto error_read;
-	if (php_mp_check(pack_len, 5))
-		goto error_check;
+	if (tarantool_stream_read(obj, pack_len, 5 TSRMLS_CC) != 5) {
+		THROW_EXC("Can't read query from server");
+		goto error;
+	}
+	if (php_mp_check(pack_len, 5)) {
+		THROW_EXC("Failed verifying msgpack");
+		goto error;
+	}
 	size_t body_size = php_mp_unpack_package_size(pack_len);
 	smart_str_ensure(obj->value, body_size);
 	if (tarantool_stream_read(obj, SSTR_POS(obj->value),
-				body_size TSRMLS_CC) != body_size)
-		goto error_read;
+				body_size TSRMLS_CC) != body_size) {
+		THROW_EXC("Can't read query from server");
+		goto error;
+	}
 	SSTR_LEN(obj->value) += body_size;
 
 	char *pos = SSTR_BEG(obj->value);
-	if (php_mp_check(pos, body_size))
-		goto error_check;
+	if (php_mp_check(pos, body_size)) {
+		THROW_EXC("Failed verifying msgpack");
+		goto error;
+	}
 	php_mp_unpack(header, &pos);
-	if (php_mp_check(pos, body_size))
-		goto error_check;
+	if (php_mp_check(pos, body_size)) {
+		THROW_EXC("Failed verifying msgpack");
+		goto error;
+	}
 	php_mp_unpack(body, &pos);
 
 	HashTable *hash = HASH_OF(*header);
@@ -290,35 +311,17 @@ static int64_t tarantool_step_recv(
 		}
 		HashTable *hash = HASH_OF(*body);
 		zval **errstr = NULL;
-		long errcode = Z_LVAL_PP(val) & (1 << 15 - 1);
+		long errcode = Z_LVAL_PP(val) & ((1 << 15) - 1 );
 		if (zend_hash_index_find(hash, TNT_ERROR, (void **)&errstr) == FAILURE) {
 			ALLOC_INIT_ZVAL(*errstr);
 			ZVAL_STRING(*errstr, "empty", 1);
 		}
-		zend_throw_exception_ex(
-				zend_exception_get_default(TSRMLS_C),
-				0 TSRMLS_CC,
-				"Query Error %d: %s", errcode,
-				Z_STRVAL_PP(errstr), Z_STRLEN_PP(errstr));
+		THROW_EXC("Query error %d: %s", errcode, Z_STRVAL_PP(errstr),
+				Z_STRLEN_PP(errstr));
 		zval_ptr_dtor(errstr);
 		goto error;
 	}
-	zend_throw_exception_ex(
-			zend_exception_get_default(TSRMLS_C),
-			0 TSRMLS_CC,
-			"failed to retrieve answer code");
-	goto error;
-error_read:
-	zend_throw_exception_ex(
-			zend_exception_get_default(TSRMLS_C),
-			0 TSRMLS_CC,
-			"can't read query from server");
-	goto error;
-error_check:
-	zend_throw_exception_ex(
-			zend_exception_get_default(TSRMLS_C),
-			0 TSRMLS_CC,
-			"failed verifying msgpack");
+	THROW_EXC("Failed to retrieve answer code");
 error:
 	if (header) zval_ptr_dtor(header);
 	if (body) zval_ptr_dtor(body);
@@ -345,9 +348,6 @@ const zend_function_entry tarantool_class_methods[] = {
 };
 
 /* ####################### HELPERS ####################### */
-
-/* TODO: BEFORE EXCEPTION - CLEANUP BUFFER */
-/* TODO: SPACE_NO/INDEX_NO TO SPACE/INDEX (SCHEMA) + "l" -> "z" */
 
 static void
 xor(unsigned char *to, unsigned const char *left,
@@ -398,9 +398,7 @@ zval *pack_key(zval *args, char select) {
 
 zval *tarantool_update_verify_op(zval *op, long position TSRMLS_DC) {
 	if (Z_TYPE_P(op) != IS_ARRAY || !php_mp_is_hash(op)) {
-		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
-				0 TSRMLS_CC, "Op must be Map at position %d",
-				position);
+		THROW_EXC("Op must be MAP at pos %d", position);
 		return NULL;
 	}
 	HashTable *ht = HASH_OF(op);
@@ -410,51 +408,42 @@ zval *tarantool_update_verify_op(zval *op, long position TSRMLS_DC) {
 	if (zend_hash_find(ht, "op", 3, (void **)&opstr) == FAILURE ||
 			!opstr || Z_TYPE_PP(opstr) != IS_STRING ||
 			Z_STRLEN_PP(opstr) != 1) {
-		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
-				0 TSRMLS_CC, "Field OP must be provided"
-				" and must be STRING with length=1 at position %d", position);
+		THROW_EXC("Field OP must be provided and myst be STRING with "
+				"length=1 at position %d", position);
 		return NULL;
 	}
 	if (zend_hash_find(ht, "field", 6, (void **)&oppos) == FAILURE ||
 			!oppos || Z_TYPE_PP(oppos) != IS_LONG) {
-		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
-				0 TSRMLS_CC, "Field FIELD must be provided"
-				" and must be LONG at position %d", position);
+		THROW_EXC("Field FIELD must be provided and must be LONG at "
+				"position %d", position);
 		return NULL;
 
 	}
 	zval **oparg, **splice_len, **splice_val;
 	switch(Z_STRVAL_PP(opstr)[0]) {
 	case ':':
+		if (n != 5) {
+			THROW_EXC("Five fields must be provided for splice"
+					" at position %d", position);
+			return NULL;
+		}
 		if (zend_hash_find(ht, "offset", 7,
 				(void **)&oparg) == FAILURE ||
 				!oparg || Z_TYPE_PP(oparg) != IS_LONG) {
-			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
-						0 TSRMLS_CC, "Field OFFSET must be provided"
-						" and must be LONG for splice at position %d",
-						position);
+			THROW_EXC("Field OFFSET must be provided and must be LONG for "
+					"splice at position %d", position);
 			return NULL;
 		}
 		if (zend_hash_find(ht, "length", 7, (void **)&splice_len) == FAILURE ||
 				!oparg || Z_TYPE_PP(splice_len) != IS_LONG) {
-			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
-						0 TSRMLS_CC, "Field LENGTH must be provided"
-						" and must be LONG for splice at position %d",
-						position);
+			THROW_EXC("Field LENGTH must be provided and must be LONG for "
+					"splice at position %d", position);
 			return NULL;
 		}
 		if (zend_hash_find(ht, "list", 5, (void **)&splice_val) == FAILURE ||
 				!oparg || Z_TYPE_PP(splice_val) != IS_STRING) {
-			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
-						0 TSRMLS_CC, "Field LIST must be provided"
-						" and must be STRING for splice at position %d",
-						position);
-			return NULL;
-		}
-		if (n != 5) {
-			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
-						0 TSRMLS_CC, "Five fields must be provided for"
-						" splice at position %d", position);
+			THROW_EXC("Field LIST must be provided and must be STRING for "
+					"splice at position %d", position);
 			return NULL;
 		}
 		add_next_index_stringl(arr, Z_STRVAL_PP(opstr), 1, 1);
@@ -467,21 +456,18 @@ zval *tarantool_update_verify_op(zval *op, long position TSRMLS_DC) {
 	case '+':
 	case '-':
 	case '&':
+	case '|':
 	case '^':
 	case '#':
-		if (zend_hash_find(ht, "arg", 4, (void **)&oparg) == FAILURE ||
-				!oparg || Z_TYPE_PP(oparg) != IS_LONG) {
-			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
-						0 TSRMLS_CC, "Field ARG must be provided"
-						" and must be LONG for '%s' at position %d",
-						Z_STRVAL_PP(opstr), position);
+		if (n != 3) {
+			THROW_EXC("Three fields must be provided for '%s' at "
+					"position %d", Z_STRVAL_PP(opstr), position);
 			return NULL;
 		}
-		if (n != 3) {
-			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
-						0 TSRMLS_CC, "Three fields must be provided "
-						"for '%s' at position %d",
-						Z_STRVAL_PP(opstr), position);
+		if (zend_hash_find(ht, "arg", 4, (void **)&oparg) == FAILURE ||
+				!oparg || Z_TYPE_PP(oparg) != IS_LONG) {
+			THROW_EXC("Field ARG must be provided and must be LONG for "
+					"'%s' at position %d", Z_STRVAL_PP(opstr), position);
 			return NULL;
 		}
 		add_next_index_stringl(arr, Z_STRVAL_PP(opstr), 1, 1);
@@ -490,19 +476,15 @@ zval *tarantool_update_verify_op(zval *op, long position TSRMLS_DC) {
 		break;
 	case '=':
 	case '!':
-		if (zend_hash_find(ht, "arg", 4, (void **)&oparg) == FAILURE ||
-				!oparg || !PHP_MP_SERIALIZABLE_PP(oparg)) {
-			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
-						0 TSRMLS_CC, "Field ARG must be provided"
-						" and must be SERIALIZABLE for '%s' at position %d",
-						Z_STRVAL_PP(opstr), position);
+		if (n != 3) {
+			THROW_EXC("Three fields must be provided for '%s' at "
+					"position %d", Z_STRVAL_PP(opstr), position);
 			return NULL;
 		}
-		if (n != 3) {
-			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
-						0 TSRMLS_CC, "Three fields must be provided "
-						"for '%s' at position %d",
-						Z_STRVAL_PP(opstr), position);
+		if (zend_hash_find(ht, "arg", 4, (void **)&oparg) == FAILURE ||
+				!oparg || !PHP_MP_SERIALIZABLE_PP(oparg)) {
+			THROW_EXC("Field ARG must be provided and must be SERIALIZABLE for "
+					"'%s' at position %d", Z_STRVAL_PP(opstr), position);
 			return NULL;
 		}
 		add_next_index_stringl(arr, Z_STRVAL_PP(opstr), 1, 1);
@@ -510,9 +492,8 @@ zval *tarantool_update_verify_op(zval *op, long position TSRMLS_DC) {
 		add_next_index_zval(arr, *oparg);
 		break;
 	default:
-		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
-					0 TSRMLS_CC, "Unknown operation '%s' at position %d",
-					Z_STRVAL_PP(opstr), position);
+		THROW_EXC("Unknown operation '%s' at position %d",
+				Z_STRVAL_PP(opstr), position);
 		return NULL;
 
 	}
@@ -521,8 +502,7 @@ zval *tarantool_update_verify_op(zval *op, long position TSRMLS_DC) {
 
 zval *tarantool_update_verify_args(zval *args TSRMLS_DC) {
 	if (Z_TYPE_P(args) != IS_ARRAY || php_mp_is_hash(args)) {
-		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
-					0 TSRMLS_CC, "Provided value for update ops must ");
+		THROW_EXC("Provided value for update OPS must be Array");
 		return NULL;
 	}
 	HashTable *ht = HASH_OF(args);
@@ -535,16 +515,15 @@ zval *tarantool_update_verify_args(zval *args TSRMLS_DC) {
 		int status = zend_hash_index_find(ht, key_index,
 				                  (void **)&op);
 		if (status != SUCCESS || !op) {
-			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
-						0 TSRMLS_CC, "Internal HASH Error");
+			THROW_EXC("Internal Array Error");
 			return NULL;
 		}
-		zval *op_arr = tarantool_update_verify_op(*op, key_index TSRMLS_CC);
+		zval *op_arr = tarantool_update_verify_op(*op, key_index
+				TSRMLS_CC);
 		if (!op_arr)
 			return NULL;
 		if (add_next_index_zval(arr, op_arr) == FAILURE) {
-			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C),
-						0 TSRMLS_CC, "Internal HASH Error");
+			THROW_EXC("Internal Array Error");
 			return NULL;
 		}
 	}
@@ -713,7 +692,9 @@ int get_indexno_by_name(tarantool_object *obj, zval *id,
 zend_class_entry *tarantool_class_ptr;
 
 PHP_RINIT_FUNCTION(tarantool) {
-	TARANTOOL_G(sync_counter) = 0;
+	TARANTOOL_G(sync_counter)  = 0;
+	TARANTOOL_G(retry_count)   = INI_INT("tarantool.retry_count");
+	TARANTOOL_G(retry_sleep)   = INI_FLT("tarantool.retry_sleep");
 	return SUCCESS;
 }
 
@@ -733,7 +714,7 @@ PHP_MINIT_FUNCTION(tarantool) {
 	RLCI(BITSET_ALL_SET);
 	RLCI(BITSET_ANY_SET);
 	RLCI(BITSET_ALL_NOT_SET);
-	//REGISTER_INI_ENTRIES();
+	REGISTER_INI_ENTRIES();
 	zend_class_entry tarantool_class;
 	INIT_CLASS_ENTRY(tarantool_class, "Tarantool", tarantool_class_methods);
 	tarantool_class.create_object = tarantool_create;
@@ -742,6 +723,7 @@ PHP_MINIT_FUNCTION(tarantool) {
 }
 
 PHP_MSHUTDOWN_FUNCTION(tarantool) {
+	UNREGISTER_INI_ENTRIES();
 	return SUCCESS;
 }
 
@@ -750,6 +732,7 @@ PHP_MINFO_FUNCTION(tarantool) {
 	php_info_print_table_header(2, "Tarantool support", "enabled");
 	php_info_print_table_row(2, "Extension version", PHP_TARANTOOL_VERSION);
 	php_info_print_table_end();
+	DISPLAY_INI_ENTRIES();
 }
 
 PHP_METHOD(tarantool_class, __construct) {
@@ -991,7 +974,7 @@ PHP_METHOD(tarantool_class, update) {
 	php_tp_encode_update(obj->value, sync, space_no, key, args);
 	tarantool_stream_send(obj TSRMLS_CC);
 
-	zval_ptr_dtor(&args);
+	//zval_ptr_dtor(&args);
 	zval *header, *body;
 	if (tarantool_step_recv(obj, sync, &header, &body TSRMLS_CC) == FAILURE)
 		RETURN_FALSE;

@@ -31,7 +31,7 @@ class CreateTest extends PHPUnit_Framework_TestCase
 
     /**
      * @expectedException Exception
-     * @expectedExceptionMessage failed to connect.
+     * @expectedExceptionMessage Failed to connect.
      */
     public function test_02_create_error_host()
     {
@@ -41,7 +41,7 @@ class CreateTest extends PHPUnit_Framework_TestCase
 
     /**
      * @expectedException Exception
-     * @expectedExceptionMessage failed to connect.
+     * @expectedExceptionMessage Failed to connect.
      */
     public function test_03_create_error_port()
     {
