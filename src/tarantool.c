@@ -211,7 +211,7 @@ static void tarantool_stream_close(tarantool_object *obj TSRMLS_DC) {
 	obj->stream = NULL;
 }
 
-int __tarantool_connect(tarantool_object *obj TSRMLS_CC) {
+int __tarantool_connect(tarantool_object *obj TSRMLS_DC) {
 	long count = TARANTOOL_G(retry_count);
 	long sec = TARANTOOL_G(retry_sleep);
 	struct timespec sleep_time = {
@@ -235,9 +235,9 @@ int __tarantool_connect(tarantool_object *obj TSRMLS_CC) {
 	}
 }
 
-int __tarantool_reconnect(tarantool_object *obj TSRMLS_CC) {
-	tarantool_stream_close(obj);
-	return __tarantool_connect(obj);
+int __tarantool_reconnect(tarantool_object *obj TSRMLS_DC) {
+	tarantool_stream_close(obj TSRMLS_CC);
+	return __tarantool_connect(obj TSRMLS_CC);
 }
 
 static void tarantool_free(tarantool_object *obj TSRMLS_DC) {
@@ -770,7 +770,7 @@ PHP_METHOD(tarantool_class, connect) {
 	TARANTOOL_PARSE_PARAMS(id, "", id);
 	TARANTOOL_FETCH_OBJECT(obj, id);
 
-	if (__tarantool_connect(obj) == FAILURE)
+	if (__tarantool_connect(obj TSRMLS_CC) == FAILURE)
 		RETURN_FALSE;
 	RETURN_TRUE;
 }
