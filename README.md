@@ -37,8 +37,21 @@ pecl channel-discover tarantool.github.io/tarantool-php/pecl
 pecl install Tarantool-PHP/Tarantool-beta
 ```
 
-## Composer: TBA
-
+## Composer Repository
+Simply add
+```
+{
+    "repositories": [
+        {
+            "type": "vcs",
+            "url" : "https://github.com/tarantool/tarantool-php"
+        }
+    ],
+    "require": {
+        "tarantool/tarantool-php": "dev-nextgen"
+    }
+}
+```
 ## Building RPM/DEB/PECL Packages
 
 For building packages - please, read `README.PACK.md`
