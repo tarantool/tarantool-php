@@ -17,10 +17,10 @@ http://pear.php.net/dtd/package-2.0.xsd">
     <email>bigbes@gmail.com</email>
     <active>yes</active>
   </lead>
-  <date>2014-08-07</date>
+  <date>2014-08-11</date>
   <version>
-    <release>0.0.2</release>
-    <api>0.0.2</api>
+    <release>0.0.3</release>
+    <api>0.0.3</api>
   </version>
   <stability>
     <release>beta</release>
@@ -50,7 +50,7 @@ http://pear.php.net/dtd/package-2.0.xsd">
       </dir> <!-- lib -->
       <dir name='tests'>
         <file role='test' name='CreateTest.php'/>
-        <file role='test' name='SelectTest.php'/>
+        <file role='test' name='DMLTest.php'/>
         <file role='test' name='phpunit.phar'/>
         <file role='test' name='phpunit'/>
         <dir name='shared'>
@@ -77,6 +77,17 @@ http://pear.php.net/dtd/package-2.0.xsd">
   <providesextension>tarantool</providesextension>
   <extsrcrelease/>
   <changelog>
+    <release>
+      <stability><release>beta</release><api>beta</api></stability>
+      <version><release>0.0.3</release><api>0.0.3</api></version>
+      <date>2014-08-11</date>
+      <notes>
+        tarantool-php 0.0.3
+
+        Continue with Tests, Fixing Bugs
+        Adding global constants for different iterator types
+      </notes>
+    </release>
     <release>
       <stability><release>beta</release><api>beta</api></stability>
       <version><release>0.0.2</release><api>0.0.2</api></version>
