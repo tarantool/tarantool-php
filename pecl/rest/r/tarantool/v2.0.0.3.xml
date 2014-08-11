@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<r xmlns="http://pear.php.net/dtd/rest.release2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xlink="http://www.w3.org/1999/xlink" xsi:schemaLocation="http://pear.php.net/dtd/rest.release2 http://pear.php.net/dtd/rest.release2.xsd">
+    <p xlink:href="/rest/p/tarantool">Tarantool</p>
+    <c>tarantool.github.io/tarantool-php/pecl</c>
+    <v>0.0.3</v>
+    <a>0.0.3</a>
+    <mp>5.3.0</mp>
+    <st>beta</st>
+    <l>MIT</l>
+    <m>bigbes</m>
+    <s>PHP extension for Tarantool</s>
+    <d>PECL PHP driver for Tarantool
+    Tarantool is an in-memory database and Lua application server.
+    This package provides PECL PHP driver for Tarantool.</d>
+    <da>2014-08-11 13:50:03</da>
+    <n>
+-
+ </n>
+    <f>1050999</f>
+    <g>http://tarantool.github.io/tarantool-php/pecl/get/Tarantool-0.0.3</g>
+    <x xlink:href="package.0.0.3.xml"/>
+</r>
