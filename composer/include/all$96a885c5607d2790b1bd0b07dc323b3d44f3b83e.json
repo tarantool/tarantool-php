@@ -1,0 +1,51 @@
+{
+    "packages": {
+        "tarantool/tarantool-php": {
+            "dev-nextgen-rpm": {
+                "name": "tarantool/tarantool-php",
+                "version": "dev-nextgen-rpm",
+                "version_normalized": "dev-nextgen-rpm",
+                "source": {
+                    "type": "git",
+                    "url": "https://github.com/tarantool/tarantool-php.git",
+                    "reference": "2163aafb99ffcba9d2583066f07f1829ba976c3b"
+                },
+                "dist": {
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/tarantool/tarantool-php/zipball/2163aafb99ffcba9d2583066f07f1829ba976c3b",
+                    "reference": "2163aafb99ffcba9d2583066f07f1829ba976c3b",
+                    "shasum": ""
+                },
+                "require": {
+                    "composer/composer": "1.0.*@dev",
+                    "php": ">=5.3.0"
+                },
+                "time": "2014-08-11 13:41:07",
+                "type": "library",
+                "license": [
+                    "MIT"
+                ],
+                "authors": [
+                    {
+                        "name": "Eugine Blikh",
+                        "email": "bigbes@gmail.com",
+                        "homepage": "http://bigbe.su"
+                    }
+                ],
+                "description": "PECL PHP driver for Tarantool",
+                "homepage": "https://github.com/tarantool/tarantool-php",
+                "keywords": [
+                    "connector",
+                    "tarantool"
+                ],
+                "support": {
+                    "forum": "https://groups.google.com/forum/#!forum/tarantool",
+                    "irc": "irc://irc.freenode.org/tarantool",
+                    "support": "https://github.com/tarantool/tarantool-php/",
+                    "source": "https://github.com/tarantool/tarantool-php/tree/nextgen-rpm",
+                    "issues": "https://github.com/tarantool/tarantool-php/issues"
+                }
+            }
+        }
+    }
+}
