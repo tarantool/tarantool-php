@@ -20,6 +20,7 @@ class DMLTest extends PHPUnit_Framework_TestCase
         $tuples = $this->tarantool->select("test");
         foreach($tuples as $value)
             $this->tarantool->delete("test", $value[0]);
+        $this->tarantool->flush_schema();
     }
 
     private function populate($num)
