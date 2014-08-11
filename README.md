@@ -1,7 +1,7 @@
 tarantool-php
 =============
 
-PECL PHP driver for Tarantool/Box
+PECL PHP driver for Tarantool [![Build Status](https://travis-ci.org/tarantool/tarantool-php.png?branch=nextgen)](https://travis-ci.org/tarantool/tarantool-php)
 
 ## Build
 
@@ -17,16 +17,28 @@ $ make install
 
 ## Test
 
-To run tests Taranool/Box server and PHP/PECL package are requred.
+To run tests Taranool server and PHP/PECL package are requred.
 
 ```sh
-$ cd test
-$ ./run-tests
+$ ./test-run.py
 ```
-
-If Tarantool/Box doesn't define in `PATH` variable, you may define it in
-`TARANTOOL_BOX_BIN` enviroment variable.
+It'll automaticly find and start Tarantool and, then, run `phpunit.phar` based tests.
+If Tarantool doesn't defined in `PATH` variable, you may define it in `TARANTOOL_BOX_PATH` enviroment variable.
 
 ```sh
-$ TARANTOOL_BOX_BIN=/path/to/tarantool/bin/tarantool_box ./run-tests
+$ TARANTOOL_BOX_PATH=/path/to/tarantool/bin/tarantool ./test-run.py
 ```
+
+## Installing from PEAR
+Tarantool-PHP Have it's own [PEAR repository](https://tarantool.github.io/tarantool-php).
+You may install it from PEAR with just a few commands:
+```
+pecl channel-discover tarantool.github.io/tarantool-php
+pecl install Tarantool-PHP/Tarantool-beta
+```
+
+## Composer: TBA
+
+## Building RPM/DEB/PECL Packages
+
+For building packages - please, read `README.PACK.md`

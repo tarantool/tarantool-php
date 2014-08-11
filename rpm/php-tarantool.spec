@@ -21,7 +21,7 @@ Tarantool is an in-memory database and Lua application server.
 This package provides PECL PHP driver for Tarantool/Box.
 
 %prep
-%setup -q -n tarantool-php-0.0.3.tar.gz
+%setup -q -c tarantool-php-0.0.3
 %build
 %{_bindir}/phpize
 %configure
