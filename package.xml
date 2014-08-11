@@ -4,12 +4,12 @@ http://pear.php.net/dtd/tasks-1.0.xsd
 http://pear.php.net/dtd/package-2.0
 http://pear.php.net/dtd/package-2.0.xsd">
   <name>Tarantool</name>
-  <channel>tarantool.github.io/tarantool-php</channel>
-  <summary>PHP extension for Tarantool/Box</summary>
+  <channel>tarantool.github.io/tarantool-php/pecl</channel>
+  <summary>PHP extension for Tarantool</summary>
   <description>
-    PECL PHP driver for Tarantool/Box
+    PECL PHP driver for Tarantool
     Tarantool is an in-memory database and Lua application server.
-    This package provides PECL PHP driver for Tarantool/Box.
+    This package provides PECL PHP driver for Tarantool.
   </description>
   <lead>
     <name>Eugine Blikh</name>
@@ -65,7 +65,7 @@ http://pear.php.net/dtd/package-2.0.xsd">
   <dependencies>
     <required>
       <php>
-        <min>5.2.0</min>
+        <min>5.3.0</min>
         <max>6.0.0</max>
         <exclude>6.0.0</exclude>
       </php>

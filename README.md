@@ -33,7 +33,7 @@ $ TARANTOOL_BOX_PATH=/path/to/tarantool/bin/tarantool ./test-run.py
 Tarantool-PHP Have it's own [PEAR repository](https://tarantool.github.io/tarantool-php).
 You may install it from PEAR with just a few commands:
 ```
-pecl channel-discover tarantool.github.io/tarantool-php
+pecl channel-discover tarantool.github.io/tarantool-php/pecl
 pecl install Tarantool-PHP/Tarantool-beta
 ```
 

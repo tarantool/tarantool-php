@@ -1,0 +1,24 @@
+{
+    "name": "tarantool/tarantool-php",
+    "description": "PECL PHP driver for Tarantool",
+    "keywords": ["tarantool", "connector"],
+    "homepage": "https://github.com/tarantool/tarantool-php",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Eugine Blikh",
+            "email": "bigbes@gmail.com",
+            "homepage": "http://bigbe.su"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.0",
+        "composer/composer": "1.0.*@dev"
+    },
+    "support": {
+        "forum"  : "https://groups.google.com/forum/#!forum/tarantool",
+        "irc"    : "irc://irc.freenode.org/tarantool",
+        "support": "https://github.com/tarantool/tarantool-php/"
+    }
+}
