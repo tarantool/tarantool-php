@@ -3,6 +3,10 @@
     <p>Tarantool</p>
     <c>tarantool.github.io/tarantool-php</c>
     <r>
+        <v>0.0.3</v>
+        <s>beta</s>
+    </r>
+    <r>
         <v>0.0.2</v>
         <s>beta</s>
     </r>
