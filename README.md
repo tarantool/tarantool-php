@@ -1,8 +1,9 @@
-tarantool-php
-=============
+PHP driver for Tarantool 1.6
+============================
 
 PECL PHP driver for Tarantool [![Build Status](https://travis-ci.org/tarantool/tarantool-php.png?branch=master)](https://travis-ci.org/tarantool/tarantool-php)
 
+If you're looking for 1.5 version, check out branch 'stable'
 ## Build
 
 To build Tarantool PHP extenstion PHP-devel package is requred. The
