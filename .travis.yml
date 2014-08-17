@@ -2,8 +2,8 @@ language: php
 
 branches:
   only:
-    - nextgen
     - master
+    - stable 
 
 php:
   - 5.3

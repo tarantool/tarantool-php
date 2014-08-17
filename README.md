@@ -1,7 +1,7 @@
 tarantool-php
 =============
 
-PECL PHP driver for Tarantool [![Build Status](https://travis-ci.org/tarantool/tarantool-php.png?branch=nextgen)](https://travis-ci.org/tarantool/tarantool-php)
+PECL PHP driver for Tarantool [![Build Status](https://travis-ci.org/tarantool/tarantool-php.png?branch=master)](https://travis-ci.org/tarantool/tarantool-php)
 
 ## Build
 
@@ -48,7 +48,7 @@ Simply add
         }
     ],
     "require": {
-        "tarantool/tarantool-php": "dev-nextgen"
+        "tarantool/tarantool-php": "master"
     }
 }
 ```
