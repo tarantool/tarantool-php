@@ -1,11 +1,12 @@
 os = require('os')
 require('console').listen(os.getenv('ADMIN'))
 box.cfg{
-   listen = os.getenv('LISTEN'),
-   log_level = 5,
-   logger = 'tarantool.log',
-   pid_file = 'box.pid',
-   background = true,
+   listen           = os.getenv('LISTEN'),
+   log_level        = 5,
+   logger           = 'tarantool.log',
+   pid_file         = 'box.pid',
+   background       = true,
+   slab_alloc_arena = 4
 }
 
 lp = {

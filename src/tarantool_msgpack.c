@@ -299,7 +299,7 @@ ptrdiff_t php_mp_unpack_map(zval **oval, char **str) {
 			/* TODO: THROW EXCEPTION */
 			break;
 		}
-
+		zval_ptr_dtor(&key);
 	}
 }
 

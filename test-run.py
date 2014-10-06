@@ -21,7 +21,7 @@ def find_php_bin():
         version = read_popen('phpenv global')
         if (version.find('system') != -1):
             return '/usr/bin/php'
-        return '~/.phpenv/versions/{0}/bin/php'.format(version)
+        return '~/.phpenv/versions/{0}/bin/php'.format(version.strip())
     return path
 
 def build_gdb_cmd(unit):
@@ -52,11 +52,26 @@ def main():
         if 'global' in sys.argv:
             cmd = 'phpunit -v'
         else:
-            test_lib_path = os.path.join(test_dir_path, 'phpunit.phar')
-            shutil.copy('tests/shared/php.ini', test_cwd)
-            shutil.copy('modules/tarantool.so', test_cwd)
+            cmd = ''
             os.environ['PATH'] += os.pathsep + test_dir_path
-            cmd = 'php -c php.ini {0}'.format(test_lib_path)
+            test_lib_path = os.path.join(test_dir_path, 'phpunit.phar')
+            shutil.copy('tests/shared/tarantool.ini', test_cwd)
+            shutil.copy('modules/tarantool.so', test_cwd)
+            if '--flags' in sys.argv:
+                os.environ['ZEND_DONT_UNLOAD_MODULES'] = '1'
+                os.environ['USE_ZEND_ALLOC'] = '0'
+            if '--valgrind' in sys.argv:
+                cmd = cmd + 'valgrind --leak-check=full --log-file=php.out '
+                cmd = cmd + '--suppressions=tests/shared/valgrind.sup '
+                cmd = cmd + '--num-callers=40 '
+                cmd = cmd + find_php_bin()
+                cmd = cmd + ' -c tarantool.ini {0}'.format(test_lib_path)
+            elif '--gdb' in sys.argv:
+                cmd = cmd + 'gdb {0} --ex '.format(find_php_bin())
+                cmd = cmd + '"set args -c tarantool.ini {0}"'.format(test_lib_path)
+            else:
+                cmd = '{0} -c tarantool.ini {1}'.format(find_php_bin(), test_lib_path)
+
         print('Running ' + repr(cmd))
         version = read_popen('php-config --version').strip(' \n\t') + '.'
         version1 = read_popen('php-config --extension-dir').strip(' \n\t')
@@ -64,11 +79,8 @@ def main():
         version += ' ' + ('With' if version1.find('no-debug') == -1 else 'Without') + ' Debug'
         print('Running against ' + version)
         proc = subprocess.Popen(cmd, shell=True, cwd=test_cwd)
-        cmd_stat = proc.wait()
-        if (cmd_stat in [245, 139] and 'global' not in sys.argv):
-            proc = subprocess.Popen(build_gdb_cmd(test_lib_path), shell=True, cwd=test_cwd)
+        proc.wait()
     finally:
-        del srv
         a = [
                 os.path.join(test_cwd, 'php.ini'),
                 os.path.join(test_cwd, 'phpunit.xml'),

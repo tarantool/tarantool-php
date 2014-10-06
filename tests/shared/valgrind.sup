@@ -1,0 +1,28 @@
+{
+   <tarantool_free schema supp_1>
+   Memcheck:Addr1
+   ...
+   fun:tarantool_free
+   ...
+}
+{
+   <tarantool_free schema supp_4>
+   Memcheck:Addr4
+   ...
+   fun:tarantool_free
+   ...
+}
+{
+   <php call context supp>
+   Memcheck:Leak
+   ...
+   fun:ZEND_SEND_VAL_SPEC_CONST_HANDLER
+   ...
+}
+{
+   <php backtrace>
+   Memchek:Leak
+   ...
+   fun:debug_backtrace_get_args.isra.9
+   ...
+}

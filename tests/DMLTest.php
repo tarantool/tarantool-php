@@ -19,7 +19,7 @@ class DMLTest extends PHPUnit_Framework_TestCase
         $this->tarantool->authenticate('test', 'test');
         $tuples = $this->tarantool->select("test");
         foreach($tuples as $value)
-            $this->tarantool->delete("test", $value[0]);
+            $this->tarantool->delete("test", Array($value[0]));
         $this->tarantool->flush_schema();
     }
 
@@ -174,61 +174,68 @@ class DMLTest extends PHPUnit_Framework_TestCase
         $this->tarantool->update("test", 0, array());
     }
 
-    /**
-     * @expectedException Exception
-     * @expectedExceptionMessage Five fields
-     */
-    public function test_08_update_error_01() {
-        $this->tarantool->update("test", 0, array(
-            array(
-                "field" => 2,
-                "op" => ":",
-                "offset" => 2,
-                "length" => 2,
-            )
-        ));
+    public function test_08_update_error() {
+        try {
+            $this->tarantool->update("test", 0, array(
+                array(
+                    "field" => 2,
+                    "op" => ":",
+                    "offset" => 2,
+                    "length" => 2,
+                )
+            ));
+            $this->assertFalse(True);
+        } catch (Exception $e) {
+            $this->assertTrue(strpos($e->getMessage(), "Five fields") !== False);
+        }
     }
 
-    /**
-     * @expectedException Exception
-     * @expectedExceptionMessage Field OP must be provided
-     */
-    public function test_08_update_error_02() {
-        $this->tarantool->update("test", 0, array(
-            array(
-                "field" => 2,
-                "op" => "BAD_OP",
-                "arg" => 2,
-            )
-        ));
+    public function test_09_update_error() {
+        try {
+            $this->tarantool->update("test", 0, array(
+                array(
+                    "field" => 2,
+                    "op" => "BAD_OP",
+                    "arg" => 2,
+                )
+            ));
+            $this->assertFalse(True);
+        } catch (Exception $e) {
+            $this->assertTrue(strpos($e->getMessage(),
+                "Field OP must be provided") !== False);
+        }
     }
 
-    /**
-     * @expectedException Exception
-     * @expectedExceptionMessage Field OP must be provided
-     */
-    public function test_08_update_error_03() {
-        $this->tarantool->update("test", 0, array(
-            array(
-                "field" => 2,
-                "arg" => 2,
-            )
-        ));
+    public function test_10_update_error() {
+        try {
+            $this->tarantool->update("test", 0, array(
+                array(
+                    "field" => 2,
+                    "arg" => 2,
+                )
+            ));
+            $this->assertFalse(True);
+        } catch (Exception $e) {
+            $this->assertTrue(strpos($e->getMessage(),
+                "Field OP must be provided") !== False);
+        }
     }
 
-    /**
-     * @expectedException Exception
-     * @expectedExceptionMessage Three fields must be provided
-     */
-    public function test_08_update_error_04() {
-        $this->tarantool->update("test", 0, array(
-            array(
-                "op" => "^",
-                "field" => 2,
-                "arg" => 2,
-                "unneeeded field" => "LALALLALA"
-            )
-        ));
+    public function test_11_update_error() {
+        try {
+            $this->tarantool->update("test", 0, array(
+                array(
+                    "op" => "^",
+                    "field" => 2,
+                    "arg" => 2,
+                    "unneeeded field" => "LALALLALA"
+                )
+            ));
+            $this->assertFalse(True);
+        } catch (Exception $e) {
+            $this->assertTrue(strpos($e->getMessage(),
+                "Three fields must be provided") !== False);
+        }
     }
 
     /**
