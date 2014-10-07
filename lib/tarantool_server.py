@@ -218,6 +218,8 @@ class TarantoolServer(object):
         while True:
             try:
                 temp = TarantoolAdmin('localhost', self.args['admin'])
+                temp.connect()
+                temp.socket.recv(128)
                 ans = temp('box.info.status')[0]
                 if ans in ('running', 'primary', 'hot_standby', 'orphan') or ans.startswith('replica'):
                     return True

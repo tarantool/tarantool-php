@@ -855,7 +855,7 @@ PHP_METHOD(tarantool_class, authenticate) {
 
 	long sync = TARANTOOL_G(sync_counter)++;
 	php_tp_encode_auth(obj->value, sync, login, login_len, scramble);
-	if (tarantool_stream_send(obj TSRMLS_CC) == FAILRE)
+	if (tarantool_stream_send(obj TSRMLS_CC) == FAILURE)
 		RETURN_FALSE;
 
 	zval *header = NULL, *body = NULL;
@@ -890,7 +890,7 @@ PHP_METHOD(tarantool_class, ping) {
 
 	long sync = TARANTOOL_G(sync_counter)++;
 	php_tp_encode_ping(obj->value, sync);
-	if (tarantool_stream_send(obj TSRMLS_CC) == FAILRE)
+	if (tarantool_stream_send(obj TSRMLS_CC) == FAILURE)
 		RETURN_FALSE;
 
 	zval *header, *body;
@@ -929,7 +929,7 @@ PHP_METHOD(tarantool_class, select) {
 		zval_ptr_dtor(&key_new);
 		if (key) Z_DELREF_P(key);
 	}
-	if (tarantool_stream_send(obj TSRMLS_CC) == FAILRE)
+	if (tarantool_stream_send(obj TSRMLS_CC) == FAILURE)
 		RETURN_FALSE;
 
 	zval *header = NULL, *body = NULL;
@@ -953,7 +953,7 @@ PHP_METHOD(tarantool_class, insert) {
 	long sync = TARANTOOL_G(sync_counter)++;
 	php_tp_encode_insert_or_replace(obj->value, sync, space_no,
 			tuple, TNT_INSERT);
-	if (tarantool_stream_send(obj TSRMLS_CC) == FAILRE)
+	if (tarantool_stream_send(obj TSRMLS_CC) == FAILURE)
 		RETURN_FALSE;
 
 	zval *header, *body;
@@ -977,7 +977,7 @@ PHP_METHOD(tarantool_class, replace) {
 	long sync = TARANTOOL_G(sync_counter)++;
 	php_tp_encode_insert_or_replace(obj->value, sync, space_no,
 			tuple, TNT_REPLACE);
-	if (tarantool_stream_send(obj TSRMLS_CC) == FAILRE)
+	if (tarantool_stream_send(obj TSRMLS_CC) == FAILURE)
 		RETURN_FALSE;
 
 	zval *header, *body;
@@ -1008,7 +1008,7 @@ PHP_METHOD(tarantool_class, delete) {
 		zval_ptr_dtor(&key_new);
 		if (key) Z_DELREF_P(key);
 	}
-	if (tarantool_stream_send(obj TSRMLS_CC) == FAILRE)
+	if (tarantool_stream_send(obj TSRMLS_CC) == FAILURE)
 		RETURN_FALSE;
 
 	zval *header, *body;
@@ -1031,7 +1031,7 @@ PHP_METHOD(tarantool_class, call) {
 	long sync = TARANTOOL_G(sync_counter)++;
 	php_tp_encode_call(obj->value, sync, proc, proc_len, tuple);
 	zval_ptr_dtor(&tuple);
-	if (tarantool_stream_send(obj TSRMLS_CC) == FAILRE)
+	if (tarantool_stream_send(obj TSRMLS_CC) == FAILURE)
 		RETURN_FALSE;
 
 	zval *header, *body;
@@ -1064,7 +1064,7 @@ PHP_METHOD(tarantool_class, update) {
 		if (key) Z_DELREF_P(key);
 	}
 	zval_ptr_dtor(&args);
-	if (tarantool_stream_send(obj TSRMLS_CC) == FAILRE)
+	if (tarantool_stream_send(obj TSRMLS_CC) == FAILURE)
 		RETURN_FALSE;
 
 	zval *header, *body;

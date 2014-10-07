@@ -1,7 +1,7 @@
 os = require('os')
-require('console').listen(os.getenv('ADMIN'))
+require('console').listen('localhost:'..os.getenv('ADMIN'))
 box.cfg{
-   listen           = os.getenv('LISTEN'),
+   listen           = 'localhost:'..os.getenv('LISTEN'),
    log_level        = 5,
    logger           = 'tarantool.log',
    pid_file         = 'box.pid',
