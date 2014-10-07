@@ -552,7 +552,7 @@ void schema_flush(tarantool_object *obj TSRMLS_DC) {
 	for (;; zend_hash_move_forward_ex(ht, &pos)) {
 		key_type = zend_hash_get_current_key_ex(
 			ht, &key, &key_len, &key_index, 0, &pos);
-		if (key_type == HASH_KEY_NON_EXISTENT)
+		if (key_type == HASH_KEY_NON_EXISTANT)
 			break;
 		int status = zend_hash_get_current_data_ex(ht,
 				(void *)&data, &pos);

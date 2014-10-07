@@ -21,12 +21,10 @@ before_script:
   - curl http://tarantool.org/dist/public.key | sudo apt-key add -
   - echo "deb http://tarantool.org/dist/master/ubuntu `lsb_release -c -s` main" | sudo tee -a /etc/apt/sources.list.d/tarantool.list
   - sudo apt-get update
-  - sudo apt-get -y install tarantool
-  - sudo apt-get -y install python-yaml
-  - phpenv config-add tests/shared/tarantool.ini
+  - sudo apt-get -y install tarantool python-yaml
 
 script:
   - phpize && ./configure
   - make
   - make install
-  - ./test-run.py global
+  - ./test-run.py --flags

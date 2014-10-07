@@ -33,4 +33,5 @@ Makefile.in
 *.lo
 *.libs
 *.pyc
+*.out
 var*
