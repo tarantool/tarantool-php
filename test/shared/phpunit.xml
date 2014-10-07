@@ -5,8 +5,8 @@
 >
   <testsuites>
     <testsuite name="Basic PHP Tests">
-      <file>tests/DMLTest.php</file>
-      <file>tests/CreateTest.php</file>
+      <file>test/DMLTest.php</file>
+      <file>test/CreateTest.php</file>
     </testsuite>
   </testsuites>
 
