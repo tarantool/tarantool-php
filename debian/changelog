@@ -1,3 +1,10 @@
+tarantool-php (1.6-1) unstable; urgency=medium
+
+  * New upstream version.
+  * Relicensed as BSD. closes: #752655.
+
+ -- Dmitry E. Oboukhov <unera@debian.org>  Mon, 27 Oct 2014 18:46:34 +0300
+
 tarantool-php (1.0-2) unstable; urgency=low
 
   * Fixed debian/rules:clean section by ftp-master's review.
