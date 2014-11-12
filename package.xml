@@ -50,6 +50,7 @@ http://pear.php.net/dtd/package-2.0.xsd">
       </dir> <!-- lib -->
       <dir name='tests'>
         <file role='test' name='CreateTest.php'/>
+        <file role='test' name='MsgPackTest.php'/>
         <file role='test' name='DMLTest.php'/>
         <file role='test' name='phpunit.phar'/>
         <file role='test' name='phpunit'/>

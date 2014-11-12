@@ -9,6 +9,12 @@
 #define    HASH_KEY_NON_EXISTENT HASH_KEY_NON_EXISTANT
 #endif  /* HASH_KEY_NON_EXISTENT */
 
+#ifndef    TRHOW_EXC
+#define    THROW_EXC(...) zend_throw_exception_ex(\
+		zend_exception_get_default(TSRMLS_C),\
+		0 TSRMLS_CC, __VA_ARGS__)
+#endif  /* TRHOW_EXC */
+
 /* UTILITES */
 
 int smart_str_ensure(smart_str *str, size_t len) {
@@ -158,7 +164,7 @@ void php_mp_pack_hash_recursively(smart_str *str, zval *val) {
 			php_mp_pack_long(str, key_index);
 			break;
 		case HASH_KEY_IS_STRING:
-			php_mp_pack_string(str, key, key_len - 1);
+			php_mp_pack_string(str, key, key_len -1);
 			break;
 		default:
 			/* TODO: THROW EXCEPTION */
@@ -279,28 +285,45 @@ ptrdiff_t php_mp_unpack_double(zval **oval, char **str) {
 }
 
 ptrdiff_t php_mp_unpack_map(zval **oval, char **str) {
+	TSRMLS_FETCH();
 	ALLOC_INIT_ZVAL(*oval);
 	size_t len = mp_decode_map((const char **)str);
 	array_init_size(*oval, len);
 	while (len-- > 0) {
 		zval *key = {0};
-		php_mp_unpack(&key, str);
+		if (php_mp_unpack(&key, str) == FAILURE) {
+			goto error;
+		}
 		zval *value = {0};
-		php_mp_unpack(&value, str);
+		if (php_mp_unpack(&value, str) == FAILURE) {
+			goto error;
+		}
 		switch (Z_TYPE_P(key)) {
 		case IS_LONG:
 			add_index_zval(*oval, Z_LVAL_P(key), value);
 			break;
 		case IS_STRING:
 			add_assoc_zval_ex(*oval, Z_STRVAL_P(key),
-					Z_STRLEN_P(key), value);
+					Z_STRLEN_P(key) + 1, value);
 			break;
+		case IS_DOUBLE:
+			/* convert to INT/STRING for future uses */
+			/* FALLTHROUGH */
 		default:
-			/* TODO: THROW EXCEPTION */
+			THROW_EXC("Can't create Array - key value"
+					" not of type LONG/STRING");
+			goto error;
 			break;
 		}
 		zval_ptr_dtor(&key);
+		continue;
+error:
+		if (key) zval_ptr_dtor(&key);
+		if (value) zval_ptr_dtor(&value);
+		if (*oval) zval_ptr_dtor(oval);
+		return FAILURE;
 	}
+	return SUCCESS;
 }
 
 ptrdiff_t php_mp_unpack_array(zval **oval, char **str) {
@@ -314,7 +337,7 @@ ptrdiff_t php_mp_unpack_array(zval **oval, char **str) {
 	}
 }
 
-size_t php_mp_unpack(zval **oval, char **str) {
+ssize_t php_mp_unpack(zval **oval, char **str) {
 	size_t needed = 0;
 	switch (mp_typeof(**str)) {
 	case MP_NIL:
@@ -444,7 +467,7 @@ size_t php_mp_sizeof_hash_recursively(zval *val) {
 			needed += php_mp_sizeof_long(key_index);
 			break;
 		case HASH_KEY_IS_STRING:
-			needed += php_mp_sizeof_string(key_len);
+			needed += php_mp_sizeof_string(key_len) - 1;
 			break;
 		default:
 			/* TODO: THROW EXCEPTION */
@@ -456,6 +479,7 @@ size_t php_mp_sizeof_hash_recursively(zval *val) {
 		if (status != SUCCESS || !data || data == &val ||
 				(Z_TYPE_PP(data) == IS_ARRAY &&
 				 Z_ARRVAL_PP(data)->nApplyCount > 1)) {
+			/* TODO: THROW EXCEPTION */
 			needed += php_mp_sizeof_nil();
 		} else {
 			if (Z_TYPE_PP(data) == IS_ARRAY)
@@ -465,6 +489,7 @@ size_t php_mp_sizeof_hash_recursively(zval *val) {
 				Z_ARRVAL_PP(data)->nApplyCount--;
 		}
 	}
+	return needed;
 }
 
 

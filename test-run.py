@@ -6,6 +6,8 @@ import shlex
 import shutil
 import subprocess
 
+import time
+
 from lib.tarantool_server import TarantoolServer
 
 from pprint import pprint
@@ -49,8 +51,7 @@ def main():
         if '--valgrind' in sys.argv:
             cmd = cmd + 'valgrind --leak-check=full --log-file=php.out '
             cmd = cmd + '--suppressions=test/shared/valgrind.sup '
-            cmd = cmd + '--num-callers=40 '
-            cmd = cmd + find_php_bin()
+            cmd = cmd + '--num-callers=40 ' + find_php_bin()
             cmd = cmd + ' -c tarantool.ini {0}'.format(test_lib_path)
         elif '--gdb' in sys.argv:
             cmd = cmd + 'gdb {0} --ex '.format(find_php_bin())
@@ -66,6 +67,7 @@ def main():
         print('Running against ' + version)
         proc = subprocess.Popen(cmd, shell=True, cwd=test_cwd)
         proc.wait()
+        time.sleep(50)
     finally:
         a = [
                 os.path.join(test_cwd, 'tarantool.ini'),

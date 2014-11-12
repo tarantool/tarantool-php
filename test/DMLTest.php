@@ -6,7 +6,7 @@ class DMLTest extends PHPUnit_Framework_TestCase
      */
     public function setUp()
     {
-        $this->tarantool = new Tarantool('localhost', getenv('LISTEN'));
+        $this->tarantool = new Tarantool('localhost', getenv('PRIMARY_PORT'));
         $this->assertTrue($this->tarantool->ping());
         $this->tarantool->authenticate('test', 'test');
     }

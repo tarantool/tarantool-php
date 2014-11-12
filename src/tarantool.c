@@ -291,12 +291,16 @@ static int64_t tarantool_step_recv(
 		THROW_EXC("Failed verifying msgpack");
 		goto error;
 	}
-	php_mp_unpack(header, &pos);
+	if (php_mp_unpack(header, &pos) == FAILURE) {
+		goto error;
+	}
 	if (php_mp_check(pos, body_size)) {
 		THROW_EXC("Failed verifying msgpack");
 		goto error;
 	}
-	php_mp_unpack(body, &pos);
+	if (php_mp_unpack(body, &pos) == FAILURE) {
+		goto error;
+	}
 
 	HashTable *hash = HASH_OF(*header);
 	zval **val = NULL;

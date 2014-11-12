@@ -6,7 +6,7 @@ class CreateTest extends PHPUnit_Framework_TestCase
      */
     public function setUp()
     {
-        $this->port = getenv('LISTEN');
+        $this->port = getenv('PRIMARY_PORT');
     }
 
 

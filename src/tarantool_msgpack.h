@@ -12,10 +12,10 @@
 				  Z_TYPE_PP(v) == IS_ARRAY  || \
 				  Z_TYPE_PP(v) == IS_STRING)
 
-size_t php_mp_check  (const char *str,  size_t str_size);
-void   php_mp_pack   (smart_str  *buf,  zval   *val    );
-size_t php_mp_unpack (zval      **oval, char   **str   );
-size_t php_mp_sizeof (zval *val);
+size_t php_mp_check   (const char *str,  size_t str_size);
+void   php_mp_pack    (smart_str  *buf,  zval   *val    );
+ssize_t php_mp_unpack (zval      **oval, char   **str   );
+size_t php_mp_sizeof  (zval *val);
 
 void   php_mp_pack_package_size   (smart_str *str, size_t val);
 size_t php_mp_unpack_package_size (char *buf);

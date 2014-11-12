@@ -12,8 +12,7 @@ import subprocess
 
 def check_port(port, rais=True):
     try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect(("localhost", port))
+        sock = socket.create_connection(("localhost", port))
     except socket.error:
         return True
     if rais:
@@ -39,22 +38,29 @@ class TarantoolAdmin(object):
         self.host = host
         self.port = port
         self.is_connected = False
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
+        self.socket = None
 
     def connect(self):
-        self.socket.connect((self.host, self.port))
+        self.socket = socket.create_connection((self.host, self.port))
+        self.socket.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
         self.is_connected = True
+        self.recv_exactly(128)
+
+    def recv_exactly(self, size):
+        if not self.is_connected:
+            return False
+        while (size > 0):
+            response = self.socket.recv(size)
+            size -= len(response)
 
     def disconnect(self):
         if self.is_connected:
             self.socket.close()
+            self.socket = None
             self.is_connected = False
 
     def reconnect(self):
         self.disconnect()
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
         self.connect()
 
     def opt_reconnect(self):
@@ -63,7 +69,7 @@ class TarantoolAdmin(object):
             Make use of this property and detect whether or not the socket is
             dead. Reconnect a dead socket, do nothing if the socket is good."""
         try:
-            if self.socket.recv(0, socket.MSG_DONTWAIT) == '':
+            if self.socket is None or self.socket.recv(0, socket.MSG_DONTWAIT) == '':
                 self.reconnect()
         except socket.error as e:
             if e.errno == errno.EAGAIN:
@@ -185,7 +191,6 @@ class TarantoolServer(object):
         self.args['admin'] = find_port(self.args['primary'] + 1)
         self._admin = self.args['admin']
         self.vardir = tempfile.mkdtemp(prefix='var_', dir=os.getcwd())
-        self.process = None
         self.find_exe()
 
     def find_exe(self):
@@ -199,13 +204,11 @@ class TarantoolServer(object):
         raise RuntimeError("Can't find server executable in " + path)
 
     def generate_configuration(self):
-        os.putenv("LISTEN", str(self.args['primary']))
-        os.putenv("ADMIN", str(self.args['admin']))
+        os.putenv("PRIMARY_PORT", str(self.args['primary']))
+        os.putenv("ADMIN_PORT", str(self.args['admin']))
 
     def prepare_args(self):
-        cmd = self.binary + ' '
-        cmd += '' if not self.script else self.script
-        return shlex.split(cmd)
+        return shlex.split(self.binary if not self.script else self.script_dst)
 
     def wait_until_started(self):
         """ Wait until server is started.
@@ -218,8 +221,6 @@ class TarantoolServer(object):
         while True:
             try:
                 temp = TarantoolAdmin('localhost', self.args['admin'])
-                temp.connect()
-                temp.socket.recv(128)
                 ans = temp('box.info.status')[0]
                 if ans in ('running', 'primary', 'hot_standby', 'orphan') or ans.startswith('replica'):
                     return True
@@ -253,7 +254,7 @@ class TarantoolServer(object):
         self.wait_until_started()
 
     def stop(self):
-        if self.process:
+        if self.process and self.process.poll() is None:
             self.process.terminate()
             self.process.wait()
 
