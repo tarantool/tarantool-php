@@ -1,25 +1,23 @@
 <?php
 class CreateTest extends PHPUnit_Framework_TestCase
 {
-    /**
-     * @beforeClass
-     */
-    public function setUp()
-    {
-        $this->port = getenv('PRIMARY_PORT');
+    protected static $port;
+
+    public static function setUpBeforeClass() {
+        self::$port = getenv('PRIMARY_PORT');
     }
 
 
     public function test_00_create_basic()
     {
-        $c = new Tarantool('localhost', $this->port);
+        $c = new Tarantool('localhost', self::$port);
         $c->connect();
         $this->assertTrue($c->ping());
         $c->close();
     }
     public function test_01_create_test_ping_and_close()
     {
-        $c = new Tarantool('localhost', $this->port);
+        $c = new Tarantool('localhost', self::$port);
         $c->connect();
         $c->connect();
         $this->assertTrue($c->ping());

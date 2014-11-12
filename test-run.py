@@ -67,7 +67,6 @@ def main():
         print('Running against ' + version)
         proc = subprocess.Popen(cmd, shell=True, cwd=test_cwd)
         proc.wait()
-        time.sleep(50)
     finally:
         a = [
                 os.path.join(test_cwd, 'tarantool.ini'),

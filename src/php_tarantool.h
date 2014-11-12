@@ -1,6 +1,8 @@
 #ifndef    PHP_TARANTOOL_H
 #define    PHP_TARANTOOL_H
 
+#include "php.h"
+
 extern zend_module_entry tarantool_module_entry;
 #define phpext_tarantool_ptr &tarantool_module_entry
 
@@ -21,6 +23,11 @@ extern zend_module_entry tarantool_module_entry;
 #ifdef ZTS
 #include "TSRM.h"
 #endif
+
+#include <ext/standard/php_smart_str.h>
+#include <php_network.h>
+
+#include "tarantool_manager.h"
 
 #define SSTR_BEG(str) (str->c)
 #define SSTR_END(str) (str->c + str->a)
@@ -51,9 +58,26 @@ ZEND_BEGIN_MODULE_GLOBALS(tarantool)
 	long sync_counter;
 	long retry_count;
 	double retry_sleep;
+	struct pool_manager *manager;
+	zend_bool persistent;
+	zend_bool deauthorize;
 ZEND_END_MODULE_GLOBALS(tarantool)
 
 ZEND_EXTERN_MODULE_GLOBALS(tarantool)
+
+typedef struct tarantool_object {
+	zend_object zo;
+	char *host;
+	int   port;
+	char *login;
+	char *passwd;
+	php_stream *stream;
+	smart_str  *value;
+	char  auth;
+	char *greeting;
+	char *salt;
+	zval *schema_hash;
+} tarantool_object;
 
 #ifdef ZTS
 #  define TARANTOOL_G(v) TSRMG(tarantool_globals_id, zend_tarantool_globals *, v)
