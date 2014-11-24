@@ -242,18 +242,17 @@ int __tarantool_reconnect(tarantool_object *obj, zval *id TSRMLS_DC) {
 
 static void tarantool_free(tarantool_object *obj TSRMLS_DC) {
 	if (!obj) return;
-	/*
 	if (TARANTOOL_G(deauthorize) && obj->stream) {
 		pefree(obj->login, 1);
 		obj->login  = pestrdup("guest", 1);
-		obj->passwd = pestrdup("guest", 1);
+		obj->passwd = NULL;
 		__tarantool_authenticate(obj);
-	}*/
+	}
 	pool_manager_push_assure(TARANTOOL_G(manager), obj);
-	pefree(obj->host, 1);
-//	pefree(obj->login, 1);
-//	pefree(obj->passwd, 1);
-	pefree(obj->greeting, 1);
+	if (obj->host)     pefree(obj->host, 1);
+//	if (obj->login)    pefree(obj->login, 1);
+//	if (obj->passwd)   pefree(obj->passwd, 1);
+	if (obj->greeting) pefree(obj->greeting, 1);
 	smart_str_free(obj->value);
 	pefree(obj->value, 1);
 	if (!TARANTOOL_G(persistent)) {

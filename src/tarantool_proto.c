@@ -21,15 +21,18 @@ static void php_tp_pack_header(smart_str *str, size_t size,
 	php_mp_pack_long(str, sync);
 }
 
-size_t php_tp_sizeof_auth(uint32_t sync, size_t ulen) {
-	return php_tp_sizeof_header(TNT_AUTH, sync) +
-		php_mp_sizeof_hash(2)               +
-		php_mp_sizeof_long(TNT_USERNAME)    +
-		php_mp_sizeof_string(ulen)          +
-		php_mp_sizeof_long(TNT_TUPLE)       +
-		php_mp_sizeof_array(2)              +
-		php_mp_sizeof_string(9)             +
+size_t php_tp_sizeof_auth(uint32_t sync, size_t ulen, zend_bool guest) {
+	size_t val = php_tp_sizeof_header(TNT_AUTH, sync) +
+		     php_mp_sizeof_hash(2)               +
+		     php_mp_sizeof_long(TNT_USERNAME)    +
+		     php_mp_sizeof_string(ulen)          +
+		     php_mp_sizeof_long(TNT_TUPLE)       +
+		     php_mp_sizeof_array((guest ? 0 : 2));
+	if (!guest) {
+		val += php_mp_sizeof_string(9)      +
 		php_mp_sizeof_string(SCRAMBLE_SIZE) ;
+	}
+	return val;
 }
 
 void php_tp_encode_auth(
@@ -38,7 +41,8 @@ void php_tp_encode_auth(
 		char * const username,
 		size_t username_len,
 		char * const scramble) {
-	size_t packet_size = php_tp_sizeof_auth(sync, username_len);
+	zend_bool guest = (strncmp(username, "guest", 6) == 0);
+	size_t packet_size = php_tp_sizeof_auth(sync, username_len, guest);
 	smart_str_ensure(str, packet_size + 5);
 	php_tp_pack_header(str, packet_size, TNT_AUTH, sync);
 
@@ -46,9 +50,11 @@ void php_tp_encode_auth(
 	php_mp_pack_long(str, TNT_USERNAME);
 	php_mp_pack_string(str, username, username_len);
 	php_mp_pack_long(str, TNT_TUPLE);
-	php_mp_pack_array(str, 2);
-	php_mp_pack_string(str, "chap-sha1", 9);
-	php_mp_pack_string(str, scramble, SCRAMBLE_SIZE);
+	php_mp_pack_array(str, (guest ? 0 : 2));
+	if (!guest) {
+		php_mp_pack_string(str, "chap-sha1", 9);
+		php_mp_pack_string(str, scramble, SCRAMBLE_SIZE);
+	}
 }
 
 size_t php_tp_sizeof_ping(uint32_t sync) {

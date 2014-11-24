@@ -67,7 +67,7 @@ enum tnt_iterator_type {
 	ITERATOR_BITSET_ALL_NOT_SET = 9
 };
 
-size_t php_tp_sizeof_auth(uint32_t sync, size_t ulen);
+size_t php_tp_sizeof_auth(uint32_t sync, size_t ulen, zend_bool guest);
 size_t php_tp_sizeof_ping(uint32_t sync);
 size_t php_tp_sizeof_select(uint32_t sync, uint32_t space_no,
 		uint32_t index_no, uint32_t limit,

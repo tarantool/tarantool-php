@@ -15,7 +15,7 @@ TAILQ_HEAD(pool_list, pool_value);
 
 struct pool_value {
 	php_stream *connection;
-	char *salt;
+	char *greeting;
 	zval *schema_hash;
 	TAILQ_ENTRY(pool_value) list_int;
 };

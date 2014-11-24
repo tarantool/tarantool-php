@@ -6,6 +6,7 @@
 
 #include "php_tarantool.h"
 #include "tarantool_manager.h"
+#include "tarantool_proto.h"
 
 #define mh_arg_t void *
 
@@ -80,7 +81,7 @@ int manager_entry_dequeue_delete (struct manager_entry *entry) {
 	TSRMLS_FETCH();
 
 	php_stream_close(pval->connection);
-	pefree(pval->salt, 1);
+	pefree(pval->greeting, 1);
 	zval_ptr_dtor(&pval->schema_hash);
 	TAILQ_REMOVE(entry->value, *entry->value->tqh_last, list_int);
 	--entry->size;
@@ -97,7 +98,8 @@ int manager_entry_pop_apply (
 	struct pool_value *pval = *entry->value->tqh_last;
 	TAILQ_REMOVE(entry->value, *entry->value->tqh_last, list_int);
 	obj->stream = pval->connection;
-	obj->salt = pval->salt;
+	obj->greeting = pval->greeting;
+	obj->salt = pval->greeting + SALT_PREFIX_SIZE;
 	obj->schema_hash = pval->schema_hash;
 	--entry->size;
 	return 0;
@@ -112,7 +114,7 @@ int manager_entry_enqueue_assure (
 		manager_entry_dequeue_delete(entry);
 	struct pool_value *temp_con = pemalloc(sizeof(struct pool_value), 1);
 	temp_con->connection = obj->stream;
-	temp_con->salt = obj->salt;
+	temp_con->greeting = obj->greeting;
 	temp_con->schema_hash = obj->schema_hash;
 	entry->size++;
 	TAILQ_INSERT_HEAD(entry->value, temp_con, list_int);
