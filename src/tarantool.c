@@ -779,16 +779,6 @@ PHP_RINIT_FUNCTION(tarantool) {
 
 static void
 php_tarantool_init_globals(zend_tarantool_globals *tarantool_globals) {
-	TSRMLS_FETCH();
-
-	TARANTOOL_G(sync_counter) = 0;
-	TARANTOOL_G(retry_count)  = INI_INT("tarantool.retry_count");
-	TARANTOOL_G(retry_sleep)  = INI_FLT("tarantool.retry_sleep");
-	zend_bool persistent  = INI_BOOL("tarantool.persistent");
-	zend_bool deauthorize = INI_BOOL("tarantool.deauthorize");
-	int con_per_host = INI_INT("tarantool.con_per_host");
-	TARANTOOL_G(deauthorize) = deauthorize;
-	TARANTOOL_G(manager) = pool_manager_create(persistent, con_per_host, deauthorize);
 }
 
 PHP_MINIT_FUNCTION(tarantool) {
@@ -804,6 +794,14 @@ PHP_MINIT_FUNCTION(tarantool) {
 	RLCI(BITSET_ALL_SET);
 	RLCI(BITSET_ANY_SET);
 	RLCI(BITSET_ALL_NOT_SET);
+	TARANTOOL_G(sync_counter) = 0;
+	TARANTOOL_G(retry_count)  = INI_INT("tarantool.retry_count");
+	TARANTOOL_G(retry_sleep)  = INI_FLT("tarantool.retry_sleep");
+	zend_bool persistent  = INI_BOOL("tarantool.persistent");
+	zend_bool deauthorize = INI_BOOL("tarantool.deauthorize");
+	int con_per_host = INI_INT("tarantool.con_per_host");
+	TARANTOOL_G(deauthorize) = deauthorize;
+	TARANTOOL_G(manager) = pool_manager_create(persistent, con_per_host, deauthorize);
 	zend_class_entry tarantool_class;
 	INIT_CLASS_ENTRY(tarantool_class, "Tarantool", tarantool_class_methods);
 	tarantool_class.create_object = tarantool_create;
