@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<package packagerversion="1.9.5" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0 http://pear.php.net/dtd/tasks-1.0.xsd http://pear.php.net/dtd/package-2.0 http://pear.php.net/dtd/package-2.0.xsd">
+ <name>Tarantool</name>
+ <channel>tarantool.github.io/tarantool-php/pecl</channel>
+ <summary>PHP extension for Tarantool</summary>
+ <description>PECL PHP driver for Tarantool
+    Tarantool is an in-memory database and Lua application server.
+    This package provides PECL PHP driver for Tarantool.</description>
+ <lead>
+  <name>Eugine Blikh</name>
+  <user>bigbes</user>
+  <email>bigbes@gmail.com</email>
+  <active>yes</active>
+ </lead>
+ <date>2014-12-01</date>
+ <time>11:03:23</time>
+ <version>
+  <release>0.0.4</release>
+  <api>0.0.4</api>
+ </version>
+ <stability>
+  <release>beta</release>
+  <api>beta</api>
+ </stability>
+ <license uri="http://opensource.org/licenses/mit-license.php">MIT</license>
+ <notes>
+-
+ </notes>
+ <contents>
+  <dir name="/">
+   <file md5sum="0bb969db5a7c973f2ea9e8b031feb3f0" name="src/third_party/msgpuck.c" role="src" />
+   <file md5sum="e70f843d6d5d16d8302acc46c4418fa7" name="src/third_party/msgpuck.h" role="src" />
+   <file md5sum="ac36327c0b812cd0728cddd041ac6654" name="src/php_tarantool.h" role="src" />
+   <file md5sum="26455cf06584bb028ef763c53cd59fdf" name="src/tarantool.c" role="src" />
+   <file md5sum="d13b0a20525a14883b90132f9bd5f188" name="src/tarantool_msgpack.c" role="src" />
+   <file md5sum="9b8980fbd5ffeec463679da87e3e0bbb" name="src/tarantool_msgpack.h" role="src" />
+   <file md5sum="9db7eb2387c25acfaf85e9d5a60d4294" name="src/tarantool_proto.c" role="src" />
+   <file md5sum="9d31d48cf3932620d35a083ffe7a076c" name="src/tarantool_proto.h" role="src" />
+   <file md5sum="d41d8cd98f00b204e9800998ecf8427e" name="lib/__init__.py" role="test" />
+   <file md5sum="702d4e44da832fbda4a1d824e8cd14bb" name="lib/tarantool_server.py" role="test" />
+   <file md5sum="c12b9fbe75b59ff97947e169b46224c3" name="test/shared/box.lua" role="test" />
+   <file md5sum="3b3d2957484ca00528fa7f2d15f66fdd" name="test/shared/tarantool.ini" role="test" />
+   <file md5sum="9ab8f0487e3b4564d7abb4ca5c05f581" name="test/shared/phpunit.xml" role="test" />
+   <file md5sum="23c1c123bb4f76433870f038cb2b6783" name="test/CreateTest.php" role="test" />
+   <file md5sum="f155064a3147d00341b1ec57eb34b8f9" name="test/MsgPackTest.php" role="test" />
+   <file md5sum="72cfd8ccabeb03e2644256610245ba6e" name="test/DMLTest.php" role="test" />
+   <file md5sum="f6663f1255dce426270826a6389ce6c7" name="test/phpunit.phar" role="test" />
+   <file md5sum="f6663f1255dce426270826a6389ce6c7" name="test/phpunit" role="test" />
+   <file md5sum="88f8b3d1dc71e154b05a5d04bf439902" name="config.m4" role="src" />
+   <file md5sum="1605b13d7086a2dddf3488b928daaaf9" name="test-run.py" role="test" />
+  </dir>
+ </contents>
+ <dependencies>
+  <required>
+   <php>
+    <min>5.3.0</min>
+    <max>6.0.0</max>
+    <exclude>6.0.0</exclude>
+   </php>
+   <pearinstaller>
+    <min>1.4.0</min>
+   </pearinstaller>
+  </required>
+ </dependencies>
+ <providesextension>tarantool</providesextension>
+ <extsrcrelease />
+ <changelog>
+  <release>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <version>
+    <release>0.0.4</release>
+    <api>0.0.4</api>
+   </version>
+   <date>2014-08-11</date>
+   <notes>
+tarantool-php 0.0.4
+
+Added connection pool for PHP-FPM, fixing memleaks, fixing msgpack
+   </notes>
+  </release>
+  <release>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <version>
+    <release>0.0.3</release>
+    <api>0.0.3</api>
+   </version>
+   <date>2014-08-11</date>
+   <notes>
+tarantool-php 0.0.3
+
+Continue with Tests, Fixing Bugs
+Adding global constants for different iterator types
+   </notes>
+  </release>
+  <release>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <version>
+    <release>0.0.2</release>
+    <api>0.0.2</api>
+   </version>
+   <date>2014-08-07</date>
+   <notes>
+tarantool-php 0.0.2
+
+Initial Release
+   </notes>
+  </release>
+ </changelog>
+</package>
