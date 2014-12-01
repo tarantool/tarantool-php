@@ -19,8 +19,8 @@ http://pear.php.net/dtd/package-2.0.xsd">
   </lead>
   <date>2014-08-11</date>
   <version>
-    <release>0.0.3</release>
-    <api>0.0.3</api>
+    <release>0.0.4</release>
+    <api>0.0.4</api>
   </version>
   <stability>
     <release>beta</release>
@@ -48,7 +48,7 @@ http://pear.php.net/dtd/package-2.0.xsd">
         <file role='test' name='__init__.py'/>
         <file role='test' name='tarantool_server.py'/>
       </dir> <!-- lib -->
-      <dir name='tests'>
+      <dir name='test'>
         <file role='test' name='CreateTest.php'/>
         <file role='test' name='MsgPackTest.php'/>
         <file role='test' name='DMLTest.php'/>
@@ -56,7 +56,6 @@ http://pear.php.net/dtd/package-2.0.xsd">
         <file role='test' name='phpunit'/>
         <dir name='shared'>
           <file role='test' name='box.lua'/>
-          <file role='test' name='php.ini'/>
           <file role='test' name='tarantool.ini'/>
           <file role='test' name='phpunit.xml'/>
         </dir> <!-- shared -->
@@ -78,6 +77,16 @@ http://pear.php.net/dtd/package-2.0.xsd">
   <providesextension>tarantool</providesextension>
   <extsrcrelease/>
   <changelog>
+    <release>
+      <stability><release>beta</release><api>beta</api></stability>
+      <version><release>0.0.4</release><api>0.0.4</api></version>
+      <date>2014-08-11</date>
+      <notes>
+        tarantool-php 0.0.4
+        
+        Added connection pool for PHP-FPM, fixing memleaks, fixing msgpack
+      </notes>
+    </release>
     <release>
       <stability><release>beta</release><api>beta</api></stability>
       <version><release>0.0.3</release><api>0.0.3</api></version>

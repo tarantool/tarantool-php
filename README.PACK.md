@@ -8,7 +8,7 @@ cp rpm/tarantool.ini ${HOME}/rpmbuild/SOURCES/
 rpmbuild -bb rpm/php-tarantool.spec
 ```
 When build will be ended you'll find you RPM in the `${HOME}/rpmbuild/(x86_64|i386)/`
-Current `${VERSION}` is `0.0.3`
+Current `${VERSION}` is `0.0.4`
 
 DEBIAN Package
 ===============================================================================
