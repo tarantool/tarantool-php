@@ -1,0 +1,96 @@
+{
+    "packages": {
+        "tarantool/tarantool-php": {
+            "0.0.4": {
+                "name": "tarantool/tarantool-php",
+                "version": "0.0.4",
+                "version_normalized": "0.0.4.0",
+                "source": {
+                    "type": "git",
+                    "url": "https://github.com/tarantool/tarantool-php.git",
+                    "reference": "8ac62ecf390c9d0a455e78b8229c5637255287a8"
+                },
+                "dist": {
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/tarantool/tarantool-php/zipball/8ac62ecf390c9d0a455e78b8229c5637255287a8",
+                    "reference": "8ac62ecf390c9d0a455e78b8229c5637255287a8",
+                    "shasum": ""
+                },
+                "require": {
+                    "composer/composer": "1.0.*@dev",
+                    "php": ">=5.3.0"
+                },
+                "time": "2014-12-01 12:05:21",
+                "type": "library",
+                "license": [
+                    "MIT"
+                ],
+                "authors": [
+                    {
+                        "name": "Eugine Blikh",
+                        "email": "bigbes@gmail.com",
+                        "homepage": "http://bigbe.su"
+                    }
+                ],
+                "description": "PECL PHP driver for Tarantool",
+                "homepage": "https://github.com/tarantool/tarantool-php",
+                "keywords": [
+                    "connector",
+                    "tarantool"
+                ],
+                "support": {
+                    "forum": "https://groups.google.com/forum/#!forum/tarantool",
+                    "irc": "irc://irc.freenode.org/tarantool",
+                    "support": "https://github.com/tarantool/tarantool-php/",
+                    "source": "https://github.com/tarantool/tarantool-php/tree/0.0.4",
+                    "issues": "https://github.com/tarantool/tarantool-php/issues"
+                }
+            },
+            "dev-master": {
+                "name": "tarantool/tarantool-php",
+                "version": "dev-master",
+                "version_normalized": "9999999-dev",
+                "source": {
+                    "type": "git",
+                    "url": "https://github.com/tarantool/tarantool-php.git",
+                    "reference": "8ac62ecf390c9d0a455e78b8229c5637255287a8"
+                },
+                "dist": {
+                    "type": "zip",
+                    "url": "https://api.github.com/repos/tarantool/tarantool-php/zipball/8ac62ecf390c9d0a455e78b8229c5637255287a8",
+                    "reference": "8ac62ecf390c9d0a455e78b8229c5637255287a8",
+                    "shasum": ""
+                },
+                "require": {
+                    "composer/composer": "1.0.*@dev",
+                    "php": ">=5.3.0"
+                },
+                "time": "2014-12-01 12:05:21",
+                "type": "library",
+                "license": [
+                    "MIT"
+                ],
+                "authors": [
+                    {
+                        "name": "Eugine Blikh",
+                        "email": "bigbes@gmail.com",
+                        "homepage": "http://bigbe.su"
+                    }
+                ],
+                "description": "PECL PHP driver for Tarantool",
+                "homepage": "https://github.com/tarantool/tarantool-php",
+                "keywords": [
+                    "connector",
+                    "tarantool"
+                ],
+                "support": {
+                    "forum": "https://groups.google.com/forum/#!forum/tarantool",
+                    "irc": "irc://irc.freenode.org/tarantool",
+                    "support": "https://github.com/tarantool/tarantool-php/",
+                    "source": "https://github.com/tarantool/tarantool-php/tree/0.0.4",
+                    "issues": "https://github.com/tarantool/tarantool-php/issues"
+                }
+            }
+        }
+    }
+}
