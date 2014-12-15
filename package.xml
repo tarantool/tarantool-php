@@ -38,6 +38,8 @@ http://pear.php.net/dtd/package-2.0.xsd">
         <file role='src' name='tarantool_msgpack.h'/>
         <file role='src' name='tarantool_proto.c'/>
         <file role='src' name='tarantool_proto.h'/>
+        <file role='src' name='tarantool_manager.c'/>
+        <file role='src' name='tarantool_manager.h'/>
         <dir name='third_party'>
           <file role='src' name='msgpuck.c'/>
           <file role='src' name='msgpuck.h'/>
@@ -83,7 +85,7 @@ http://pear.php.net/dtd/package-2.0.xsd">
       <date>2014-08-11</date>
       <notes>
         tarantool-php 0.0.4
-        
+
         Added connection pool for PHP-FPM, fixing memleaks, fixing msgpack
       </notes>
     </release>
