@@ -17,10 +17,10 @@ http://pear.php.net/dtd/package-2.0.xsd">
     <email>bigbes@gmail.com</email>
     <active>yes</active>
   </lead>
-  <date>2014-08-11</date>
+  <date>2015-02-09</date>
   <version>
-    <release>0.0.4</release>
-    <api>0.0.4</api>
+    <release>0.0.5</release>
+    <api>0.0.5</api>
   </version>
   <stability>
     <release>beta</release>
@@ -79,6 +79,14 @@ http://pear.php.net/dtd/package-2.0.xsd">
   <providesextension>tarantool</providesextension>
   <extsrcrelease/>
   <changelog>
+    <release>
+      <stability><release>beta</release><api>beta</api></stability>
+      <version><release>0.0.5</release><api>0.0.5</api></version>
+      <date>2014-02-09</date>
+      <notes>
+        tarantool-php 0.0.5
+      </notes>
+    </release>
     <release>
       <stability><release>beta</release><api>beta</api></stability>
       <version><release>0.0.4</release><api>0.0.4</api></version>

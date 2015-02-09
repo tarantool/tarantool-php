@@ -6,7 +6,7 @@
 extern zend_module_entry tarantool_module_entry;
 #define phpext_tarantool_ptr &tarantool_module_entry
 
-#define PHP_TARANTOOL_VERSION "0.0.4"
+#define PHP_TARANTOOL_VERSION "0.0.5"
 #define PHP_TARANTOOL_EXTNAME "tarantool"
 
 #ifdef PHP_WIN32
