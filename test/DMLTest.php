@@ -98,7 +98,7 @@ class DMLTest extends PHPUnit_Framework_TestCase
     public function test_06_update() {
         self::$tarantool->insert("test", array(1, 2, "test"));
         $result_tuple = array(
-            9,
+            1,
             18,
             "terrance and phillipe show",
             88,
@@ -110,11 +110,11 @@ class DMLTest extends PHPUnit_Framework_TestCase
                 "op" => "+",
                 "arg" => 16
             ),
-            array(
-                "field" => 0,
-                "op" => "=",
-                "arg" => 9
-            ),
+//            array(
+//                "field" => 0,
+//                "op" => "=",
+//                "arg" => 9
+//            ),
             array(
                 "field" => 3,
                 "op" => "=",
@@ -126,7 +126,7 @@ class DMLTest extends PHPUnit_Framework_TestCase
                 "arg" => intval(0x11111)
             ),
         ));
-        self::$tarantool->update("test", 9, array(
+        self::$tarantool->update("test", 1, array(
             array(
                 "field" => 3,
                 "op" => "-",
@@ -138,21 +138,21 @@ class DMLTest extends PHPUnit_Framework_TestCase
                 "arg" => intval(0x10101)
             )
         ));
-        self::$tarantool->update("test", 9, array(
+        self::$tarantool->update("test", 1, array(
             array(
                 "field" => 4,
                 "op" => "^",
                 "arg" => intval(0x11100)
             )
         ));
-        self::$tarantool->update("test", 9, array(
+        self::$tarantool->update("test", 1, array(
             array(
                 "field" => 4,
                 "op" => "|",
                 "arg" => intval(0x00010)
             )
         ));
-        $tuple = self::$tarantool->update("test", 9, array(
+        $tuple = self::$tarantool->update("test", 1, array(
             array(
                 "field" => 2,
                 "op" => ":",

@@ -26,11 +26,25 @@ def find_php_bin():
         return '~/.phpenv/versions/{0}/bin/php'.format(version.strip())
     return path
 
+def prepare_env():
+    if os.path.isdir('var'):
+        shutil.rmtree('var')
+    if not os.path.isdir('var') and not os.path.exists('var'):
+        os.mkdir('var')
+    shutil.copy('test/shared/phpunit.xml', 'var')
+    test_dir_path = os.path.abspath(os.path.join(os.getcwd(), 'test'))
+    test_lib_path = os.path.join(test_dir_path, 'phpunit.phar')
+    shutil.copy('test/shared/tarantool.ini', 'var')
+    shutil.copy('modules/tarantool.so', 'var')
+
 def main():
     path = os.path.dirname(sys.argv[0])
     if not path:
         path = '.'
     os.chdir(path)
+    if '--prepare' in sys.argv:
+        prepare_env()
+        exit(0)
     srv = None
     srv = TarantoolServer()
     srv.script = 'test/shared/box.lua'
@@ -51,11 +65,16 @@ def main():
         if '--valgrind' in sys.argv:
             cmd = cmd + 'valgrind --leak-check=full --log-file=php.out '
             cmd = cmd + '--suppressions=test/shared/valgrind.sup '
-            cmd = cmd + '--num-callers=40 ' + find_php_bin()
+            cmd = cmd + '--keep-stacktraces=alloc-and-free --freelist-vol=2000000000 '
+            cmd = cmd + '--malloc-fill=0 --free-fill=0 '
+            cmd = cmd + '--num-callers=50 ' + find_php_bin()
             cmd = cmd + ' -c tarantool.ini {0}'.format(test_lib_path)
         elif '--gdb' in sys.argv:
             cmd = cmd + 'gdb {0} --ex '.format(find_php_bin())
             cmd = cmd + '"set args -c tarantool.ini {0}"'.format(test_lib_path)
+        elif '--strace' in sys.argv:
+            cmd = cmd + 'strace ' + find_php_bin()
+            cmd = cmd + ' -c tarantool.ini {0}'.format(test_lib_path)
         else:
             cmd = '{0} -c tarantool.ini {1}'.format(find_php_bin(), test_lib_path)
 

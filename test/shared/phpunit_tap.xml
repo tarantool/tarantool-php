@@ -1,6 +1,7 @@
 <phpunit
   colors ="true"
   verbose="true"
+  printerClass="PHPUnit_Util_Log_TAP"
 >
   <testsuites>
     <testsuite name="Basic PHP Tests">

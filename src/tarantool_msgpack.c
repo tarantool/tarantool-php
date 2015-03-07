@@ -291,10 +291,10 @@ ptrdiff_t php_mp_unpack_map(zval **oval, char **str) {
 	array_init_size(*oval, len);
 	while (len-- > 0) {
 		zval *key = {0};
+		zval *value = {0};
 		if (php_mp_unpack(&key, str) == FAILURE) {
 			goto error;
 		}
-		zval *value = {0};
 		if (php_mp_unpack(&value, str) == FAILURE) {
 			goto error;
 		}

@@ -556,7 +556,7 @@ cleanup:
 void schema_flush(tarantool_object *obj TSRMLS_DC) {
 	HashTable *ht = HASH_OF(obj->schema_hash);
 	size_t n = zend_hash_num_elements(ht);
-	assert(n % 2 != 0);
+	assert(n % 2 == 0);
 	ulong *keys = calloc(sizeof(ulong), n/2 + 1);
 
 	char *key;
@@ -1061,11 +1061,15 @@ PHP_METHOD(tarantool_class, call) {
 	TARANTOOL_FETCH_OBJECT(obj, id);
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
 
-	tuple = pack_key(tuple, 1);
+	zval *tuple_new = pack_key(tuple, 1);
+	if (tuple_new != tuple) {
+		if (tuple) Z_ADDREF_P(tuple);
+		zval_ptr_dtor(&tuple_new);
+		if (tuple) Z_DELREF_P(tuple);
+	}
 
 	long sync = TARANTOOL_G(sync_counter)++;
 	php_tp_encode_call(obj->value, sync, proc, proc_len, tuple);
-	zval_ptr_dtor(&tuple);
 	if (tarantool_stream_send(obj TSRMLS_CC) == FAILURE)
 		RETURN_FALSE;
 
@@ -1098,7 +1102,7 @@ PHP_METHOD(tarantool_class, update) {
 		zval_ptr_dtor(&key_new);
 		if (key) Z_DELREF_P(key);
 	}
-	zval_ptr_dtor(&args);
+	//zval_ptr_dtor(&args);
 	if (tarantool_stream_send(obj TSRMLS_CC) == FAILURE)
 		RETURN_FALSE;
 
