@@ -3,6 +3,10 @@
     <p>Tarantool</p>
     <c>tarantool.github.io/tarantool-php/pecl</c>
     <r>
+        <v>0.0.6</v>
+        <s>beta</s>
+    </r>
+    <r>
         <v>0.0.5</v>
         <s>beta</s>
     </r>
