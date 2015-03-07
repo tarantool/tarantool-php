@@ -1,8 +1,0 @@
-{
-    "name": "Tarantool-PHP",
-    "homepage": "http://tarantool.github.io/tarantool-php/composer/",
-    "repositories": [
-        { "type": "vcs", "url": "http://github.com/tarantool/tarantool-php" }
-    ],
-    "require-all": true
-}
