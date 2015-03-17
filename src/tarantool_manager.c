@@ -57,7 +57,7 @@ int pool_manager_free (struct pool_manager *manager) {
 	mh_foreach(manager->pool, pos) {
 		struct manager_entry *pos_val_p = *mh_manager_node(manager->pool, pos);
 		pefree(pos_val_p->prep_line, 1);
-		while (*pos_val_p->value->tqh_last != NULL)
+		while (pos_val_p->value.end != NULL)
 			manager_entry_dequeue_delete(pos_val_p);
 		pefree(pos_val_p, 1);
 	}
@@ -71,19 +71,23 @@ struct manager_entry *manager_entry_create (
 	struct manager_entry *entry = pemalloc(sizeof(struct manager_entry), 1);
 	entry->prep_line = tarantool_tostr(obj, pool);
 	entry->size = 0;
-	entry->value = pemalloc(sizeof(struct pool_list), 1);
-	TAILQ_INIT(entry->value);
+	entry->value.begin = entry->value.end = 0;
 	return entry;
 }
 
 int manager_entry_dequeue_delete (struct manager_entry *entry) {
-	struct pool_value *pval = *entry->value->tqh_last;
+	struct pool_value *pval = entry->value.begin;
+	assert (pval != NULL);
 	TSRMLS_FETCH();
 
-	php_stream_close(pval->connection);
-	pefree(pval->greeting, 1);
-	zval_ptr_dtor(&pval->schema_hash);
-	TAILQ_REMOVE(entry->value, *entry->value->tqh_last, list_int);
+	if (pval->connection)  php_stream_close(pval->connection);
+	if (pval->greeting)    pefree(pval->greeting, 1);
+	if (pval->schema_hash) zval_ptr_dtor(&pval->schema_hash);
+	if (entry->value.begin == entry->value.end)
+		entry->value.begin = entry->value.end = NULL;
+	else
+		entry->value.begin = entry->value.begin->next;
+	pval->next = NULL;
 	--entry->size;
 	pefree(pval, 1);
 }
@@ -93,10 +97,13 @@ int manager_entry_pop_apply (
 		struct manager_entry *entry,
 		struct tarantool_object *obj
 ) {
-	if (*entry->value->tqh_last == NULL)
+	if (entry->value.end == NULL)
 		return 1;
-	struct pool_value *pval = *entry->value->tqh_last;
-	TAILQ_REMOVE(entry->value, *entry->value->tqh_last, list_int);
+	struct pool_value *pval = entry->value.end;
+	if (entry->value.begin == entry->value.end)
+		entry->value.begin = entry->value.end = NULL;
+	else
+		entry->value.begin = entry->value.begin->next;
 	obj->stream = pval->connection;
 	obj->greeting = pval->greeting;
 	obj->salt = pval->greeting + SALT_PREFIX_SIZE;
@@ -116,8 +123,13 @@ int manager_entry_enqueue_assure (
 	temp_con->connection = obj->stream;
 	temp_con->greeting = obj->greeting;
 	temp_con->schema_hash = obj->schema_hash;
+	temp_con->next = NULL;
 	entry->size++;
-	TAILQ_INSERT_HEAD(entry->value, temp_con, list_int);
+	if (entry->value.begin == NULL)
+		entry->value.begin = entry->value.end = temp_con;
+	else
+		entry->value.end = entry->value.end->next = temp_con;
+
 	return 0;
 }
 

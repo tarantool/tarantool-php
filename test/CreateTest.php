@@ -31,19 +31,24 @@ class CreateTest extends PHPUnit_Framework_TestCase
      * @expectedException Exception
      * @expectedExceptionMessage Failed to connect.
      */
-    public function test_02_create_error_host()
-    {
-        $a = new Tarantool('very_bad_host');
-        $a->connect();
+    public function test_02_create_error_host() {
+        (new Tarantool('very_bad_host'))->connect();
     }
 
     /**
      * @expectedException Exception
      * @expectedExceptionMessage Failed to connect.
      */
-    public function test_03_create_error_port()
+    public function test_03_create_error_port() {
+        (new Tarantool('localhost', 65500))->connect();
+    }
+
+    public function test_04_create_many_conns()
     {
-        $a = new Tarantool('localhost', 65500);
-        $a->connect();
+        $a = 1;
+        while ($a < 10) {
+            $this->assertTrue((new Tarantool('127.0.0.1', self::$port))->ping());
+            $a++;
+        }
     }
 }

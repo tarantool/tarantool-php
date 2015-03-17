@@ -11,21 +11,21 @@
 #include "third_party/PMurHash.h"
 #define MUR_SEED 13
 
-TAILQ_HEAD(pool_list, pool_value);
-
 struct pool_value {
 	php_stream *connection;
 	char *greeting;
 	zval *schema_hash;
-	TAILQ_ENTRY(pool_value) list_int;
+	struct pool_value *next;
 };
 
 struct manager_entry {
 	char *prep_line;
 	uint16_t size;
-	struct pool_list *value;
+	struct {
+		struct pool_value *begin;
+		struct pool_value *end;
+	} value;
 };
-
 
 struct mh_manager_t;
 

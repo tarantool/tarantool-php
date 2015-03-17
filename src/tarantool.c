@@ -208,6 +208,10 @@ int __tarantool_connect(tarantool_object *obj, zval *id TSRMLS_DC) {
 			goto authorize;
 		return status;
 	}
+	if (!obj->schema_hash) {
+		ALLOC_INIT_ZVAL(obj->schema_hash);
+		array_init(obj->schema_hash);
+	}
 	long count = TARANTOOL_G(retry_count);
 	long sec = TARANTOOL_G(retry_sleep);
 	struct timespec sleep_time = {
@@ -250,16 +254,16 @@ static void tarantool_free(tarantool_object *obj TSRMLS_DC) {
 	}
 	pool_manager_push_assure(TARANTOOL_G(manager), obj);
 	if (obj->host)     pefree(obj->host, 1);
-//	if (obj->login)    pefree(obj->login, 1);
-//	if (obj->passwd)   pefree(obj->passwd, 1);
-	if (obj->greeting) pefree(obj->greeting, 1);
-	smart_str_free(obj->value);
-	pefree(obj->value, 1);
-	if (!TARANTOOL_G(persistent)) {
+	if (obj->passwd)   pefree(obj->passwd, 1);
+	if (TARANTOOL_G(persistent) == 0) {
+		if (obj->greeting) pefree(obj->greeting, 1);
+		if (obj->login)    pefree(obj->login, 1);
 		tarantool_stream_close(obj TSRMLS_CC);
 		schema_flush(obj TSRMLS_CC);
 		zval_ptr_dtor(&obj->schema_hash);
 	}
+	smart_str_free(obj->value);
+	pefree(obj->value, 1);
 	pefree(obj, 1);
 }
 
@@ -798,9 +802,10 @@ PHP_MINIT_FUNCTION(tarantool) {
 	TARANTOOL_G(retry_count)  = INI_INT("tarantool.retry_count");
 	TARANTOOL_G(retry_sleep)  = INI_FLT("tarantool.retry_sleep");
 	zend_bool persistent  = INI_BOOL("tarantool.persistent");
+	TARANTOOL_G(persistent) = persistent;
 	zend_bool deauthorize = INI_BOOL("tarantool.deauthorize");
-	int con_per_host = INI_INT("tarantool.con_per_host");
 	TARANTOOL_G(deauthorize) = deauthorize;
+	int con_per_host = INI_INT("tarantool.con_per_host");
 	TARANTOOL_G(manager) = pool_manager_create(persistent, con_per_host, deauthorize);
 	zend_class_entry tarantool_class;
 	INIT_CLASS_ENTRY(tarantool_class, "Tarantool", tarantool_class_methods);
@@ -850,7 +855,6 @@ PHP_METHOD(tarantool_class, __construct) {
 	obj->salt = NULL;
 	obj->login = NULL;
 	obj->passwd = NULL;
-	ALLOC_INIT_ZVAL(obj->schema_hash); array_init(obj->schema_hash);
 	smart_str_ensure(obj->value, GREETING_SIZE);
 	return;
 }
@@ -914,7 +918,11 @@ PHP_METHOD(tarantool_class, close) {
 	TARANTOOL_PARSE_PARAMS(id, "", id);
 	TARANTOOL_FETCH_OBJECT(obj, id);
 
-	tarantool_stream_close(obj TSRMLS_CC);
+	if (TARANTOOL_G(persistent) == 0) {
+		tarantool_stream_close(obj TSRMLS_CC);
+		schema_flush(obj TSRMLS_CC);
+		zval_ptr_dtor(&obj->schema_hash);
+	}
 	RETURN_TRUE;
 }
 
