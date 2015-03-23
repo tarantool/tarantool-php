@@ -72,6 +72,7 @@ typedef struct tarantool_object {
 	char *login;
 	char *passwd;
 	php_stream *stream;
+	char *persistent_id;
 	smart_str  *value;
 	char  auth;
 	char *greeting;

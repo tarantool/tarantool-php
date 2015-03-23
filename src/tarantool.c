@@ -20,6 +20,7 @@
 
 #include "tarantool_msgpack.h"
 #include "tarantool_proto.h"
+#include "tarantool_manager.h"
 
 ZEND_DECLARE_MODULE_GLOBALS(tarantool)
 
@@ -115,7 +116,7 @@ static int tarantool_stream_open(tarantool_object *obj, int count TSRMLS_DC) {
 	char *dest_addr = NULL;
 	size_t dest_addr_len = spprintf(&dest_addr, 0, "tcp://%s:%d",
 					obj->host, obj->port);
-	int options = ENFORCE_SAFE_MODE | REPORT_ERRORS;
+	int options = ENFORCE_SAFE_MODE | REPORT_ERRORS | STREAM_OPEN_PERSISTENT;
 	int flags = STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT;
 	long time = floor(INI_FLT("tarantool.timeout"));
 	struct timeval timeout = {
@@ -127,8 +128,8 @@ static int tarantool_stream_open(tarantool_object *obj, int count TSRMLS_DC) {
 
 	php_stream *stream = php_stream_xport_create(dest_addr, dest_addr_len,
 						     options, flags,
-						     NULL, &timeout, NULL,
-						     &errstr, &errcode);
+						     obj->persistent_id, &timeout,
+						     NULL, &errstr, &errcode);
 	efree(dest_addr);
 	if (errcode || !stream) {
 		if (!count)
@@ -150,7 +151,7 @@ error:
 	if (count)
 		php_error(E_NOTICE, "Connection failed. %d attempts left", count);
 	if (errstr) efree(errstr);
-	if (stream) php_stream_close(stream);
+	if (stream) php_stream_pclose(stream);
 	return FAILURE;
 }
 
@@ -197,13 +198,22 @@ static size_t tarantool_stream_read(tarantool_object *obj,
 }
 
 static void tarantool_stream_close(tarantool_object *obj TSRMLS_DC) {
-	if (obj->stream) php_stream_close(obj->stream);
+	if (obj->stream) php_stream_pclose(obj->stream);
 	obj->stream = NULL;
 }
 
 int __tarantool_connect(tarantool_object *obj, zval *id TSRMLS_DC) {
 	int status = SUCCESS;
+	long count = TARANTOOL_G(retry_count);
+	long sec = TARANTOOL_G(retry_sleep);
+	struct timespec sleep_time = {
+		.tv_sec = sec,
+		.tv_nsec = (TARANTOOL_G(retry_sleep) - sec) * pow(10, 9)
+	};
 	if (pool_manager_find_apply(TARANTOOL_G(manager), obj) == 0) {
+		php_stream_from_persistent_id(obj->persistent_id, &obj->stream);
+		if (obj->stream == NULL)
+			goto retry;
 		if (TARANTOOL_G(deauthorize))
 			goto authorize;
 		return status;
@@ -212,13 +222,10 @@ int __tarantool_connect(tarantool_object *obj, zval *id TSRMLS_DC) {
 		ALLOC_INIT_ZVAL(obj->schema_hash);
 		array_init(obj->schema_hash);
 	}
-	long count = TARANTOOL_G(retry_count);
-	long sec = TARANTOOL_G(retry_sleep);
-	struct timespec sleep_time = {
-		.tv_sec = sec,
-		.tv_nsec = (TARANTOOL_G(retry_sleep) - sec) * pow(10, 9)
-	};
+retry:
 	while (1) {
+		if (obj->persistent_id) pefree(obj->persistent_id, 1);
+		obj->persistent_id = tarantool_stream_persistentid(obj);
 		if (tarantool_stream_open(obj, count TSRMLS_CC) == SUCCESS) {
 			if (tarantool_stream_read(obj, obj->greeting,
 						GREETING_SIZE TSRMLS_CC) == GREETING_SIZE) {
@@ -254,10 +261,10 @@ static void tarantool_free(tarantool_object *obj TSRMLS_DC) {
 	}
 	pool_manager_push_assure(TARANTOOL_G(manager), obj);
 	if (obj->host)     pefree(obj->host, 1);
-	if (obj->passwd)   pefree(obj->passwd, 1);
-	if (TARANTOOL_G(persistent) == 0) {
+	if (obj->login)    pefree(obj->login, 1);
+	if (obj->passwd)   efree(obj->passwd);
+	if (!TARANTOOL_G(persistent)) {
 		if (obj->greeting) pefree(obj->greeting, 1);
-		if (obj->login)    pefree(obj->login, 1);
 		tarantool_stream_close(obj TSRMLS_CC);
 		schema_flush(obj TSRMLS_CC);
 		zval_ptr_dtor(&obj->schema_hash);
@@ -815,8 +822,9 @@ PHP_MINIT_FUNCTION(tarantool) {
 }
 
 PHP_MSHUTDOWN_FUNCTION(tarantool) {
-	UNREGISTER_INI_ENTRIES();
 	pool_manager_free(TARANTOOL_G(manager));
+	printf("destroying");
+	UNREGISTER_INI_ENTRIES();
 	return SUCCESS;
 }
 
@@ -855,6 +863,7 @@ PHP_METHOD(tarantool_class, __construct) {
 	obj->salt = NULL;
 	obj->login = NULL;
 	obj->passwd = NULL;
+	obj->persistent_id = NULL;
 	smart_str_ensure(obj->value, GREETING_SIZE);
 	return;
 }
@@ -898,7 +907,7 @@ PHP_METHOD(tarantool_class, authenticate) {
 			&passwd, &passwd_len);
 	TARANTOOL_FETCH_OBJECT(obj, id);
 	obj->login = pestrdup(login, 1);
-	obj->passwd = passwd;
+	obj->passwd = estrdup(passwd);
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
 
 	if (__tarantool_authenticate(obj))
@@ -918,7 +927,7 @@ PHP_METHOD(tarantool_class, close) {
 	TARANTOOL_PARSE_PARAMS(id, "", id);
 	TARANTOOL_FETCH_OBJECT(obj, id);
 
-	if (TARANTOOL_G(persistent) == 0) {
+	if (!TARANTOOL_G(persistent)) {
 		tarantool_stream_close(obj TSRMLS_CC);
 		schema_flush(obj TSRMLS_CC);
 		zval_ptr_dtor(&obj->schema_hash);

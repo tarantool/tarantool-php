@@ -12,7 +12,8 @@
 #define MUR_SEED 13
 
 struct pool_value {
-	php_stream *connection;
+	// php_stream *connection;
+	char *persistent_id;
 	char *greeting;
 	zval *schema_hash;
 	struct pool_value *next;
@@ -37,6 +38,8 @@ struct pool_manager {
 };
 
 struct tarantool_object;
+
+char *tarantool_stream_persistentid(struct tarantool_object *);
 
 struct pool_manager *pool_manager_create (zend_bool, int, zend_bool);
 int                  pool_manager_free   (struct pool_manager *);
