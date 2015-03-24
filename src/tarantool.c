@@ -211,7 +211,7 @@ int __tarantool_connect(tarantool_object *obj, zval *id TSRMLS_DC) {
 		.tv_nsec = (TARANTOOL_G(retry_sleep) - sec) * pow(10, 9)
 	};
 	if (pool_manager_find_apply(TARANTOOL_G(manager), obj) == 0) {
-		php_stream_from_persistent_id(obj->persistent_id, &obj->stream);
+		php_stream_from_persistent_id(obj->persistent_id, &obj->stream TSRMLS_CC);
 		if (obj->stream == NULL)
 			goto retry;
 		if (TARANTOOL_G(deauthorize))
@@ -822,8 +822,7 @@ PHP_MINIT_FUNCTION(tarantool) {
 }
 
 PHP_MSHUTDOWN_FUNCTION(tarantool) {
-	pool_manager_free(TARANTOOL_G(manager));
-	printf("destroying");
+	//pool_manager_free(TARANTOOL_G(manager));
 	UNREGISTER_INI_ENTRIES();
 	return SUCCESS;
 }
