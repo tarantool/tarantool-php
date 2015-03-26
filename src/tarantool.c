@@ -1517,11 +1517,14 @@ io_buf_read_field(struct io_buf *buf, zval *tuple)
 			return false;
 		add_next_index_long(tuple, i32_val);
 		break;
+// working only on 64bit machine, else as string
+#ifdef ZEND_ENABLE_ZVAL_LONG64
 	case sizeof(int64_t):
 		if (!io_buf_read_int64(buf, &i64_val))
 			return false;
 		add_next_index_long(tuple, i64_val);
 		break;
+#endif
 	default:
 		if (!io_buf_read_str(buf, &str_val, field_length))
 			return false;
