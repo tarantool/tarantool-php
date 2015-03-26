@@ -58,7 +58,7 @@ void php_tp_encode_auth(
 }
 
 size_t php_tp_sizeof_ping(uint32_t sync) {
-	return php_tp_sizeof_header(TNT_AUTH, sync);
+	return php_tp_sizeof_header(TNT_PING, sync);
 }
 
 void php_tp_encode_ping(
