@@ -116,7 +116,10 @@ static int tarantool_stream_open(tarantool_object *obj, int count TSRMLS_DC) {
 	char *dest_addr = NULL;
 	size_t dest_addr_len = spprintf(&dest_addr, 0, "tcp://%s:%d",
 					obj->host, obj->port);
-	int options = ENFORCE_SAFE_MODE | REPORT_ERRORS | STREAM_OPEN_PERSISTENT;
+	int options = ENFORCE_SAFE_MODE | REPORT_ERRORS;
+	if (TARANTOOL_G(persistent)) {
+		options |= STREAM_OPEN_PERSISTENT;
+	}
 	int flags = STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT;
 	long time = floor(INI_FLT("tarantool.timeout"));
 	struct timeval timeout = {
@@ -210,7 +213,7 @@ int __tarantool_connect(tarantool_object *obj, zval *id TSRMLS_DC) {
 		.tv_sec = sec,
 		.tv_nsec = (TARANTOOL_G(retry_sleep) - sec) * pow(10, 9)
 	};
-	if (pool_manager_find_apply(TARANTOOL_G(manager), obj) == 0) {
+	if (TARANTOOL_G(persistent) && pool_manager_find_apply(TARANTOOL_G(manager), obj) == 0) {
 		php_stream_from_persistent_id(obj->persistent_id, &obj->stream TSRMLS_CC);
 		if (obj->stream == NULL)
 			goto retry;
@@ -218,14 +221,14 @@ int __tarantool_connect(tarantool_object *obj, zval *id TSRMLS_DC) {
 			goto authorize;
 		return status;
 	}
-	if (!obj->schema_hash) {
-		ALLOC_INIT_ZVAL(obj->schema_hash);
-		array_init(obj->schema_hash);
-	}
+	ALLOC_INIT_ZVAL(obj->schema_hash);
+	array_init(obj->schema_hash);
 retry:
 	while (1) {
-		if (obj->persistent_id) pefree(obj->persistent_id, 1);
-		obj->persistent_id = tarantool_stream_persistentid(obj);
+		if (TARANTOOL_G(persistent)) {
+			if (obj->persistent_id) pefree(obj->persistent_id, 1);
+			obj->persistent_id = tarantool_stream_persistentid(obj);
+		}
 		if (tarantool_stream_open(obj, count TSRMLS_CC) == SUCCESS) {
 			if (tarantool_stream_read(obj, obj->greeting,
 						GREETING_SIZE TSRMLS_CC) == GREETING_SIZE) {
@@ -259,15 +262,17 @@ static void tarantool_free(tarantool_object *obj TSRMLS_DC) {
 		obj->passwd = NULL;
 		__tarantool_authenticate(obj);
 	}
-	pool_manager_push_assure(TARANTOOL_G(manager), obj);
+	if (TARANTOOL_G(persistent)) {
+		pool_manager_push_assure(TARANTOOL_G(manager), obj);
+	}
 	if (obj->host)     pefree(obj->host, 1);
 	if (obj->login)    pefree(obj->login, 1);
 	if (obj->passwd)   efree(obj->passwd);
 	if (!TARANTOOL_G(persistent)) {
 		if (obj->greeting) pefree(obj->greeting, 1);
 		tarantool_stream_close(obj TSRMLS_CC);
-		schema_flush(obj TSRMLS_CC);
-		zval_ptr_dtor(&obj->schema_hash);
+		//schema_flush(obj TSRMLS_CC);
+		if (obj->schema_hash) zval_ptr_dtor(&obj->schema_hash);
 	}
 	smart_str_free(obj->value);
 	pefree(obj->value, 1);
@@ -863,6 +868,7 @@ PHP_METHOD(tarantool_class, __construct) {
 	obj->login = NULL;
 	obj->passwd = NULL;
 	obj->persistent_id = NULL;
+	obj->schema_hash = NULL;
 	smart_str_ensure(obj->value, GREETING_SIZE);
 	return;
 }
@@ -928,8 +934,10 @@ PHP_METHOD(tarantool_class, close) {
 
 	if (!TARANTOOL_G(persistent)) {
 		tarantool_stream_close(obj TSRMLS_CC);
-		schema_flush(obj TSRMLS_CC);
-		zval_ptr_dtor(&obj->schema_hash);
+		obj->stream = NULL;
+		//schema_flush(obj TSRMLS_CC);
+		if (obj->schema_hash != NULL) zval_ptr_dtor(&obj->schema_hash);
+		obj->schema_hash = NULL;
 	}
 	RETURN_TRUE;
 }
