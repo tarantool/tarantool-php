@@ -56,3 +56,7 @@ Simply add
 ## Building RPM/DEB/PECL Packages
 
 For building packages - please, read `README.PACK.md`
+
+## IDE autocompletion
+
+Add stubs/Tarantool.stub.php to IDE library path  
