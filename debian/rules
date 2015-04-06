@@ -6,19 +6,19 @@ phpapi	= $(shell php-config5 --phpapi)
 version = $(shell dpkg-parsechangelog \
 	|grep ^Version|awk '{print $$2}'|sed 's/-.*//')
 
-makebuilddir/libtarantool-php::
+makebuilddir/php5-tarantool::
 	phpize
 	./configure
 	make
-	echo "php:Depends=phpapi-$(phpapi)" > debian/libtarantool-php.substvars
+	echo "php:Depends=phpapi-$(phpapi)" > debian/php5-tarantool.substvars
 
-install/libtarantool-php::
-	install -m 0755 -d debian/libtarantool-php/usr/lib/php5/$(phpapi)/
-	install -m 0755 -d debian/libtarantool-php/etc/php5/mods-available/
+install/php5-tarantool::
+	install -m 0755 -d debian/php5-tarantool/usr/lib/php5/$(phpapi)/
+	install -m 0755 -d debian/php5-tarantool/etc/php5/mods-available/
 	install -m 0755 modules/tarantool.so \
-		debian/libtarantool-php/usr/lib/php5/$(phpapi)/
+		debian/php5-tarantool/usr/lib/php5/$(phpapi)/
 	echo extension=tarantool.so \
-		> debian/libtarantool-php/etc/php5/mods-available/tarantool.ini
+		> debian/php5-tarantool/etc/php5/mods-available/tarantool.ini
 
 clean::
 	phpize --clean
