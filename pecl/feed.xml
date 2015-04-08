@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>http://tarantool.github.io/tarantool-php/pecl</id>
-    <updated>2015-03-24T22:36:07+03:00</updated>
+    <updated>2015-04-08T13:05:36+00:00</updated>
     <title>Tarantool-PHP PEAR Channel Latest Releases</title>
     <link href="http://tarantool.github.io/tarantool-php/pecl/feed.xml" rel="self" />
     <author>
@@ -9,13 +9,29 @@
     </author>
 
     <entry>
+        <title>Tarantool 0.0.9 (beta)</title>
+        <link href="http://tarantool.github.io/tarantool-php/pecl/get/Tarantool-0.0.9.tgz" />
+        <id>http://tarantool.github.io/tarantool-php/pecl/get/Tarantool-0.0.9.tgz</id>
+        <author>
+            <name>bigbes</name>
+        </author>
+        <updated>2015-04-08T13:04:41+00:00</updated>
+        <content>
+            PECL PHP driver for Tarantool
+    Tarantool is an in-memory database and Lua application server.
+    This package provides PECL PHP driver for Tarantool.
+            
+-
+ 
+        </content>
+    </entry>    <entry>
         <title>Tarantool 0.0.8 (beta)</title>
         <link href="http://tarantool.github.io/tarantool-php/pecl/get/Tarantool-0.0.8.tgz" />
         <id>http://tarantool.github.io/tarantool-php/pecl/get/Tarantool-0.0.8.tgz</id>
         <author>
             <name>bigbes</name>
         </author>
-        <updated>2015-03-24T19:34:11+03:00</updated>
+        <updated>2015-03-24T19:34:11+00:00</updated>
         <content>
             PECL PHP driver for Tarantool
     Tarantool is an in-memory database and Lua application server.
@@ -31,7 +47,7 @@
         <author>
             <name>bigbes</name>
         </author>
-        <updated>2015-03-17T17:30:46+03:00</updated>
+        <updated>2015-03-17T17:30:46+00:00</updated>
         <content>
             PECL PHP driver for Tarantool
     Tarantool is an in-memory database and Lua application server.
@@ -47,7 +63,7 @@
         <author>
             <name>bigbes</name>
         </author>
-        <updated>2015-03-07T21:03:00+03:00</updated>
+        <updated>2015-03-07T21:03:00+00:00</updated>
         <content>
             PECL PHP driver for Tarantool
     Tarantool is an in-memory database and Lua application server.
@@ -63,7 +79,7 @@
         <author>
             <name>bigbes</name>
         </author>
-        <updated>2015-02-09T14:22:24+03:00</updated>
+        <updated>2015-02-09T14:22:24+00:00</updated>
         <content>
             PECL PHP driver for Tarantool
     Tarantool is an in-memory database and Lua application server.
@@ -79,7 +95,7 @@
         <author>
             <name>bigbes</name>
         </author>
-        <updated>2014-12-01T11:03:23+03:00</updated>
+        <updated>2014-12-01T11:03:23+00:00</updated>
         <content>
             PECL PHP driver for Tarantool
     Tarantool is an in-memory database and Lua application server.
@@ -95,7 +111,7 @@
         <author>
             <name>bigbes</name>
         </author>
-        <updated>2014-08-11T13:50:03+04:00</updated>
+        <updated>2014-08-11T13:50:03+00:00</updated>
         <content>
             PECL PHP driver for Tarantool
     Tarantool is an in-memory database and Lua application server.
