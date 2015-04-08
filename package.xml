@@ -17,10 +17,10 @@ http://pear.php.net/dtd/package-2.0.xsd">
     <email>bigbes@gmail.com</email>
     <active>yes</active>
   </lead>
-  <date>2015-03-24</date>
+  <date>2015-04-08</date>
   <version>
-    <release>0.0.8</release>
-    <api>0.0.8</api>
+    <release>0.0.9</release>
+    <api>0.0.9</api>
   </version>
   <stability>
     <release>beta</release>
@@ -34,15 +34,18 @@ http://pear.php.net/dtd/package-2.0.xsd">
       <dir name='src'>
         <file role='src' name='php_tarantool.h'/>
         <file role='src' name='tarantool.c'/>
+        <file role='src' name='tarantool_manager.c'/>
+        <file role='src' name='tarantool_manager.h'/>
         <file role='src' name='tarantool_msgpack.c'/>
         <file role='src' name='tarantool_msgpack.h'/>
         <file role='src' name='tarantool_proto.c'/>
         <file role='src' name='tarantool_proto.h'/>
-        <file role='src' name='tarantool_manager.c'/>
-        <file role='src' name='tarantool_manager.h'/>
         <dir name='third_party'>
+          <file role='src' name='mhash.h'/>
           <file role='src' name='msgpuck.c'/>
           <file role='src' name='msgpuck.h'/>
+          <file role='src' name='PMurHash.c'/>
+          <file role='src' name='PMurHash.h'/>
         </dir> <!-- third_party -->
       </dir> <!-- src -->
       <file role='test' name='test-run.py'/>
@@ -52,14 +55,15 @@ http://pear.php.net/dtd/package-2.0.xsd">
       </dir> <!-- lib -->
       <dir name='test'>
         <file role='test' name='CreateTest.php'/>
-        <file role='test' name='MsgPackTest.php'/>
         <file role='test' name='DMLTest.php'/>
-        <file role='test' name='phpunit.phar'/>
+        <file role='test' name='MsgPackTest.php'/>
         <file role='test' name='phpunit'/>
+        <file role='test' name='phpunit.phar'/>
         <dir name='shared'>
           <file role='test' name='box.lua'/>
           <file role='test' name='tarantool.ini'/>
           <file role='test' name='phpunit.xml'/>
+          <file role='test' name='valgrind.sup'/>
         </dir> <!-- shared -->
       </dir> <!-- tests -->
     </dir> <!-- / -->
@@ -79,6 +83,16 @@ http://pear.php.net/dtd/package-2.0.xsd">
   <providesextension>tarantool</providesextension>
   <extsrcrelease/>
   <changelog>
+    <release>
+      <stability><release>beta</release><api>beta</api></stability>
+      <version><release>0.0.9</release><api>0.0.9</api></version>
+      <date>2015-03-24</date>
+      <notes>
+        tarantool-php 0.0.9
+
+        Fix for build with pecl
+      </notes>
+    </release>
     <release>
       <stability><release>beta</release><api>beta</api></stability>
       <version><release>0.0.8</release><api>0.0.8</api></version>
