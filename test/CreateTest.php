@@ -51,4 +51,15 @@ class CreateTest extends PHPUnit_Framework_TestCase
             $a++;
         }
     }
+    public function test_05_flush()
+    {
+        $c = new Tarantool('localhost', self::$port);
+        $c->connect();
+        $this->assertTrue($c->ping());
+        $c->authenticate('test', 'test');
+        $c->select("test");
+        $c->flushSchema();
+        $c->select("test");
+        $c->flush_schema();
+    }
 }

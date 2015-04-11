@@ -77,6 +77,7 @@ zend_function_entry tarantool_module_functions[] = {
 	PHP_ME(tarantool_class, connect, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(tarantool_class, close, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(tarantool_class, flush_schema, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(tarantool_class, flushSchema, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(tarantool_class, authenticate, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(tarantool_class, ping, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(tarantool_class, select, NULL, ZEND_ACC_PUBLIC)
@@ -371,6 +372,7 @@ const zend_function_entry tarantool_class_methods[] = {
 	PHP_ME(tarantool_class, connect, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(tarantool_class, close, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(tarantool_class, flush_schema, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(tarantool_class, flushSchema, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(tarantool_class, authenticate, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(tarantool_class, ping, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(tarantool_class, select, NULL, ZEND_ACC_PUBLIC)
@@ -917,6 +919,14 @@ PHP_METHOD(tarantool_class, authenticate) {
 
 	if (__tarantool_authenticate(obj))
 		RETURN_FALSE;
+	RETURN_TRUE;
+}
+
+PHP_METHOD(tarantool_class, flushSchema) {
+	TARANTOOL_PARSE_PARAMS(id, "", id);
+	TARANTOOL_FETCH_OBJECT(obj, id);
+
+	schema_flush(obj TSRMLS_CC);
 	RETURN_TRUE;
 }
 
