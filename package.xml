@@ -17,10 +17,10 @@ http://pear.php.net/dtd/package-2.0.xsd">
     <email>bigbes@gmail.com</email>
     <active>yes</active>
   </lead>
-  <date>2015-04-08</date>
+  <date>2015-04-14</date>
   <version>
-    <release>0.0.9</release>
-    <api>0.0.9</api>
+    <release>0.0.10</release>
+    <api>0.0.10</api>
   </version>
   <stability>
     <release>beta</release>
@@ -83,6 +83,19 @@ http://pear.php.net/dtd/package-2.0.xsd">
   <providesextension>tarantool</providesextension>
   <extsrcrelease/>
   <changelog>
+    <release>
+      <stability><release>beta</release><api>beta</api></stability>
+      <version><release>0.0.10</release><api>0.0.10</api></version>
+      <date>2015-03-24</date>
+      <notes>
+        tarantool-php 0.0.10
+        
+        Add alias for flush_schema -> flushSchema
+        Add eval to commands
+        Fix segfaults when args are empty in eval/call
+        Add RTree constants
+      </notes>
+    </release>
     <release>
       <stability><release>beta</release><api>beta</api></stability>
       <version><release>0.0.9</release><api>0.0.9</api></version>
