@@ -84,6 +84,7 @@ zend_function_entry tarantool_module_functions[] = {
 	PHP_ME(tarantool_class, insert, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(tarantool_class, replace, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(tarantool_class, call, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(tarantool_class, eval, NULL, ZEND_ACC_PUBLIC)
 	{NULL, NULL, NULL}
 };
 
@@ -379,6 +380,7 @@ const zend_function_entry tarantool_class_methods[] = {
 	PHP_ME(tarantool_class, insert, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(tarantool_class, replace, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(tarantool_class, call, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(tarantool_class, eval, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(tarantool_class, delete, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(tarantool_class, update, NULL, ZEND_ACC_PUBLIC)
 	{NULL, NULL, NULL}
@@ -812,6 +814,8 @@ PHP_MINIT_FUNCTION(tarantool) {
 	RLCI(BITSET_ALL_SET);
 	RLCI(BITSET_ANY_SET);
 	RLCI(BITSET_ALL_NOT_SET);
+	RLCI(OVERLAPS);
+	RLCI(NEIGHBOR);
 	TARANTOOL_G(sync_counter) = 0;
 	TARANTOOL_G(retry_count)  = INI_INT("tarantool.retry_count");
 	TARANTOOL_G(retry_sleep)  = INI_FLT("tarantool.retry_sleep");
@@ -1096,14 +1100,41 @@ PHP_METHOD(tarantool_class, call) {
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
 
 	zval *tuple_new = pack_key(tuple, 1);
+
+	long sync = TARANTOOL_G(sync_counter)++;
+	php_tp_encode_call(obj->value, sync, proc, proc_len, tuple_new);
 	if (tuple_new != tuple) {
 		if (tuple) Z_ADDREF_P(tuple);
 		zval_ptr_dtor(&tuple_new);
 		if (tuple) Z_DELREF_P(tuple);
 	}
+	if (tarantool_stream_send(obj TSRMLS_CC) == FAILURE)
+		RETURN_FALSE;
+
+	zval *header, *body;
+	if (tarantool_step_recv(obj, sync, &header, &body TSRMLS_CC) == FAILURE)
+		RETURN_FALSE;
+
+	TARANTOOL_RETURN_DATA(body, header, body);
+}
+
+PHP_METHOD(tarantool_class, eval) {
+	char *proc; size_t proc_len;
+	zval *tuple = NULL;
+
+	TARANTOOL_PARSE_PARAMS(id, "s|z", &proc, &proc_len, &tuple);
+	TARANTOOL_FETCH_OBJECT(obj, id);
+	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
+
+	zval *tuple_new = pack_key(tuple, 1);
 
 	long sync = TARANTOOL_G(sync_counter)++;
-	php_tp_encode_call(obj->value, sync, proc, proc_len, tuple);
+	php_tp_encode_eval(obj->value, sync, proc, proc_len, tuple_new);
+	if (tuple_new != tuple) {
+		if (tuple) Z_ADDREF_P(tuple);
+		zval_ptr_dtor(&tuple_new);
+		if (tuple) Z_DELREF_P(tuple);
+	}
 	if (tarantool_stream_send(obj TSRMLS_CC) == FAILURE)
 		RETURN_FALSE;
 

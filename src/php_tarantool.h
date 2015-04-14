@@ -50,6 +50,7 @@ PHP_METHOD(tarantool_class, select);
 PHP_METHOD(tarantool_class, insert);
 PHP_METHOD(tarantool_class, replace);
 PHP_METHOD(tarantool_class, call);
+PHP_METHOD(tarantool_class, eval);
 PHP_METHOD(tarantool_class, delete);
 PHP_METHOD(tarantool_class, update);
 PHP_METHOD(tarantool_class, flush_schema);

@@ -42,3 +42,28 @@ if not box.space.msgpack then
    msgpack:insert{3, 'array with float key as key', {[{[2.7] = 3, [7] = 7}] = {1, 2, 3}}}
    msgpack:insert{6, 'array with string key as key', {['megusta'] = {1, 2, 3}}}
 end
+
+function test_1()
+    require('log').error('1')
+    return true, {
+        c= {
+            ['106']= {1, 1428578535},
+            ['2']= {1, 1428578535}
+        },
+        pc= {
+            ['106']= {1, 1428578535, 9243},
+            ['2']= {1, 1428578535, 9243}
+        },
+        s= {1, 1428578535},
+        u= 1428578535,
+        v= {}
+    }, true
+end
+
+function test_2()
+    return { k2= 'v', k1= 'v2'}
+end
+
+function test_3(x, y)
+    return x + y
+end

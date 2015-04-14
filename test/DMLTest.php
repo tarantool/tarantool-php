@@ -231,4 +231,31 @@ class DMLTest extends PHPUnit_Framework_TestCase
                 "Three fields must be provided") !== False);
         }
     }
+
+    public function test_12_call() {
+        $this->assertEquals(self::$tarantool->call("test_2"), array('0' => array('0' => array('k1' => v2,'k2' => v))));
+        $this->assertEquals(self::$tarantool->call("test_3", array(3, 4)), array('0' => array('0' => 7)));
+    }
+
+    public function test_13_eval() {
+        $this->assertEquals(self::$tarantool->eval("return test_1()"), array(
+            '0' => 1,
+            '1' => array(
+                    's' => array('0' => 1,'1' => 1428578535),
+                    'u' => 1428578535,
+                    'v' => array(),
+                    'c' => array(
+                            '2' => array('0' => 1,'1' => 1428578535),
+                            '106' => array('0' => 1,'1' => 1428578535)
+                        ),
+                    'pc' => array(
+                            '2' => array('0' => 1,'1' => 1428578535,'2' => 9243),
+                            '106' => array('0' => 1,'1' => 1428578535,'2' => 9243)
+                        )
+                ),
+            '2' => 1
+        ));
+        $this->assertEquals(self::$tarantool->eval("return test_2()"), array('0' => array('k1' => v2,'k2' => v)));
+        $this->assertEquals(self::$tarantool->eval("return test_3(...)", array(3, 4)), array('0' => 7));
+    }
 }
