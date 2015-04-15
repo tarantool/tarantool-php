@@ -257,5 +257,6 @@ class DMLTest extends PHPUnit_Framework_TestCase
         ));
         $this->assertEquals(self::$tarantool->eval("return test_2()"), array('0' => array('k1' => v2,'k2' => v)));
         $this->assertEquals(self::$tarantool->eval("return test_3(...)", array(3, 4)), array('0' => 7));
+        $this->assertEquals(self::$tarantool->evaluate("return test_3(...)", array(3, 4)), array('0' => 7));
     }
 }
