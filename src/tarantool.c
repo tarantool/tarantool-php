@@ -284,16 +284,29 @@ static void tarantool_free(tarantool_object *obj TSRMLS_DC) {
 }
 
 static zend_object_value tarantool_create(zend_class_entry *entry TSRMLS_DC) {
-	zend_object_value new_value;
+	zend_object_value retval;
+	tarantool_object *obj = NULL;
 
-	tarantool_object *obj = (tarantool_object *)pecalloc(sizeof(tarantool_object), 1, 1);
+	obj = (tarantool_object *)pecalloc(sizeof(tarantool_object), 1, 1);
 	zend_object_std_init(&obj->zo, entry TSRMLS_CC);
-	new_value.handle = zend_objects_store_put(obj,
+#if PHP_VERSION_ID >= 50400
+	object_properties_init((zend_object *)obj, entry);
+#else
+	{
+		zval *tmp;
+		zend_hash_copy(obj->zo.properties,
+				&entry->default_properties,
+				(copy_ctor_func_t) zval_add_ref,
+				(void *)&tmp,
+				sizeof(zval *));
+	}
+#endif
+	retval.handle = zend_objects_store_put(obj,
 			(zend_objects_store_dtor_t )zend_objects_destroy_object,
 			(zend_objects_free_object_storage_t )tarantool_free,
 			NULL TSRMLS_CC);
-	new_value.handlers = zend_get_std_object_handlers();
-	return new_value;
+	retval.handlers = zend_get_std_object_handlers();
+	return retval;
 }
 
 static int64_t tarantool_step_recv(
