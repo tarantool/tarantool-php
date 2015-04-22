@@ -3,6 +3,7 @@
 
 #include <sys/time.h>
 #include <time.h>
+#include <limits.h>
 
 #include <php.h>
 #include <php_ini.h>
@@ -972,7 +973,7 @@ PHP_METHOD(tarantool_class, ping) {
 PHP_METHOD(tarantool_class, select) {
 	zval *space = NULL, *index = NULL;
 	zval *key = NULL, *key_new = NULL;
-	long limit = -1, offset = 0, iterator = 0;
+	long limit = LONG_MAX-1, offset = 0, iterator = 0;
 
 	TARANTOOL_PARSE_PARAMS(id, "z|zzlll", &space, &key,
 			&index, &limit, &offset, &iterator);

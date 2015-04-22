@@ -6,7 +6,7 @@ box.cfg{
    listen           = os.getenv('PRIMARY_PORT'),
    log_level        = 5,
    logger           = 'tarantool.log',
-   slab_alloc_arena = 4
+   slab_alloc_arena = 0.2
 }
 
 lp = {

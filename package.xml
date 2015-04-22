@@ -19,8 +19,8 @@ http://pear.php.net/dtd/package-2.0.xsd">
   </lead>
   <date>2015-04-14</date>
   <version>
-    <release>0.0.10</release>
-    <api>0.0.10</api>
+    <release>0.0.11</release>
+    <api>0.0.11</api>
   </version>
   <stability>
     <release>beta</release>
@@ -83,6 +83,16 @@ http://pear.php.net/dtd/package-2.0.xsd">
   <providesextension>tarantool</providesextension>
   <extsrcrelease/>
   <changelog>
+    <release>
+      <stability><release>beta</release><api>beta</api></stability>
+      <version><release>0.0.11</release><api>0.0.11</api></version>
+      <date>2015-04-22</date>
+      <notes>
+        tarantool-php 0.0.11
+        
+        Fix select error on 32bit systems, update version of rpm packages
+      </notes>
+    </release>
     <release>
       <stability><release>beta</release><api>beta</api></stability>
       <version><release>0.0.10</release><api>0.0.10</api></version>

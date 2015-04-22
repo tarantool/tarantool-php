@@ -18,7 +18,7 @@ def read_popen(cmd):
     return path.stdout.read()
 
 def find_php_bin():
-    path = read_popen('which php')
+    path = read_popen('which php').strip()
     if (path.find('phpenv') != -1):
         version = read_popen('phpenv global')
         if (version.find('system') != -1):
@@ -76,7 +76,9 @@ def main():
             cmd = cmd + 'strace ' + find_php_bin()
             cmd = cmd + ' -c tarantool.ini {0}'.format(test_lib_path)
         else:
+            print find_php_bin()
             cmd = '{0} -c tarantool.ini {1}'.format(find_php_bin(), test_lib_path)
+            print cmd
 
         print('Running ' + repr(cmd))
         version = read_popen('php-config --version').strip(' \n\t') + '.'
