@@ -35,3 +35,9 @@ Makefile.in
 *.pyc
 *.out
 var*
+config.guess.cdbs-orig
+config.sub.cdbs-orig
+debian/files
+debian/php5-tarantool.debhelper.log
+debian/php5-tarantool.substvars
+debian/php5-tarantool/
