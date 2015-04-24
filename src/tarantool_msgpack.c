@@ -284,20 +284,52 @@ ptrdiff_t php_mp_unpack_double(zval **oval, char **str) {
 	return mp_sizeof_double(val);
 }
 
+static const char *op_to_string(zend_uchar type) {
+	switch(type) {
+	case(IS_NULL):
+		return "NULL";
+	case(IS_LONG):
+		return "LONG";
+	case(IS_DOUBLE):
+		return "DOUBLE";
+	case(IS_BOOL):
+		return "BOOL";
+	case(IS_ARRAY):
+		return "ARRAY";
+	case(IS_OBJECT):
+		return "OBJECT";
+	case(IS_STRING):
+		return "STRING";
+	case(IS_RESOURCE):
+		return "RESOURCE";
+	case(IS_CONSTANT):
+		return "CONSTANT";
+	case(IS_CONSTANT_ARRAY):
+		return "CONSTANT_ARRAY";
+	case(IS_CALLABLE):
+		return "CALLABLE";
+	default:
+		return "UNKNOWN";
+	}
+}
+
 ptrdiff_t php_mp_unpack_map(zval **oval, char **str) {
 	TSRMLS_FETCH();
 	ALLOC_INIT_ZVAL(*oval);
 	size_t len = mp_decode_map((const char **)str);
 	array_init_size(*oval, len);
 	while (len-- > 0) {
-		zval *key = {0};
-		zval *value = {0};
+		zval *key = NULL;
+		zval *value = NULL;
 		if (php_mp_unpack(&key, str) == FAILURE) {
+			key = NULL;
 			goto error;
 		}
 		if (php_mp_unpack(&value, str) == FAILURE) {
+			value = NULL;
 			goto error;
 		}
+		Z_ADDREF_P(value);
 		switch (Z_TYPE_P(key)) {
 		case IS_LONG:
 			add_index_zval(*oval, Z_LVAL_P(key), value);
@@ -311,7 +343,7 @@ ptrdiff_t php_mp_unpack_map(zval **oval, char **str) {
 			/* FALLTHROUGH */
 		default:
 			THROW_EXC("Can't create Array - key value"
-					" not of type LONG/STRING");
+				" not of type %s", op_to_string(Z_TYPE_P(key)));
 			goto error;
 			break;
 		}
@@ -332,9 +364,13 @@ ptrdiff_t php_mp_unpack_array(zval **oval, char **str) {
 	array_init_size(*oval, len);
 	while (len-- > 0) {
 		zval *value = {0};
-		php_mp_unpack(&value, str);
+		if (php_mp_unpack(&value, str) == FAILURE) {
+			zval_ptr_dtor(oval);
+			return FAILURE;
+		}
 		add_next_index_zval(*oval, value);
 	}
+	return SUCCESS;
 }
 
 ssize_t php_mp_unpack(zval **oval, char **str) {
@@ -373,7 +409,7 @@ ssize_t php_mp_unpack(zval **oval, char **str) {
 	case MP_EXT:
 		break;
 	default:
-		break;
+		return FAILURE;
 	}
 }
 

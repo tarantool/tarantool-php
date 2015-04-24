@@ -340,6 +340,7 @@ static int64_t tarantool_step_recv(
 		goto error;
 	}
 	if (php_mp_unpack(header, &pos) == FAILURE) {
+		*header = NULL;
 		goto error;
 	}
 	if (php_mp_check(pos, body_size)) {
@@ -347,6 +348,7 @@ static int64_t tarantool_step_recv(
 		goto error;
 	}
 	if (php_mp_unpack(body, &pos) == FAILURE) {
+		*body = NULL;
 		goto error;
 	}
 
@@ -447,6 +449,7 @@ zval *pack_key(zval *args, char select) {
 		return arr;
 	}
 	array_init_size(arr, 1);
+	Z_ADDREF_P(args);
 	add_next_index_zval(arr, args);
 	return arr;
 }
@@ -639,10 +642,11 @@ int schema_add_space(tarantool_object *obj, uint32_t space_no,
 	ALLOC_INIT_ZVAL(i_hash); array_init(i_hash);
 	add_next_index_long(s_hash, space_no);
 	add_next_index_stringl(s_hash, space_name, space_len, 1);
+	Z_ADDREF_P(i_hash);
 	add_next_index_zval(s_hash, i_hash);
 
-	add_index_zval(obj->schema_hash, space_no, s_hash);
 	Z_ADDREF_P(s_hash);
+	add_index_zval(obj->schema_hash, space_no, s_hash);
 	add_assoc_zval_ex(obj->schema_hash, space_name, space_len, s_hash);
 }
 
@@ -708,6 +712,7 @@ int get_spaceno_by_name(tarantool_object *obj, zval *id, zval *name TSRMLS_DC) {
 	ALLOC_INIT_ZVAL(spaceno); ZVAL_LONG(spaceno, SPACE_SPACE);
 	ALLOC_INIT_ZVAL(indexno); ZVAL_LONG(indexno, INDEX_SPACE_NAME);
 	zval *retval; ALLOC_INIT_ZVAL(retval);
+	Z_ADDREF_P(name);
 	add_next_index_zval(key, name);
 	zval *args[] = {id, spaceno, key, indexno};
 	call_user_function(NULL, &obj, fname, retval, 4, args TSRMLS_CC);
@@ -737,9 +742,7 @@ int get_spaceno_by_name(tarantool_object *obj, zval *id, zval *name TSRMLS_DC) {
 	}
 	space_no = Z_LVAL_PP(field);
 cleanup:
-	Z_ADDREF_P(name);
 	zval_ptr_dtor(&key);
-	Z_DELREF_P(name);
 	zval_ptr_dtor(&fname);
 	zval_ptr_dtor(&spaceno);
 	zval_ptr_dtor(&indexno);
@@ -767,6 +770,7 @@ int get_indexno_by_name(tarantool_object *obj, zval *id,
 	ALLOC_INIT_ZVAL(indexno); ZVAL_LONG(indexno, INDEX_INDEX_NAME);
 	zval *retval; ALLOC_INIT_ZVAL(retval);
 	add_next_index_long(key, space_no);
+	Z_ADDREF_P(name);
 	add_next_index_zval(key, name);
 	zval *args[] = {id, spaceno, key, indexno};
 	call_user_function(NULL, &obj, fname, retval, 4, args TSRMLS_CC);
@@ -795,9 +799,7 @@ int get_indexno_by_name(tarantool_object *obj, zval *id,
 	}
 	index_no = Z_LVAL_PP(field);
 cleanup:
-	Z_ADDREF_P(name);
 	zval_ptr_dtor(&key);
-	Z_DELREF_P(name);
 	zval_ptr_dtor(&fname);
 	zval_ptr_dtor(&retval);
 	zval_ptr_dtor(&spaceno);
@@ -1006,9 +1008,7 @@ PHP_METHOD(tarantool_class, select) {
 	php_tp_encode_select(obj->value, sync, space_no, index_no,
 			limit, offset, iterator, key_new);
 	if (key != key_new) {
-		if (key) Z_ADDREF_P(key);
 		zval_ptr_dtor(&key_new);
-		if (key) Z_DELREF_P(key);
 	}
 	if (tarantool_stream_send(obj TSRMLS_CC) == FAILURE)
 		RETURN_FALSE;
@@ -1085,9 +1085,7 @@ PHP_METHOD(tarantool_class, delete) {
 	long sync = TARANTOOL_G(sync_counter)++;
 	php_tp_encode_delete(obj->value, sync, space_no, key);
 	if (key != key_new) {
-		if (key) Z_ADDREF_P(key);
 		zval_ptr_dtor(&key_new);
-		if (key) Z_DELREF_P(key);
 	}
 	if (tarantool_stream_send(obj TSRMLS_CC) == FAILURE)
 		RETURN_FALSE;
@@ -1112,9 +1110,7 @@ PHP_METHOD(tarantool_class, call) {
 	long sync = TARANTOOL_G(sync_counter)++;
 	php_tp_encode_call(obj->value, sync, proc, proc_len, tuple_new);
 	if (tuple_new != tuple) {
-		if (tuple) Z_ADDREF_P(tuple);
 		zval_ptr_dtor(&tuple_new);
-		if (tuple) Z_DELREF_P(tuple);
 	}
 	if (tarantool_stream_send(obj TSRMLS_CC) == FAILURE)
 		RETURN_FALSE;
@@ -1139,9 +1135,7 @@ PHP_METHOD(tarantool_class, eval) {
 	long sync = TARANTOOL_G(sync_counter)++;
 	php_tp_encode_eval(obj->value, sync, proc, proc_len, tuple_new);
 	if (tuple_new != tuple) {
-		if (tuple) Z_ADDREF_P(tuple);
 		zval_ptr_dtor(&tuple_new);
-		if (tuple) Z_DELREF_P(tuple);
 	}
 	if (tarantool_stream_send(obj TSRMLS_CC) == FAILURE)
 		RETURN_FALSE;
@@ -1171,9 +1165,7 @@ PHP_METHOD(tarantool_class, update) {
 	long sync = TARANTOOL_G(sync_counter)++;
 	php_tp_encode_update(obj->value, sync, space_no, key_new, args);
 	if (key != key_new) {
-		if (key) Z_ADDREF_P(key);
 		zval_ptr_dtor(&key_new);
-		if (key) Z_DELREF_P(key);
 	}
 	//zval_ptr_dtor(&args);
 	if (tarantool_stream_send(obj TSRMLS_CC) == FAILURE)
