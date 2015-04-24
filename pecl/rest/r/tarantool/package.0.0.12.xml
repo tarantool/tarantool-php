@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<package packagerversion="1.9.4" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0 http://pear.php.net/dtd/tasks-1.0.xsd http://pear.php.net/dtd/package-2.0 http://pear.php.net/dtd/package-2.0.xsd">
+ <name>Tarantool</name>
+ <channel>tarantool.github.io/tarantool-php/pecl</channel>
+ <summary>PHP extension for Tarantool</summary>
+ <description>PECL PHP driver for Tarantool
+    Tarantool is an in-memory database and Lua application server.
+    This package provides PECL PHP driver for Tarantool.</description>
+ <lead>
+  <name>Eugine Blikh</name>
+  <user>bigbes</user>
+  <email>bigbes@gmail.com</email>
+  <active>yes</active>
+ </lead>
+ <date>2015-04-24</date>
+ <time>17:42:46</time>
+ <version>
+  <release>0.0.12</release>
+  <api>0.0.12</api>
+ </version>
+ <stability>
+  <release>beta</release>
+  <api>beta</api>
+ </stability>
+ <license uri="http://opensource.org/licenses/mit-license.php">MIT</license>
+ <notes>
+-
+ </notes>
+ <contents>
+  <dir name="/">
+   <file md5sum="00b3dc77197e4915998a4ccb5b6af9fa" name="src/third_party/mhash.h" role="src" />
+   <file md5sum="0bb969db5a7c973f2ea9e8b031feb3f0" name="src/third_party/msgpuck.c" role="src" />
+   <file md5sum="e70f843d6d5d16d8302acc46c4418fa7" name="src/third_party/msgpuck.h" role="src" />
+   <file md5sum="dfea25529b203a4d65f4011aa03d4cdd" name="src/third_party/PMurHash.c" role="src" />
+   <file md5sum="c806b4442393a4ece2d675b0a8e7f3ed" name="src/third_party/PMurHash.h" role="src" />
+   <file md5sum="b8ec4174dd9763304d054387bc39fba7" name="src/php_tarantool.h" role="src" />
+   <file md5sum="3a466904d12e2d641c9fd0effd02502b" name="src/tarantool.c" role="src" />
+   <file md5sum="09dba5a7106313900352fb541b09d224" name="src/tarantool_manager.c" role="src" />
+   <file md5sum="da45ebb7d4da5216d63e3d9019b9b2eb" name="src/tarantool_manager.h" role="src" />
+   <file md5sum="1ad08b383e167536b98e714b37bf5e44" name="src/tarantool_msgpack.c" role="src" />
+   <file md5sum="9b8980fbd5ffeec463679da87e3e0bbb" name="src/tarantool_msgpack.h" role="src" />
+   <file md5sum="068a5c9575ddbfefc549c67f4543849b" name="src/tarantool_proto.c" role="src" />
+   <file md5sum="bc4bd94fad73ce2e06496cc1500791fc" name="src/tarantool_proto.h" role="src" />
+   <file md5sum="d41d8cd98f00b204e9800998ecf8427e" name="lib/__init__.py" role="test" />
+   <file md5sum="61b0ab10e82858626638fd4af2a69388" name="lib/tarantool_server.py" role="test" />
+   <file md5sum="ade9e1c3621b3114800461f2bc6f9f1e" name="test/shared/box.lua" role="test" />
+   <file md5sum="3e24a33e1952ff2f8b66ef6b1a79dfd1" name="test/shared/tarantool.ini" role="test" />
+   <file md5sum="412c5982e5935187b36253bf5cfd229c" name="test/shared/phpunit.xml" role="test" />
+   <file md5sum="83da8822755347778c178c12d060169a" name="test/shared/valgrind.sup" role="test" />
+   <file md5sum="be64709c8e4d480763820ec5850ea402" name="test/CreateTest.php" role="test" />
+   <file md5sum="9ed536efc68289c230d086ff52180031" name="test/DMLTest.php" role="test" />
+   <file md5sum="f155064a3147d00341b1ec57eb34b8f9" name="test/MsgPackTest.php" role="test" />
+   <file md5sum="f6663f1255dce426270826a6389ce6c7" name="test/phpunit" role="test" />
+   <file md5sum="f6663f1255dce426270826a6389ce6c7" name="test/phpunit.phar" role="test" />
+   <file md5sum="88f8b3d1dc71e154b05a5d04bf439902" name="config.m4" role="src" />
+   <file md5sum="ca790371c8e9613793ec7d44e69f91c0" name="test-run.py" role="test" />
+  </dir>
+ </contents>
+ <dependencies>
+  <required>
+   <php>
+    <min>5.3.0</min>
+    <max>6.0.0</max>
+    <exclude>6.0.0</exclude>
+   </php>
+   <pearinstaller>
+    <min>1.4.0</min>
+   </pearinstaller>
+  </required>
+ </dependencies>
+ <providesextension>tarantool</providesextension>
+ <extsrcrelease />
+ <changelog>
+  <release>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <version>
+    <release>0.0.12</release>
+    <api>0.0.12</api>
+   </version>
+   <date>2015-04-24</date>
+   <notes>
+tarantool-php 0.0.12
+
+Fix couple of segfaults and memory leaks
+   </notes>
+  </release>
+  <release>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <version>
+    <release>0.0.11</release>
+    <api>0.0.11</api>
+   </version>
+   <date>2015-04-22</date>
+   <notes>
+tarantool-php 0.0.11
+
+Fix select error on 32bit systems, update version of rpm packages
+   </notes>
+  </release>
+  <release>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <version>
+    <release>0.0.10</release>
+    <api>0.0.10</api>
+   </version>
+   <date>2015-03-24</date>
+   <notes>
+tarantool-php 0.0.10
+
+Add alias for flush_schema -&gt; flushSchema
+Add eval to commands
+Fix segfaults when args are empty in eval/call
+Add RTree constants
+   </notes>
+  </release>
+  <release>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <version>
+    <release>0.0.9</release>
+    <api>0.0.9</api>
+   </version>
+   <date>2015-03-24</date>
+   <notes>
+tarantool-php 0.0.9
+
+Fix for build with pecl
+   </notes>
+  </release>
+  <release>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <version>
+    <release>0.0.8</release>
+    <api>0.0.8</api>
+   </version>
+   <date>2015-03-24</date>
+   <notes>
+tarantool-php 0.0.8
+
+Fixing avito segfaults, remove obsolete cleanups
+   </notes>
+  </release>
+  <release>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <version>
+    <release>0.0.7</release>
+    <api>0.0.7</api>
+   </version>
+   <date>2015-03-17</date>
+   <notes>
+tarantool-php 0.0.7
+
+Fixing avito segfaults
+   </notes>
+  </release>
+  <release>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <version>
+    <release>0.0.6</release>
+    <api>0.0.5</api>
+   </version>
+   <date>2015-03-08</date>
+   <notes>
+tarantool-php 0.0.6
+
+Fixing some segfaults
+   </notes>
+  </release>
+  <release>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <version>
+    <release>0.0.5</release>
+    <api>0.0.5</api>
+   </version>
+   <date>2014-02-09</date>
+   <notes>
+tarantool-php 0.0.5
+   </notes>
+  </release>
+  <release>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <version>
+    <release>0.0.4</release>
+    <api>0.0.4</api>
+   </version>
+   <date>2014-08-11</date>
+   <notes>
+tarantool-php 0.0.4
+
+Added connection pool for PHP-FPM, fixing memleaks, fixing msgpack
+   </notes>
+  </release>
+  <release>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <version>
+    <release>0.0.3</release>
+    <api>0.0.3</api>
+   </version>
+   <date>2014-08-11</date>
+   <notes>
+tarantool-php 0.0.3
+
+Continue with Tests, Fixing Bugs
+Adding global constants for different iterator types
+   </notes>
+  </release>
+  <release>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <version>
+    <release>0.0.2</release>
+    <api>0.0.2</api>
+   </version>
+   <date>2014-08-07</date>
+   <notes>
+tarantool-php 0.0.2
+
+Initial Release
+   </notes>
+  </release>
+ </changelog>
+</package>
