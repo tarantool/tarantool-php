@@ -304,10 +304,14 @@ static const char *op_to_string(zend_uchar type) {
 		return "RESOURCE";
 	case(IS_CONSTANT):
 		return "CONSTANT";
+#ifdef IS_CONSTANT_ARRAY
 	case(IS_CONSTANT_ARRAY):
 		return "CONSTANT_ARRAY";
+#endif
+#ifdef IS_CALLABLE
 	case(IS_CALLABLE):
 		return "CALLABLE";
+#endif
 	default:
 		return "UNKNOWN";
 	}

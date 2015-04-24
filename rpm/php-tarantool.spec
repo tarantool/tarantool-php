@@ -3,13 +3,13 @@
 %global php_version %(php-config --version 2>/dev/null || echo 0)
 
 Name: php-tarantool
-Version: 0.0.11
+Version: 0.0.12
 Release: 1%{?dist}
 Summary: PECL PHP driver for Tarantool/Box
 Group: Development/Languages
 License: MIT
 URL: https://github.com/tarantool/tarantool-php/
-Source0: https://github.com/tarantool/tarantool-php/archive/0.0.11.tar.gz
+Source0: https://github.com/tarantool/tarantool-php/archive/0.0.12.tar.gz
 Source1: tarantool.ini
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: php-devel
@@ -21,7 +21,7 @@ Tarantool is an in-memory database and Lua application server.
 This package provides PECL PHP driver for Tarantool/Box.
 
 %prep
-%setup -q -c tarantool-php-0.0.11
+%setup -q -c tarantool-php-0.0.12
 %build
 %{_bindir}/phpize
 %configure

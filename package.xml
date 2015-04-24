@@ -85,6 +85,16 @@ http://pear.php.net/dtd/package-2.0.xsd">
   <changelog>
     <release>
       <stability><release>beta</release><api>beta</api></stability>
+      <version><release>0.0.12</release><api>0.0.12</api></version>
+      <date>2015-04-22</date>
+      <notes>
+        tarantool-php 0.0.12
+        
+        Fix couple of segfaults and memory leaks
+      </notes>
+    </release>
+    <release>
+      <stability><release>beta</release><api>beta</api></stability>
       <version><release>0.0.11</release><api>0.0.11</api></version>
       <date>2015-04-22</date>
       <notes>
