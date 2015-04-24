@@ -329,7 +329,6 @@ ptrdiff_t php_mp_unpack_map(zval **oval, char **str) {
 			value = NULL;
 			goto error;
 		}
-		Z_ADDREF_P(value);
 		switch (Z_TYPE_P(key)) {
 		case IS_LONG:
 			add_index_zval(*oval, Z_LVAL_P(key), value);

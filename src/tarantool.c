@@ -263,6 +263,7 @@ static void tarantool_free(tarantool_object *obj TSRMLS_DC) {
 	if (TARANTOOL_G(deauthorize) && obj->stream) {
 		pefree(obj->login, 1);
 		obj->login  = pestrdup("guest", 1);
+		if (obj->passwd) efree(obj->passwd);
 		obj->passwd = NULL;
 		__tarantool_authenticate(obj);
 	}
