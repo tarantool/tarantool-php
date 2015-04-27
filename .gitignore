@@ -31,6 +31,7 @@ Makefile.in
 /tarantool.la
 /test/var/
 *.lo
+*.loT
 *.libs
 *.pyc
 *.out

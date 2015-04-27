@@ -12,10 +12,9 @@
 #define MUR_SEED 13
 
 struct pool_value {
-	// php_stream *connection;
 	char *persistent_id;
 	char *greeting;
-	zval *schema_hash;
+	struct tarantool_schema *schema;
 	struct pool_value *next;
 };
 

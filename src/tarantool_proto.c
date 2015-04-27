@@ -30,7 +30,7 @@ size_t php_tp_sizeof_auth(uint32_t sync, size_t ulen, zend_bool guest) {
 		     php_mp_sizeof_array((guest ? 0 : 2));
 	if (!guest) {
 		val += php_mp_sizeof_string(9)      +
-		php_mp_sizeof_string(SCRAMBLE_SIZE) ;
+		php_mp_sizeof_string(PHP_SCRAMBLE_SIZE) ;
 	}
 	return val;
 }
@@ -53,7 +53,7 @@ void php_tp_encode_auth(
 	php_mp_pack_array(str, (guest ? 0 : 2));
 	if (!guest) {
 		php_mp_pack_string(str, "chap-sha1", 9);
-		php_mp_pack_string(str, scramble, SCRAMBLE_SIZE);
+		php_mp_pack_string(str, scramble, PHP_SCRAMBLE_SIZE);
 	}
 }
 
@@ -233,3 +233,60 @@ void php_tp_encode_update(smart_str *str, uint32_t sync,
 	php_mp_pack_long(str, TNT_TUPLE);
 	php_mp_pack(str, args);
 }
+
+int64_t php_tp_response(struct tnt_response *r, char *buf, size_t size)
+{
+	memset(r, 0, sizeof(*r));
+	const char *p = buf;
+	/* len */
+	uint32_t len = size;
+	/* header */
+	if (mp_typeof(*p) != MP_MAP)
+		return -1;
+	uint32_t n = mp_decode_map(&p);
+	while (n-- > 0) {
+		if (mp_typeof(*p) != MP_UINT)
+			return -1;
+		uint32_t key = mp_decode_uint(&p);
+		if (mp_typeof(*p) != MP_UINT)
+			return -1;
+		switch (key) {
+		case TNT_SYNC:
+			r->sync = mp_decode_uint(&p);
+			break;
+		case TNT_CODE:
+			r->code = mp_decode_uint(&p);
+			break;
+		default:
+			return -1;
+		}
+		r->bitmap |= (1ULL << key);
+	}
+	/* body */
+	if (mp_typeof(*p) != MP_MAP)
+		return -1;
+	n = mp_decode_map(&p);
+	while (n-- > 0) {
+		uint32_t key = mp_decode_uint(&p);
+		switch (key) {
+		case TNT_ERROR:
+			if (mp_typeof(*p) != MP_STR)
+				return -1;
+			uint32_t elen = 0;
+			r->error = mp_decode_str(&p, &elen);
+			r->error_len = elen;
+			r->code &= ((1 << 15) - 1);
+			break;
+		case TNT_DATA:
+			if (mp_typeof(*p) != MP_ARRAY)
+				return -1;
+			r->data = p;
+			mp_next(&p);
+			r->data_len = p - r->data;
+			break;
+		}
+		r->bitmap |= (1ULL << key);
+	}
+	return p - buf;
+}
+

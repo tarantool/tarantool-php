@@ -1,14 +1,14 @@
 #ifndef PHP_TP_H
 #define PHP_TP_H
 
-#define SALT64_SIZE      44
-#define SALT_SIZE        64
-#define SCRAMBLE_SIZE    20
-#define GREETING_SIZE    128
-#define SALT_PREFIX_SIZE 64
+#define SALT64_SIZE       44
+#define SALT_SIZE         64
+#define PHP_SCRAMBLE_SIZE 20
+#define GREETING_SIZE     128
+#define SALT_PREFIX_SIZE  64
 
-#define SPACE_SPACE   280
-#define SPACE_INDEX   288
+#define SPACE_SPACE 281
+#define SPACE_INDEX 289
 
 #define INDEX_SPACE_NAME    2
 #define INDEX_INDEX_NAME    2
@@ -70,6 +70,19 @@ enum tnt_iterator_type {
 	ITERATOR_OVERLAPS = 10,
 	ITERATOR_NEIGHBOR = 11,
 };
+
+struct tnt_response {
+	uint64_t    bitmap;
+	const char *buf;
+	uint32_t    code;
+	uint32_t    sync;
+	const char *error;
+	size_t      error_len;
+	const char *data;
+	size_t      data_len;
+};
+
+int64_t php_tp_response(struct tnt_response *r, char *buf, size_t size);
 
 void php_tp_encode_auth(smart_str *str, uint32_t sync,
 		char * const username, size_t username_len,

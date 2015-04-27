@@ -24,7 +24,7 @@ int smart_str_ensure(smart_str *str, size_t len) {
 	if (SSTR_LEN(str) + len > needed)
 		needed = SSTR_LEN(str) + len;
 	register size_t __n1;
-	smart_str_alloc4(str, needed, 0, __n1);
+	smart_str_alloc4(str, needed, 1, __n1);
 	return 0;
 }
 

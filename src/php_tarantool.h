@@ -54,7 +54,6 @@ PHP_METHOD(tarantool_class, eval);
 PHP_METHOD(tarantool_class, delete);
 PHP_METHOD(tarantool_class, update);
 PHP_METHOD(tarantool_class, flush_schema);
-PHP_METHOD(tarantool_class, flushSchema);
 
 ZEND_BEGIN_MODULE_GLOBALS(tarantool)
 	long sync_counter;
@@ -69,17 +68,18 @@ ZEND_EXTERN_MODULE_GLOBALS(tarantool)
 
 typedef struct tarantool_object {
 	zend_object zo;
-	char *host;
-	int   port;
-	char *login;
-	char *passwd;
+	char       *host;
+	int         port;
+	char       *login;
+	char       *passwd;
 	php_stream *stream;
-	char *persistent_id;
+	char       *persistent_id;
 	smart_str  *value;
-	char  auth;
-	char *greeting;
-	char *salt;
-	zval *schema_hash;
+	struct tp  *tps;
+	char        auth;
+	char       *greeting;
+	char       *salt;
+	struct tarantool_schema *schema;
 } tarantool_object;
 
 #ifdef ZTS

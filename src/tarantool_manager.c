@@ -52,7 +52,7 @@ struct pool_manager *pool_manager_create (
 		int max_per_host,
 		zend_bool deauthorize
 ) {
-	struct pool_manager *manager = pecalloc(1, sizeof(struct pool_manager), 1);
+	struct pool_manager *manager = pemalloc(sizeof(struct pool_manager), 1);
 	manager->max_per_host = max_per_host;
 	manager->persistent = persistent;
 	manager->deauthorize = deauthorize;
@@ -78,7 +78,7 @@ struct manager_entry *manager_entry_create (
 		struct pool_manager *pool,
 		struct tarantool_object *obj
 ) {
-	struct manager_entry *entry = pecalloc(1, sizeof(struct manager_entry), 1);
+	struct manager_entry *entry = pemalloc(sizeof(struct manager_entry), 1);
 	entry->prep_line = tarantool_tostr(obj, pool);
 	entry->size = 0;
 	entry->value.begin = entry->value.end = 0;
@@ -92,9 +92,9 @@ int manager_entry_dequeue_delete (struct manager_entry *entry) {
 
 	if (pval->greeting)      pefree(pval->greeting, 1);
 	if (pval->persistent_id) pefree(pval->persistent_id, 1);
-	if (pval->schema_hash) {
-		zval_ptr_dtor(&pval->schema_hash);
-		pval->schema_hash = NULL;
+	if (pval->schema) {
+		tarantool_schema_destroy(pval->schema);
+		pval->schema = NULL;
 	}
 	if (entry->value.begin == entry->value.end)
 		entry->value.begin = entry->value.end = NULL;
@@ -120,9 +120,10 @@ int manager_entry_pop_apply (
 	if (obj->persistent_id) pefree(obj->persistent_id, 1);
 	if (obj->greeting)      pefree(obj->greeting, 1);
 	obj->persistent_id = pval->persistent_id;
+//	printf("%p %p\n", obj->greeting, pval->greeting);
 	obj->greeting = pval->greeting;
 	obj->salt = pval->greeting + SALT_PREFIX_SIZE;
-	obj->schema_hash = pval->schema_hash;
+	obj->schema = pval->schema;
 	--entry->size;
 	return 0;
 }
@@ -134,14 +135,14 @@ int manager_entry_enqueue_assure (
 ) {
 	if (entry->size == pool->max_per_host)
 		manager_entry_dequeue_delete(entry);
-	struct pool_value *temp_con = pecalloc(1, sizeof(struct pool_value), 1);
+	struct pool_value *temp_con = pemalloc(sizeof(struct pool_value), 1);
 	temp_con->persistent_id = obj->persistent_id;
 	temp_con->greeting = obj->greeting;
-	temp_con->schema_hash = obj->schema_hash;
+	temp_con->schema = obj->schema;
 	temp_con->next = NULL;
 	obj->persistent_id = NULL;
 	obj->greeting = NULL;
-	obj->schema_hash = NULL;
+	obj->schema = NULL;
 	entry->size++;
 	if (entry->value.begin == NULL)
 		entry->value.begin = entry->value.end = temp_con;
