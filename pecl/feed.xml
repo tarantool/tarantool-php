@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>http://tarantool.github.io/tarantool-php/pecl</id>
-    <updated>2015-04-29T14:49:29+00:00</updated>
+    <updated>2015-04-29T15:14:50+00:00</updated>
     <title>Tarantool-PHP PEAR Channel Latest Releases</title>
     <link href="http://tarantool.github.io/tarantool-php/pecl/feed.xml" rel="self" />
     <author>
