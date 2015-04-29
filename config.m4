@@ -12,6 +12,8 @@ if test "$PHP_TARANTOOL" != "no"; then
         src/tarantool_proto.c           \
         src/tarantool_tp.c              \
         src/third_party/msgpuck.c       \
+        src/third_party/sha1.c          \
+        src/third_party/base64.c        \
         src/third_party/PMurHash.c      \
         , $ext_shared)
 fi

@@ -1234,11 +1234,11 @@ tp_xor(unsigned char *to, const unsigned char *left,
 }
 
 /**
- * scramble_prepare
+ * tp_scramble_prepare
  * The function is for internal use, not part of the API
  */
-/* static inline void
-scramble_prepare(void *out, const void *salt, const void *password,
+static inline void
+tp_scramble_prepare(void *out, const void *salt, const void *password,
 		 int password_len)
 {
 	unsigned char hash1[SCRAMBLE_SIZE];
@@ -1260,7 +1260,7 @@ scramble_prepare(void *out, const void *salt, const void *password,
 
 	tp_xor((unsigned char *) out, hash1, (const unsigned char *) out,
 	       SCRAMBLE_SIZE);
-}*/
+}
 
 /**
  * Create an auth request.
@@ -1273,6 +1273,7 @@ scramble_prepare(void *out, const void *salt, const void *password,
 static inline char *
 tp_auth(struct tp *p, const char *salt_base64, const char *user, int ulen, const char *pass, int plen)
 {
+	char guest = (strncmp(user, "guest", 6) == 0);
 	int sz = 5 +
 		mp_sizeof_map(2) +
 		mp_sizeof_uint(TP_CODE) +
@@ -1282,10 +1283,13 @@ tp_auth(struct tp *p, const char *salt_base64, const char *user, int ulen, const
 		mp_sizeof_map(2) +
 		mp_sizeof_uint(TP_USERNAME) +
 		mp_sizeof_str(ulen) +
-		mp_sizeof_uint(TP_TUPLE) +
-		mp_sizeof_array(2) +
-		mp_sizeof_str(0) +
-		mp_sizeof_str(SCRAMBLE_SIZE);
+		mp_sizeof_uint(TP_TUPLE);
+	if (!guest)
+		sz += mp_sizeof_array(2) +
+		      mp_sizeof_str(0) +
+		      mp_sizeof_str(SCRAMBLE_SIZE);
+	else
+		sz += mp_sizeof_array(0);
 	if (tpunlikely(tp_ensure(p, sz) == -1))
 		return NULL;
 	p->size = p->p;
@@ -1301,14 +1305,18 @@ tp_auth(struct tp *p, const char *salt_base64, const char *user, int ulen, const
 	h = mp_encode_uint(h, TP_USERNAME);
 	h = mp_encode_str(h, user, ulen);
 	h = mp_encode_uint(h, TP_TUPLE);
-	h = mp_encode_array(h, 2);
-	h = mp_encode_str(h, 0, 0);
+	if (!guest) {
+		h = mp_encode_array(h, 2);
+		h = mp_encode_str(h, 0, 0);
 
-	char salt[64];
-	base64_decode(salt_base64, 44, salt, 64);
-	char scramble[SCRAMBLE_SIZE];
-	/*scramble_prepare(scramble, salt, pass, plen);*/
-	h = mp_encode_str(h, scramble, SCRAMBLE_SIZE);
+		char salt[64];
+		base64_decode(salt_base64, 44, salt, 64);
+		char scramble[SCRAMBLE_SIZE];
+		tp_scramble_prepare(scramble, salt, pass, plen);
+		h = mp_encode_str(h, scramble, SCRAMBLE_SIZE);
+	} else {
+		h = mp_encode_array(h, 0);
+	}
 
 	return tp_add(p, sz);
 }
@@ -1735,7 +1743,7 @@ tp_reply(struct tpresponse *r, const char * const buf, size_t size)
 }
 
 /**
- * Return the current request id
+ * Return the current response id
  */
 static inline uint32_t
 tp_getreqid(struct tpresponse *r)

@@ -229,7 +229,7 @@ int __tarantool_connect(tarantool_object *obj, zval *id TSRMLS_DC) {
 retry:
 	while (1) {
 		if (TARANTOOL_G(persistent)) {
-			if (obj->persistent_id) pefree(obj->persistent_id, 1);
+		if (obj->persistent_id) pefree(obj->persistent_id, 1);
 			obj->persistent_id = tarantool_stream_persistentid(obj);
 		}
 		if (tarantool_stream_open(obj, count TSRMLS_CC) == SUCCESS) {
@@ -247,8 +247,10 @@ retry:
 		nanosleep(&sleep_time, NULL);
 	}
 authorize:
-	if (obj->login != NULL && obj->passwd != NULL)
+	if (obj->login != NULL && obj->passwd != NULL) {
+		tarantool_schema_flush(obj->schema);
 		__tarantool_authenticate(obj);
+	}
 	return status;
 }
 
@@ -264,6 +266,7 @@ static void tarantool_free(tarantool_object *obj TSRMLS_DC) {
 		obj->login  = pestrdup("guest", 1);
 		if (obj->passwd) efree(obj->passwd);
 		obj->passwd = NULL;
+		tarantool_schema_flush(obj->schema);
 		__tarantool_authenticate(obj);
 	}
 	if (TARANTOOL_G(persistent)) {
@@ -405,39 +408,6 @@ const zend_function_entry tarantool_class_methods[] = {
 };
 
 /* ####################### HELPERS ####################### */
-
-static void
-xor(unsigned char *to, unsigned const char *left,
-	unsigned const char *right, uint32_t len)
-{
-	const uint8_t *end = to + len;
-	while (to < end)
-		*to++= *left++ ^ *right++;
-}
-
-static inline void
-scramble_prepare(void *out, const void *salt,
-		 const void *password, int password_len)
-{
-	unsigned char hash1[PHP_SCRAMBLE_SIZE];
-	unsigned char hash2[PHP_SCRAMBLE_SIZE];
-	PHP_SHA1_CTX ctx;
-
-	PHP_SHA1Init(&ctx);
-	PHP_SHA1Update(&ctx, (const unsigned char *)password, password_len);
-	PHP_SHA1Final(hash1, &ctx);
-
-	PHP_SHA1Init(&ctx);
-	PHP_SHA1Update(&ctx, (const unsigned char *)hash1, PHP_SCRAMBLE_SIZE);
-	PHP_SHA1Final(hash2, &ctx);
-
-	PHP_SHA1Init(&ctx);
-	PHP_SHA1Update(&ctx, (const unsigned char *)salt,  PHP_SCRAMBLE_SIZE);
-	PHP_SHA1Update(&ctx, (const unsigned char *)hash2, PHP_SCRAMBLE_SIZE);
-	PHP_SHA1Final((unsigned char *)out, &ctx);
-
-	xor((unsigned char *)out, (const unsigned char *)hash1, (const unsigned char *)out, PHP_SCRAMBLE_SIZE);
-}
 
 zval *pack_key(zval *args, char select) {
 	if (args && Z_TYPE_P(args) == IS_ARRAY)
@@ -606,6 +576,7 @@ int get_spaceno_by_name(tarantool_object *obj, zval *id, zval *name TSRMLS_DC) {
 	tp_select(obj->tps, SPACE_SPACE, INDEX_SPACE_NAME, 0, 4096);
 	tp_key(obj->tps, 1);
 	tp_encode_str(obj->tps, Z_STRVAL_P(name), Z_STRLEN_P(name));
+	tp_reqid(obj->tps, TARANTOOL_G(sync_counter)++);
 
 	obj->value->len = tp_used(obj->tps);
 	tarantool_tp_flush(obj->tps);
@@ -665,6 +636,7 @@ int get_indexno_by_name(tarantool_object *obj, zval *id,
 	tp_key(obj->tps, 2);
 	tp_encode_uint(obj->tps, space_no);
 	tp_encode_str(obj->tps, Z_STRVAL_P(name), Z_STRLEN_P(name));
+	tp_reqid(obj->tps, TARANTOOL_G(sync_counter)++);
 
 	obj->value->len = tp_used(obj->tps);
 	tarantool_tp_flush(obj->tps);
@@ -810,25 +782,68 @@ PHP_METHOD(tarantool_class, connect) {
 }
 
 int __tarantool_authenticate(tarantool_object *obj) {
-	char *salt = php_base64_decode(obj->salt, SALT64_SIZE, NULL);
-	char scramble[PHP_SCRAMBLE_SIZE];
-	zval *header = NULL, *body = NULL;
-	TSRMLS_FETCH();
-	long sync = TARANTOOL_G(sync_counter)++;
 
+	tarantool_tp_update(obj->tps);
+	int batch_count = 3;
 	size_t passwd_len = (obj->passwd ? strlen(obj->passwd) : 0);
-	scramble_prepare(scramble, salt, obj->passwd, passwd_len);
-	efree(salt);
-	php_tp_encode_auth(obj->value, sync, obj->login,
-			strlen(obj->login), scramble);
+	tp_auth(obj->tps, obj->salt, obj->login, strlen(obj->login), obj->passwd, passwd_len);
+	uint32_t auth_sync = TARANTOOL_G(sync_counter)++;
+	tp_reqid(obj->tps, auth_sync);
+	tp_select(obj->tps, SPACE_SPACE, 0, 0, 4096);
+	tp_key(obj->tps, 0);
+	uint32_t space_sync = TARANTOOL_G(sync_counter)++;
+	tp_reqid(obj->tps, space_sync);
+	tp_select(obj->tps, SPACE_INDEX, 0, 0, 4096);
+	tp_key(obj->tps, 0);
+	uint32_t index_sync = TARANTOOL_G(sync_counter)++;
+	tp_reqid(obj->tps, index_sync);
+	obj->value->len = tp_used(obj->tps);
+	tarantool_tp_flush(obj->tps);
+
 	if (tarantool_stream_send(obj TSRMLS_CC) == FAILURE)
-		return 1;
+		return FAILURE;
 
-	if (tarantool_step_recv(obj, sync, &header, &body TSRMLS_CC) == FAILURE)
-		return 1;
+	int status = SUCCESS;
 
-	zval_ptr_dtor(&header);
-	zval_ptr_dtor(&body);
+	while (batch_count-- > 0) {
+		char pack_len[5] = {0, 0, 0, 0, 0};
+		if (tarantool_stream_read(obj, pack_len, 5 TSRMLS_CC) != 5) {
+			THROW_EXC("Can't read query from server");
+			return FAILURE;
+		}
+		size_t body_size = php_mp_unpack_package_size(pack_len);
+		smart_str_ensure(obj->value, body_size);
+		if (tarantool_stream_read(obj, obj->value->c,
+					body_size TSRMLS_CC) != body_size) {
+			THROW_EXC("Can't read query from server");
+			return FAILURE;
+		}
+		if (status == FAILURE) continue;
+		struct tnt_response resp; memset(&resp, 0, sizeof(struct tnt_response));
+		if (php_tp_response(&resp, obj->value->c, body_size) == -1) {
+			THROW_EXC("Failed to parse query");
+			status = FAILURE;
+		}
+
+		if (resp.error) {
+			THROW_EXC("Query error %d: %.*s", resp.code, resp.error_len, resp.error);
+			status = FAILURE;
+		}
+		if (resp.sync == space_sync) {
+			if (tarantool_schema_add_spaces(obj->schema, resp.data, resp.data_len)) {
+				THROW_EXC("Failed parsing schema (space) or memory issues");
+				status = FAILURE;
+			}
+		} else if (resp.sync == index_sync) {
+			if (tarantool_schema_add_indexes(obj->schema, resp.data, resp.data_len)) {
+				THROW_EXC("Failed parsing schema (index) or memory issues");
+				status = FAILURE;
+			}
+		} else if (resp.sync == auth_sync) {
+			continue;
+		}
+	}
+
 	return 0;
 }
 
