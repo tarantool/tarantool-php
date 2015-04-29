@@ -93,7 +93,7 @@ int manager_entry_dequeue_delete (struct manager_entry *entry) {
 	if (pval->greeting)      pefree(pval->greeting, 1);
 	if (pval->persistent_id) pefree(pval->persistent_id, 1);
 	if (pval->schema) {
-		tarantool_schema_destroy(pval->schema);
+		tarantool_schema_delete(pval->schema);
 		pval->schema = NULL;
 	}
 	if (entry->value.begin == entry->value.end)
