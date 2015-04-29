@@ -782,6 +782,7 @@ PHP_METHOD(tarantool_class, connect) {
 }
 
 int __tarantool_authenticate(tarantool_object *obj) {
+	TSRMLS_FETCH();
 
 	tarantool_tp_update(obj->tps);
 	int batch_count = 3;

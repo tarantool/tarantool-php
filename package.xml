@@ -40,12 +40,21 @@ http://pear.php.net/dtd/package-2.0.xsd">
         <file role='src' name='tarantool_msgpack.h'/>
         <file role='src' name='tarantool_proto.c'/>
         <file role='src' name='tarantool_proto.h'/>
+        <file role='src' name='tarantool_schema.c'/>
+        <file role='src' name='tarantool_schema.h'/>
+        <file role='src' name='tarantool_tp.c'/>
+        <file role='src' name='tarantool_tp.h'/>
         <dir name='third_party'>
+          <file role='src' name='base64.c'/>
+          <file role='src' name='base64.h'/>
           <file role='src' name='mhash.h'/>
           <file role='src' name='msgpuck.c'/>
           <file role='src' name='msgpuck.h'/>
           <file role='src' name='PMurHash.c'/>
           <file role='src' name='PMurHash.h'/>
+          <file role='src' name='sha1.c'/>
+          <file role='src' name='sha1.h'/>
+          <file role='src' name='tp.h'/>
         </dir> <!-- third_party -->
       </dir> <!-- src -->
       <file role='test' name='test-run.py'/>
@@ -56,13 +65,14 @@ http://pear.php.net/dtd/package-2.0.xsd">
       <dir name='test'>
         <file role='test' name='CreateTest.php'/>
         <file role='test' name='DMLTest.php'/>
+        <file role='test' name='MockTest.php'/>
         <file role='test' name='MsgPackTest.php'/>
         <file role='test' name='phpunit'/>
         <file role='test' name='phpunit.phar'/>
         <dir name='shared'>
           <file role='test' name='box.lua'/>
-          <file role='test' name='tarantool.ini'/>
           <file role='test' name='phpunit.xml'/>
+          <file role='test' name='tarantool.ini'/>
           <file role='test' name='valgrind.sup'/>
         </dir> <!-- shared -->
       </dir> <!-- tests -->
@@ -89,7 +99,7 @@ http://pear.php.net/dtd/package-2.0.xsd">
       <date>2015-04-24</date>
       <notes>
         tarantool-php 0.0.13
-        
+
         Schema is rewritten (using mhash, not zend hash).
         Batching auth+select_index+select_space (download schema) using tp.h
       </notes>
@@ -100,7 +110,7 @@ http://pear.php.net/dtd/package-2.0.xsd">
       <date>2015-04-24</date>
       <notes>
         tarantool-php 0.0.12
-        
+
         Fix couple of segfaults and memory leaks
       </notes>
     </release>
@@ -110,7 +120,7 @@ http://pear.php.net/dtd/package-2.0.xsd">
       <date>2015-04-22</date>
       <notes>
         tarantool-php 0.0.11
-        
+
         Fix select error on 32bit systems, update version of rpm packages
       </notes>
     </release>
@@ -120,7 +130,7 @@ http://pear.php.net/dtd/package-2.0.xsd">
       <date>2015-03-24</date>
       <notes>
         tarantool-php 0.0.10
-        
+
         Add alias for flush_schema -> flushSchema
         Add eval to commands
         Fix segfaults when args are empty in eval/call
