@@ -59,4 +59,5 @@ For building packages - please, read `README.PACK.md`
 
 ## IDE autocompletion
 
-Add stubs/Tarantool.stub.php to IDE library path  
+Stubs can be found at [tarantool/tarantool-php-stubs](https://github.com/tarantool/tarantool-php-stubs).
+Place it into project library path in your IDE.  
