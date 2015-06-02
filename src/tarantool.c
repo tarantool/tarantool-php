@@ -87,6 +87,7 @@ zend_function_entry tarantool_module_functions[] = {
 	PHP_ME(tarantool_class, eval, NULL, ZEND_ACC_PUBLIC)
 	PHP_MALIAS(tarantool_class, evaluate, eval, NULL, ZEND_ACC_PUBLIC)
 	PHP_MALIAS(tarantool_class, flushSchema, flush_schema, NULL, ZEND_ACC_PUBLIC)
+	PHP_MALIAS(tarantool_class, disconnect, close, NULL, ZEND_ACC_PUBLIC)
 	{NULL, NULL, NULL}
 };
 
@@ -404,6 +405,7 @@ const zend_function_entry tarantool_class_methods[] = {
 	PHP_ME(tarantool_class, update, NULL, ZEND_ACC_PUBLIC)
 	PHP_MALIAS(tarantool_class, evaluate, eval, NULL, ZEND_ACC_PUBLIC)
 	PHP_MALIAS(tarantool_class, flushSchema, flush_schema, NULL, ZEND_ACC_PUBLIC)
+	PHP_MALIAS(tarantool_class, disconnect, close, NULL, ZEND_ACC_PUBLIC)
 	{NULL, NULL, NULL}
 };
 
