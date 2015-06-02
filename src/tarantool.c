@@ -229,8 +229,8 @@ int __tarantool_connect(tarantool_object *obj, zval *id TSRMLS_DC) {
 retry:
 	while (1) {
 		if (TARANTOOL_G(persistent)) {
-		if (obj->persistent_id) pefree(obj->persistent_id, 1);
-			obj->persistent_id = tarantool_stream_persistentid(obj);
+			if (obj->persistent_id) pefree(obj->persistent_id, 1);
+				obj->persistent_id = tarantool_stream_persistentid(obj);
 		}
 		if (tarantool_stream_open(obj, count TSRMLS_CC) == SUCCESS) {
 			if (tarantool_stream_read(obj, obj->greeting,
@@ -280,9 +280,9 @@ static void tarantool_free(tarantool_object *obj TSRMLS_DC) {
 		tarantool_stream_close(obj TSRMLS_CC);
 		tarantool_schema_delete(obj->schema);
 	}
-	smart_str_free_ex(obj->value, 1);
-	tarantool_tp_free(obj->tps);
-	pefree(obj->value, 1);
+	if (obj->value) smart_str_free_ex(obj->value, 1);
+	if (obj->tps)   tarantool_tp_free(obj->tps);
+	if (obj->value) pefree(obj->value, 1);
 	pefree(obj, 1);
 }
 
@@ -723,7 +723,6 @@ PHP_MINIT_FUNCTION(tarantool) {
 }
 
 PHP_MSHUTDOWN_FUNCTION(tarantool) {
-	//pool_manager_free(TARANTOOL_G(manager));
 	UNREGISTER_INI_ENTRIES();
 	return SUCCESS;
 }
@@ -776,6 +775,7 @@ PHP_METHOD(tarantool_class, __construct) {
 PHP_METHOD(tarantool_class, connect) {
 	TARANTOOL_PARSE_PARAMS(id, "", id);
 	TARANTOOL_FETCH_OBJECT(obj, id);
+	if (obj->stream && obj->stream->mode) RETURN_TRUE;
 	if (__tarantool_connect(obj, id TSRMLS_CC) == FAILURE)
 		RETURN_FALSE;
 	RETURN_TRUE;
@@ -831,21 +831,26 @@ int __tarantool_authenticate(tarantool_object *obj) {
 			status = FAILURE;
 		}
 		if (resp.sync == space_sync) {
-			if (tarantool_schema_add_spaces(obj->schema, resp.data, resp.data_len)) {
+			if (tarantool_schema_add_spaces(obj->schema, resp.data,
+						        resp.data_len) &&
+					status != FAILURE) {
 				THROW_EXC("Failed parsing schema (space) or memory issues");
 				status = FAILURE;
 			}
 		} else if (resp.sync == index_sync) {
-			if (tarantool_schema_add_indexes(obj->schema, resp.data, resp.data_len)) {
+			if (tarantool_schema_add_indexes(obj->schema, resp.data,
+							 resp.data_len) &&
+					status != FAILURE) {
 				THROW_EXC("Failed parsing schema (index) or memory issues");
 				status = FAILURE;
 			}
-		} else if (resp.sync == auth_sync) {
-			continue;
+		} else if (resp.sync == auth_sync && resp.error) {
+			THROW_EXC("Query error %d: %.*s", resp.code, resp.error_len, resp.error);
+			status = FAILURE;
 		}
 	}
 
-	return 0;
+	return status;
 }
 
 PHP_METHOD(tarantool_class, authenticate) {

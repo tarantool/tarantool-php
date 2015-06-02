@@ -39,8 +39,16 @@ class CreateTest extends PHPUnit_Framework_TestCase
      * @expectedException Exception
      * @expectedExceptionMessage Failed to connect.
      */
-    public function test_03_create_error_port() {
+    public function test_03_00_create_error_port() {
         (new Tarantool('localhost', 65500))->connect();
+    }
+
+    /**
+     * @expectedException Exception
+     * @expectedExceptionMessage Invalid primary port value
+     */
+    public function test_03_01_create_error_port() {
+        new Tarantool('localhost', 123456);
     }
 
     public function test_04_create_many_conns()
@@ -61,5 +69,16 @@ class CreateTest extends PHPUnit_Framework_TestCase
         $c->flushSchema();
         $c->select("test");
         $c->flush_schema();
+    }
+    /**
+     * @expectedException Exception
+     * @expectedExceptionMessage Query error
+     */
+    public function test_06_bad_cridentials()
+    {
+        $c = new Tarantool('localhost', self::$port);
+        $c->connect();
+        $this->assertTrue($c->ping());
+        $c->authenticate('test', 'bad_password');
     }
 }

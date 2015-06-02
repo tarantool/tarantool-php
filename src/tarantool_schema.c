@@ -222,7 +222,7 @@ schema_add_space(
 			if (memcmp(sfield, "name", sfield_len) == 0) {
 				if (mp_typeof(*tuple) != MP_STR) goto error;
 				sfield = mp_decode_str(&tuple, &val->field_name_len);
-				val->field_name = pemalloc(sfield_len, 1);
+				val->field_name = pemalloc(val->field_name_len, 1);
 				if (!val->field_name) goto error;
 				memcpy(val->field_name, sfield, val->field_name_len);
 			} else if (memcmp(sfield, "type", sfield_len) == 0) {
