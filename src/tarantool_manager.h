@@ -34,6 +34,9 @@ struct pool_manager {
 	int max_per_host;
 	zend_bool deauthorize;
 	struct mh_manager_t *pool;
+#ifdef    ZTS
+	MUTEX_T mutex;
+#endif /* ZTS */
 };
 
 struct tarantool_object;

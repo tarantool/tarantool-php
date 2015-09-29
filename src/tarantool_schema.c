@@ -12,10 +12,10 @@
 #define MUR_SEED 13
 #include "third_party/msgpuck.h"
 
-static inline void
+/*static inline void
 schema_field_value_free(struct schema_field_value *val) {
 	free(val->field_name);
-}
+}*/
 
 int
 mh_indexcmp_eq(
@@ -58,10 +58,12 @@ static inline void
 schema_index_value_free(const struct schema_index_value *val) {
 	if (val) {
 		pefree(val->index_name, 1);
+		/*
 		int i = 0;
 		for (i = val->index_parts_len; i > 0; --i)
 			schema_field_value_free(&(val->index_parts[i - 1]));
 		pefree(val->index_parts, 1);
+		*/
 	}
 }
 
@@ -137,10 +139,12 @@ static inline void
 schema_space_value_free(const struct schema_space_value *val) {
 	if (val) {
 		pefree(val->space_name, 1);
+		/*
 		int i = 0;
 		for (i = val->schema_list_len; i > 0; --i)
 			schema_field_value_free(&(val->schema_list[i - 1]));
 		pefree(val->schema_list, 1);
+		*/
 		if (val->index_hash) {
 			schema_index_free(val->index_hash);
 			mh_schema_index_delete(val->index_hash);
@@ -204,6 +208,8 @@ schema_add_space(
 	/* skip format */
 	mp_next(&tuple);
 	/* parse format */
+	mp_next(&tuple);
+	/* skip_format
 	uint32_t fmp_tmp_len = 0;
 	if (mp_typeof(*tuple) != MP_ARRAY) goto error;
 	uint32_t fmt_len = mp_decode_array(&tuple);
@@ -243,6 +249,7 @@ schema_add_space(
 			}
 		}
 	}
+	*/
 	space_string->index_hash = mh_schema_index_new();
 	if (!space_string->index_hash) goto error;
 	struct schema_space_value *space_number = pemalloc(sizeof(struct schema_space_value), 1);
@@ -313,6 +320,8 @@ schema_add_index(
 	mp_next(&tuple);
 	/* skip unique flag */
 	mp_next(&tuple);
+	mp_next(&tuple);
+	/* skip fields
 	uint32_t part_count = mp_decode_uint(&tuple);
 	if (mp_typeof(*tuple) != MP_UINT) goto error;
 	uint32_t rpart_count = part_count;
@@ -341,6 +350,7 @@ schema_add_index(
 		}
 		index_string->index_parts_len++;
 	}
+	*/
 	struct schema_index_value *index_number = pemalloc(sizeof(struct schema_index_value), 1);
 	if (!index_number) goto error;
 	memcpy(index_number, index_string, sizeof(struct schema_index_value));

@@ -57,6 +57,9 @@ struct pool_manager *pool_manager_create (
 	manager->persistent = persistent;
 	manager->deauthorize = deauthorize;
 	manager->pool = mh_manager_new();
+#ifdef    ZTS
+	manager->mutex = tsrm_mutex_alloc();
+#endif /* ZTS */
 	return manager;
 }
 
@@ -65,13 +68,17 @@ int pool_manager_free (struct pool_manager *manager) {
 		return 0;
 	int pos = 0;
 	mh_foreach(manager->pool, pos) {
-		struct manager_entry *pos_val_p = *mh_manager_node(manager->pool, pos);
+		struct manager_entry *pos_val_p = *mh_manager_node(
+				manager->pool, pos);
 		pefree(pos_val_p->prep_line, 1);
 		while (pos_val_p->value.end != NULL)
 			manager_entry_dequeue_delete(pos_val_p);
 		pefree(pos_val_p, 1);
 	}
 	mh_manager_delete(manager->pool);
+#ifdef    ZTS
+	tsrm_mutex_free(manager->mutex);
+#endif /* ZTS */
 }
 
 struct manager_entry *manager_entry_create (
@@ -158,13 +165,21 @@ int pool_manager_find_apply (
 ) {
 	if (!pool->persistent)
 		return 1;
+#ifdef    ZTS
+	tsrm_mutex_lock(pool->mutex);
+#endif /* ZTS */
 	char *key = tarantool_tostr(obj, pool);
 	mh_int_t pos = mh_manager_find(pool->pool, key, NULL);
 	pefree(key, 1);
-	if (pos == mh_end(pool->pool))
-		return 1;
-	struct manager_entry *t = *mh_manager_node(pool->pool, pos);
-	return manager_entry_pop_apply(pool, t, obj);
+	int rv = 1;
+	if (pos != mh_end(pool->pool)) {
+		struct manager_entry *t = *mh_manager_node(pool->pool, pos);
+		rv = manager_entry_pop_apply(pool, t, obj);
+	}
+#ifdef    ZTS
+	tsrm_mutex_unlock(pool->mutex);
+#endif /* ZTS */
+	return rv;
 }
 
 int pool_manager_push_assure (
@@ -173,6 +188,9 @@ int pool_manager_push_assure (
 ) {
 	if (!pool->persistent)
 		return 1;
+#ifdef    ZTS
+	tsrm_mutex_lock(pool->mutex);
+#endif /* ZTS */
 	char *key = tarantool_tostr(obj, pool);
 	mh_int_t pos = mh_manager_find(pool->pool, key, NULL);
 	pefree(key, 1);
@@ -183,5 +201,9 @@ int pool_manager_push_assure (
 	} else {
 		t = *mh_manager_node(pool->pool, pos);
 	}
-	return manager_entry_enqueue_assure(pool, t, obj);
+	int rv = manager_entry_enqueue_assure(pool, t, obj);
+#ifdef    ZTS
+	tsrm_mutex_unlock(pool->mutex);
+#endif /* ZTS */
+	return rv;
 }
