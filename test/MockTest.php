@@ -1,6 +1,6 @@
 <?php
 const SPACE_INDEX = 289;
-class FooTest extends \PHPUnit_Framework_TestCase
+class MockTest extends \PHPUnit_Framework_TestCase
 {
     public function testFoo()
     {

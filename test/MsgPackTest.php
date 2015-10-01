@@ -60,4 +60,20 @@ class MsgPackTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($resp[0][2]['megusta'], array(1, 2, 3));
         $this->assertTrue(True);
     }
+
+    public function test_05_msgpack_call() {
+        $resp = self::$tarantool->call('test_4', [
+                '4TL2tLIXqMqyGQm_kiE7mRrS96I5E8nqU', 'B627', 0, [
+                    'browser_stats_first_session_hits' => 1
+                ]
+        ]);
+        $this->assertEquals($resp[0][0], 2);
+        $resp = self::$tarantool->call('test_4', [
+                '4TL2tLIXqMqyGQm_kiE7mRrS96I5E8nqU', 'B627', 0, [
+                    'browser_stats_first_session_hit' => 1
+                ]
+        ]);
+        $this->assertEquals($resp[0][0], 2);
+
+    }
 }

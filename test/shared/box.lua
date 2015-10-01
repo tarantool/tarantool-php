@@ -44,7 +44,6 @@ if not box.space.msgpack then
 end
 
 function test_1()
-    require('log').error('1')
     return true, {
         c= {
             ['106']= {1, 1428578535},
@@ -66,4 +65,10 @@ end
 
 function test_3(x, y)
     return x + y
+end
+
+function test_4(...)
+    local args = {...}
+    require('log').info('%s', require('yaml').encode(args))
+    return 2
 end

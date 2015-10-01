@@ -506,7 +506,7 @@ size_t php_mp_sizeof_hash_recursively(zval *val) {
 			needed += php_mp_sizeof_long(key_index);
 			break;
 		case HASH_KEY_IS_STRING:
-			needed += php_mp_sizeof_string(key_len) - 1;
+			needed += php_mp_sizeof_string(key_len - 1);
 			break;
 		default:
 			/* TODO: THROW EXCEPTION */
