@@ -8,7 +8,7 @@ If you're looking for 1.5 version, check out branch 'stable'.
 
 ## Build
 
-To build Tarantool PHP extenstion PHP-devel package is requred. The
+To build Tarantool PHP extenstion PHP-devel package is required. The
 package should contain phpize utility.
 
 ```sh
