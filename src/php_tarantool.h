@@ -27,7 +27,8 @@ extern zend_module_entry tarantool_module_entry;
 #include <ext/standard/php_smart_str.h>
 #include <php_network.h>
 
-#include "tarantool_manager.h"
+typedef pool_manager;
+typedef tarantool_schema;
 
 #define SSTR_BEG(str) (str->c)
 #define SSTR_END(str) (str->c + str->a)
