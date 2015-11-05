@@ -74,20 +74,6 @@ ZEND_DECLARE_MODULE_GLOBALS(tarantool)
 		ITERATOR_ ## NAME, CONST_CS | CONST_PERSISTENT)
 
 zend_function_entry tarantool_module_functions[] = {
-	PHP_ME(tarantool_class, __construct, NULL, ZEND_ACC_CTOR | ZEND_ACC_PUBLIC)
-	PHP_ME(tarantool_class, connect, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(tarantool_class, close, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(tarantool_class, flush_schema, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(tarantool_class, authenticate, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(tarantool_class, ping, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(tarantool_class, select, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(tarantool_class, insert, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(tarantool_class, replace, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(tarantool_class, call, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(tarantool_class, eval, NULL, ZEND_ACC_PUBLIC)
-	PHP_MALIAS(tarantool_class, evaluate, eval, NULL, ZEND_ACC_PUBLIC)
-	PHP_MALIAS(tarantool_class, flushSchema, flush_schema, NULL, ZEND_ACC_PUBLIC)
-	PHP_MALIAS(tarantool_class, disconnect, close, NULL, ZEND_ACC_PUBLIC)
 	{NULL, NULL, NULL}
 };
 
