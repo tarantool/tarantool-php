@@ -265,7 +265,7 @@ static void tarantool_free(tarantool_object *obj TSRMLS_DC) {
 	if (!TARANTOOL_G(persistent)) {
 		if (obj->greeting) pefree(obj->greeting, 1);
 		tarantool_stream_close(obj TSRMLS_CC);
-		tarantool_schema_delete(obj->schema);
+		if (obj->schema) tarantool_schema_delete(obj->schema);
 	}
 	if (obj->value) smart_str_free_ex(obj->value, 1);
 	if (obj->tps)   tarantool_tp_free(obj->tps);
@@ -873,6 +873,7 @@ PHP_METHOD(tarantool_class, close) {
 		tarantool_stream_close(obj TSRMLS_CC);
 		obj->stream = NULL;
 		tarantool_schema_delete(obj->schema);
+		obj->schema = NULL;
 	}
 	RETURN_TRUE;
 }
