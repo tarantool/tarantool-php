@@ -259,4 +259,14 @@ class DMLTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(self::$tarantool->eval("return test_3(...)", array(3, 4)), array('0' => 7));
         $this->assertEquals(self::$tarantool->evaluate("return test_3(...)", array(3, 4)), array('0' => 7));
     }
+
+    public function test_14_select_limit_defaults() {
+        self::$tarantool->insert("test", array(1, 2, "hello"));
+        self::$tarantool->insert("test", array(2, 3, "hello"));
+        self::$tarantool->insert("test", array(3, 4, "hello"));
+        self::$tarantool->insert("test", array(4, 2, "hello"));
+        $this->assertEquals(count(self::$tarantool->select("test", 3, "secondary", null, null, TARANTOOL_ITER_GT)), 1);
+        $this->assertEquals(count(self::$tarantool->select("test", 3, "secondary", 0,    null, TARANTOOL_ITER_GT)), 0);
+        $this->assertEquals(count(self::$tarantool->select("test", 3, "secondary", 100,  null, TARANTOOL_ITER_GT)), 1);
+    }
 }

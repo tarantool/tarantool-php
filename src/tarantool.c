@@ -913,12 +913,21 @@ PHP_METHOD(tarantool_class, ping) {
 PHP_METHOD(tarantool_class, select) {
 	zval *space = NULL, *index = NULL;
 	zval *key = NULL, *key_new = NULL;
+	zval *zlimit = NULL;
 	long limit = LONG_MAX-1, offset = 0, iterator = 0;
 
-	TARANTOOL_PARSE_PARAMS(id, "z|zzlll", &space, &key,
-			&index, &limit, &offset, &iterator);
+	TARANTOOL_PARSE_PARAMS(id, "z|zzzll", &space, &key,
+			&index, &zlimit, &offset, &iterator);
 	TARANTOOL_FETCH_OBJECT(obj, id);
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
+
+	if (zlimit != NULL && Z_TYPE_P(zlimit) != IS_NULL && Z_TYPE_P(zlimit) != IS_LONG) {
+		THROW_EXC("wrong type of 'limit' - expected long/null, got '%s'",
+				zend_zval_type_name(zlimit));
+		RETURN_FALSE;
+	} else if (zlimit != NULL && Z_TYPE_P(zlimit) == IS_LONG) {
+		limit = Z_LVAL_P(zlimit);
+	}
 
 	long space_no = get_spaceno_by_name(obj, id, space TSRMLS_CC);
 	if (space_no == FAILURE) RETURN_FALSE;
