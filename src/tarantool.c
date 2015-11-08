@@ -364,8 +364,14 @@ static int64_t tarantool_step_recv(
 	HashTable *hash = HASH_OF(*header);
 	zval **val = NULL;
 
-	if (zend_hash_index_find(hash, TNT_SYNC, (void **)&val) == SUCCESS)
-		assert(Z_LVAL_PP(val) == sync);
+	if (zend_hash_index_find(hash, TNT_SYNC, (void **)&val) == SUCCESS) {
+		if (Z_LVAL_PP(val) != sync) {
+			THROW_EXC("request sync is not equal response sync. "
+				  "closing connection");
+			tarantool_stream_close(obj TSRMLS_CC);
+			goto error;
+		}
+	}
 	val = NULL;
 	if (zend_hash_index_find(hash, TNT_CODE, (void **)&val) == SUCCESS) {
 		if (Z_LVAL_PP(val) == TNT_OK) {
