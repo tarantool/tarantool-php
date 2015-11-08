@@ -1014,21 +1014,25 @@ PHP_METHOD(tarantool_class, replace) {
 }
 
 PHP_METHOD(tarantool_class, delete) {
-	zval *space = NULL, *key = NULL;
+	zval *space = NULL, *key = NULL, *index = NULL;
 	zval *key_new = NULL;
 
-	TARANTOOL_PARSE_PARAMS(id, "zz", &space, &key);
+	TARANTOOL_PARSE_PARAMS(id, "zz|z", &space, &key, &index);
 	TARANTOOL_FETCH_OBJECT(obj, id);
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
 
-
 	long space_no = get_spaceno_by_name(obj, id, space TSRMLS_CC);
 	if (space_no == FAILURE) RETURN_FALSE;
+	int32_t index_no = 0;
+	if (index) {
+		index_no = get_indexno_by_name(obj, id, space_no, index TSRMLS_CC);
+		if (index_no == FAILURE) RETURN_FALSE;
+	}
 
 	key_new = pack_key(key, 0);
 
 	long sync = TARANTOOL_G(sync_counter)++;
-	php_tp_encode_delete(obj->value, sync, space_no, key);
+	php_tp_encode_delete(obj->value, sync, space_no, index_no, key);
 	if (key != key_new) {
 		zval_ptr_dtor(&key_new);
 	}
@@ -1093,22 +1097,26 @@ PHP_METHOD(tarantool_class, eval) {
 }
 
 PHP_METHOD(tarantool_class, update) {
-	zval *space = NULL, *key = NULL;
-	zval *args = NULL, *key_new = NULL;
+	zval *space = NULL, *key = NULL, *index = NULL, *args = NULL;
+	zval *key_new = NULL;
 
-	TARANTOOL_PARSE_PARAMS(id, "zza", &space, &key, &args);
+	TARANTOOL_PARSE_PARAMS(id, "zza|z", &space, &key, &args, &index);
 	TARANTOOL_FETCH_OBJECT(obj, id);
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
 
 	long space_no = get_spaceno_by_name(obj, id, space TSRMLS_CC);
-	if (space_no == FAILURE)
-		RETURN_FALSE;
+	if (space_no == FAILURE) RETURN_FALSE;
+	int32_t index_no = 0;
+	if (index) {
+		index_no = get_indexno_by_name(obj, id, space_no, index TSRMLS_CC);
+		if (index_no == FAILURE) RETURN_FALSE;
+	}
 
 	args = tarantool_update_verify_args(args TSRMLS_CC);
 	if (!args) RETURN_FALSE;
 	key_new = pack_key(key, 0);
 	long sync = TARANTOOL_G(sync_counter)++;
-	php_tp_encode_update(obj->value, sync, space_no, key_new, args);
+	php_tp_encode_update(obj->value, sync, space_no, index_no, key_new, args);
 	if (key != key_new) {
 		zval_ptr_dtor(&key_new);
 	}

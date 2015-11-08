@@ -8,6 +8,7 @@
       <file>test/MockTest.php</file>
       <file>test/CreateTest.php</file>
       <file>test/MsgPackTest.php</file>
+      <file>test/AssertTest.php</file>
     </testsuite>
   </testsuites>
 

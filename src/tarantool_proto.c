@@ -139,24 +139,30 @@ void php_tp_encode_insert_or_replace(smart_str *str, uint32_t sync,
 }
 
 size_t php_tp_sizeof_delete(uint32_t sync,
-		uint32_t space_no, zval *tuple) {
+			    uint32_t space_no, uint32_t index_no,
+			    zval *tuple) {
 	return  php_tp_sizeof_header(TNT_DELETE, sync) +
-		php_mp_sizeof_hash(2)                  +
+		php_mp_sizeof_hash(3)                  +
 		php_mp_sizeof_long(TNT_SPACE)          +
 		php_mp_sizeof_long(space_no)           +
+		php_mp_sizeof_long(TNT_INDEX)          +
+		php_mp_sizeof_long(index_no)           +
 		php_mp_sizeof_long(TNT_KEY)            +
 		php_mp_sizeof(tuple)                   ;
 }
 
 void php_tp_encode_delete(smart_str *str, uint32_t sync,
-		uint32_t space_no, zval *tuple) {
+			  uint32_t space_no, uint32_t index_no,
+			  zval *tuple) {
 	size_t packet_size = php_tp_sizeof_delete(sync,
-			space_no, tuple);
+			space_no, index_no, tuple);
 	smart_str_ensure(str, packet_size + 5);
 	php_tp_pack_header(str, packet_size, TNT_DELETE, sync);
-	php_mp_pack_hash(str, 2);
+	php_mp_pack_hash(str, 3);
 	php_mp_pack_long(str, TNT_SPACE);
 	php_mp_pack_long(str, space_no);
+	php_mp_pack_long(str, TNT_INDEX);
+	php_mp_pack_long(str, index_no);
 	php_mp_pack_long(str, TNT_KEY);
 	php_mp_pack(str, tuple);
 }
@@ -208,11 +214,14 @@ void php_tp_encode_eval(smart_str *str, uint32_t sync,
 }
 
 size_t php_tp_sizeof_update(uint32_t sync,
-		uint32_t space_no, zval *key, zval *args) {
+			    uint32_t space_no, uint32_t index_no,
+			    zval *key, zval *args) {
 	return  php_tp_sizeof_header(TNT_UPDATE, sync) +
-		php_mp_sizeof_hash(3)                  +
+		php_mp_sizeof_hash(4)                  +
 		php_mp_sizeof_long(TNT_SPACE)          +
 		php_mp_sizeof_long(space_no)           +
+		php_mp_sizeof_long(TNT_INDEX)          +
+		php_mp_sizeof_long(index_no)           +
 		php_mp_sizeof_long(TNT_KEY)            +
 		php_mp_sizeof(key)                     +
 		php_mp_sizeof_long(TNT_TUPLE)          +
@@ -220,14 +229,17 @@ size_t php_tp_sizeof_update(uint32_t sync,
 }
 
 void php_tp_encode_update(smart_str *str, uint32_t sync,
-		uint32_t space_no, zval *key, zval *args) {
+			  uint32_t space_no, uint32_t index_no,
+			  zval *key, zval *args) {
 	size_t packet_size = php_tp_sizeof_update(sync,
-			space_no, key, args);
+			space_no, index_no, key, args);
 	smart_str_ensure(str, packet_size + 5);
 	php_tp_pack_header(str, packet_size, TNT_UPDATE, sync);
-	php_mp_pack_hash(str, 3);
+	php_mp_pack_hash(str, 4);
 	php_mp_pack_long(str, TNT_SPACE);
 	php_mp_pack_long(str, space_no);
+	php_mp_pack_long(str, TNT_INDEX);
+	php_mp_pack_long(str, index_no);
 	php_mp_pack_long(str, TNT_KEY);
 	php_mp_pack(str, key);
 	php_mp_pack_long(str, TNT_TUPLE);
