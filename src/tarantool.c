@@ -91,12 +91,19 @@ zend_module_entry tarantool_module_entry = {
 };
 
 PHP_INI_BEGIN()
-	PHP_INI_ENTRY("tarantool.timeout"     , "10.0", PHP_INI_ALL, NULL)
-	PHP_INI_ENTRY("tarantool.retry_count" , "1"   , PHP_INI_ALL, NULL)
-	PHP_INI_ENTRY("tarantool.retry_sleep" , "0.1" , PHP_INI_ALL, NULL)
-	PHP_INI_ENTRY("tarantool.persistent"  , "1"   , PHP_INI_ALL, NULL)
-	PHP_INI_ENTRY("tarantool.deauthorize" , "0"   , PHP_INI_ALL, NULL)
-	PHP_INI_ENTRY("tarantool.con_per_host", "5"   , PHP_INI_ALL, NULL)
+	PHP_INI_ENTRY("tarantool.con_per_host"   , "5"   , PHP_INI_SYSTEM, NULL)
+	PHP_INI_ENTRY("tarantool.persistent"     , "0"   , PHP_INI_SYSTEM, NULL)
+	PHP_INI_ENTRY("tarantool.timeout"        , "10.0", PHP_INI_SYSTEM, NULL)
+	PHP_INI_ENTRY("tarantool.request_timeout", "10.0", PHP_INI_SYSTEM, NULL)
+	STD_PHP_INI_ENTRY("tarantool.retry_count", "1", PHP_INI_ALL,
+			  OnUpdateLong, retry_count, zend_tarantool_globals,
+			  tarantool_globals)
+	STD_PHP_INI_ENTRY("tarantool.retry_sleep","0.1", PHP_INI_ALL,
+			  OnUpdateReal, retry_sleep, zend_tarantool_globals,
+			  tarantool_globals)
+	STD_PHP_INI_ENTRY("tarantool.deauthorize", "0", PHP_INI_ALL,
+			  OnUpdateBool, deauthorize, zend_tarantool_globals,
+			  tarantool_globals)
 PHP_INI_END()
 
 #ifdef COMPILE_DL_TARANTOOL
@@ -113,7 +120,7 @@ static int tarantool_stream_open(tarantool_object *obj, int count TSRMLS_DC) {
 	}
 	int flags = STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT;
 	long time = floor(INI_FLT("tarantool.timeout"));
-	struct timeval timeout = {
+	struct timeval tv = {
 		.tv_sec = time,
 		.tv_usec = (INI_FLT("tarantool.timeout") - time) * pow(10, 6),
 	};
@@ -122,22 +129,34 @@ static int tarantool_stream_open(tarantool_object *obj, int count TSRMLS_DC) {
 
 	php_stream *stream = php_stream_xport_create(dest_addr, dest_addr_len,
 						     options, flags,
-						     obj->persistent_id, &timeout,
+						     obj->persistent_id, &tv,
 						     NULL, &errstr, &errcode);
 	efree(dest_addr);
 	if (errcode || !stream) {
 		if (!count)
-			THROW_EXC("Failed to connect. Code %d: %s", errcode, errstr);
+			THROW_EXC("Failed to connect. Code %d: %s", errcode,
+				  errstr);
 		goto error;
 	}
 	int socketd = ((php_netstream_data_t* )stream->abstract)->socket;
 	flags = 1;
-	if (setsockopt(socketd, IPPROTO_TCP, TCP_NODELAY, (char *) &flags, sizeof(int))) {
+	if (setsockopt(socketd, IPPROTO_TCP, TCP_NODELAY, (char *) &flags,
+		       sizeof(int))) {
 		char errbuf[128];
 		if (!count)
 			THROW_EXC("Failed to connect. Setsockopt error %s",
-					strerror_r(errno, errbuf, sizeof(errbuf)));
+				  strerror_r(errno, errbuf, sizeof(errbuf)));
 		goto error;
+	}
+	time = floor(INI_FLT("tarantool.request_timeout"));
+	struct timeval read_tv = {
+		.tv_sec = time,
+		.tv_usec = (INI_FLT("tarantool.request_timeout") - time) * pow(10, 6),
+	};
+	if(tv.tv_sec != 0 || tv.tv_usec != 0) {
+		php_stream_set_option(stream,
+				      PHP_STREAM_OPTION_READ_TIMEOUT,
+				      0, &read_tv);
 	}
 	obj->stream = stream;
 	return SUCCESS;
@@ -184,7 +203,7 @@ static size_t tarantool_stream_read(tarantool_object *obj,
 				buf + total_size,
 				size - total_size);
 		assert(read_size + total_size <= size);
-		if (read_size == 0)
+		if (read_size <= 0)
 			break;
 		total_size += read_size;
 	}
@@ -701,8 +720,7 @@ PHP_MINIT_FUNCTION(tarantool) {
 	TARANTOOL_G(persistent) = persistent;
 	zend_bool deauthorize = INI_BOOL("tarantool.deauthorize");
 	TARANTOOL_G(deauthorize) = deauthorize;
-	int con_per_host = INI_INT("tarantool.con_per_host");
-	TARANTOOL_G(manager) = pool_manager_create(persistent, con_per_host, deauthorize);
+	TARANTOOL_G(manager) = pool_manager_create(persistent, INI_INT("tarantool.con_per_host"), deauthorize);
 	zend_class_entry tarantool_class;
 	INIT_CLASS_ENTRY(tarantool_class, "Tarantool", tarantool_class_methods);
 	tarantool_class.create_object = tarantool_create;
