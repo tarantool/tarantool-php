@@ -1,32 +1,43 @@
+sudo: required
+services:
+  - docker
+
 language: php 
 
-branches:
-  only:
-    - master
-    - stable 
-
 php:
-  - 5.3
-  - 5.4
-  - 5.5
+ # - 5.3
+ # - 5.4
+ # - 5.5
   - 5.6
 
 cache: false
 
-notifications:
-  email: false
-  irc: false
+env:
+    global:
+      - OUT_REPO=tarantool/modules
+    matrix:
+      - OS=el DIST=6 PACK=rpm
+      - OS=el DIST=7 PACK=rpm
+      - OS=fedora DIST=20 PACK=rpm
+      - OS=fedora DIST=21 PACK=rpm
+      - OS=fedora DIST=22 PACK=rpm
+      - OS=fedora DIST=23 PACK=rpm
+      - OS=ubuntu DIST=trusty PACK=deb PROD=tarantool-php P_URI=https://github.com/tarantool/tarantool-php.git
+      - OS=ubuntu DIST=precise PACK=deb PROD=tarantool-php P_URI=https://github.com/tarantool/tarantool-php.git
+      - OS=ubuntu DIST=vivid PACK=deb PROD=tarantool-php P_URI=https://github.com/tarantool/tarantool-php.git
+      - OS=debian DIST=jessie PACK=deb PROD=tarantool-php P_URI=https://github.com/tarantool/tarantool-php.git
+      - OS=debian DIST=wheezy PACK=deb PROD=tarantool-php P_URI=https://github.com/tarantool/tarantool-php.git
+      - OS=debian DIST=stretch PACK=deb PROD=tarantool-php P_URI=https://github.com/tarantool/tarantool-php.git
+      - PACK=none
 
-before_script:
-  - uname -a
-  - lsb_release -a
-  - curl http://tarantool.org/dist/public.key | sudo apt-key add -
-  - echo "deb http://tarantool.org/dist/master/ubuntu `lsb_release -c -s` main" | sudo tee -a /etc/apt/sources.list.d/tarantool.list
+before_install:
+  - git submodule update --init --recursive
   - sudo apt-get update
+  - gem install package_cloud
 
 script:
-  - sudo apt-get -y install tarantool python-yaml
-  - phpize && ./configure
-  - make
-  - make install
-  - ./test-run.py --flags
+  - bash travis.sh
+
+notifications:
+  email: true
+  irc: false
