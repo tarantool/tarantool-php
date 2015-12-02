@@ -269,8 +269,6 @@ int64_t php_tp_response(struct tnt_response *r, char *buf, size_t size)
 		case TNT_CODE:
 			r->code = mp_decode_uint(&p);
 			break;
-		default:
-			return -1;
 		}
 		r->bitmap |= (1ULL << key);
 	}
