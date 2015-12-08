@@ -14,6 +14,9 @@ python:
 
 cache: false
 
+virtualenv:
+    system_site_packages: true
+
 env:
     matrix:
       - OS=el DIST=6 PACK=rpm
