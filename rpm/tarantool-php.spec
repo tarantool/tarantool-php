@@ -1,10 +1,11 @@
 %global php_apiver %((echo 0; php -i 2>/dev/null | sed -n 's/^PHP API => //p') | tail -1)
 %global php_extdir %(php-config --extension-dir 2>/dev/null || echo "undefined")
 %global php_version %(php-config --version 2>/dev/null || echo 0)
+%global build_version %(git describe --long | sed "s/[0-9]*\.[0-9]*\.[0-9]*-//" | sed "s/-[a-z 0-9]*//")
 
 Name: php-tarantool
 Version: 0.0.14
-Release: 1%{?dist}
+Release: %{build_version}
 Summary: PECL PHP driver for Tarantool/Box
 Group: Development/Languages
 License: MIT
