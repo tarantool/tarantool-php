@@ -6,5 +6,5 @@ sudo apt-get -q -y install tarantool tarantool-dev
 phpize && ./configure
 make
 make install
-sudo pip install PyYAML
+pip install PyYAML
 ./test-run.py --flags
