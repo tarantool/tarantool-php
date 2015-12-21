@@ -25,6 +25,8 @@
 #include "tarantool_schema.h"
 #include "tarantool_tp.h"
 
+void smart_str_nullify(smart_str *str);
+
 ZEND_DECLARE_MODULE_GLOBALS(tarantool)
 
 #ifdef HAVE_CONFIG_H
