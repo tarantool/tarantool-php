@@ -28,7 +28,7 @@ int smart_str_ensure(smart_str *str, size_t len) {
 	return 0;
 }
 
-inline void smart_str_nullify(smart_str *str) {
+void smart_str_nullify(smart_str *str) {
 	memset(SSTR_BEG(str), 0, SSTR_AWA(str));
 }
 
