@@ -348,7 +348,7 @@ static int64_t tarantool_step_recv(
 		THROW_EXC("Failed verifying msgpack");
 		goto error;
 	}
-	if (php_mp_unpack(header, &pos) == FAILURE) {
+	if (php_mp_unpack(header, &pos) == FAILURE || Z_TYPE_PP(header) != IS_ARRAY) {
 		*header = NULL;
 		goto error;
 	}
