@@ -18,8 +18,9 @@
 
 /* header */
 enum tnt_header_key_t {
-	TNT_CODE = 0x00,
-	TNT_SYNC = 0x01
+	TNT_CODE      = 0x00,
+	TNT_SYNC      = 0x01,
+	TNT_SCHEMA_ID = 0x05
 };
 
 /* request body */
@@ -34,6 +35,7 @@ enum tnt_body_key_t {
 	TNT_FUNCTION   = 0x22,
 	TNT_USERNAME   = 0x23,
 	TNT_EXPRESSION = 0x27,
+	TNT_OPS        = 0x28
 };
 
 /* response body */
@@ -53,6 +55,7 @@ enum tnt_request_type {
 	TNT_CALL    = 0x06,
 	TNT_AUTH    = 0x07,
 	TNT_EVAL    = 0x08,
+	TNT_UPSERT  = 0x09,
 	TNT_PING    = 0x40
 };
 
@@ -84,25 +87,23 @@ struct tnt_response {
 
 int64_t php_tp_response(struct tnt_response *r, char *buf, size_t size);
 
-void php_tp_encode_auth(smart_str *str, uint32_t sync,
-		char * const username, size_t username_len,
-		char * const scramble);
+void php_tp_encode_auth(smart_str *str, uint32_t sync, char * const username,
+			size_t username_len, char * const scramble);
 void php_tp_encode_ping(smart_str *str, uint32_t sync);
-void php_tp_encode_select(smart_str *str,
-		uint32_t sync, uint32_t space_no,
-		uint32_t index_no, uint32_t limit,
-		uint32_t offset, uint32_t iterator,
-		zval *key);
+void php_tp_encode_select(smart_str *str, uint32_t sync, uint32_t space_no,
+			  uint32_t index_no, uint32_t limit, uint32_t offset,
+			  uint32_t iterator, zval *key);
 void php_tp_encode_insert_or_replace(smart_str *str, uint32_t sync,
-		uint32_t space_no, zval *tuple,
-		uint32_t type);
-void php_tp_encode_delete(smart_str *str, uint32_t sync,
-		uint32_t space_no, uint32_t index_no, zval *tuple);
-void php_tp_encode_call(smart_str *str, uint32_t sync,
-		char *proc, uint32_t proc_len, zval *tuple);
-void php_tp_encode_eval(smart_str *str, uint32_t sync,
-		char *proc, uint32_t proc_len, zval *tuple);
-void php_tp_encode_update(smart_str *str, uint32_t sync,
-		uint32_t space_no, uint32_t index_no,
-		zval *key, zval *args);
+				     uint32_t space_no, zval *tuple,
+				     uint32_t type);
+void php_tp_encode_delete(smart_str *str, uint32_t sync, uint32_t space_no,
+			  uint32_t index_no, zval *tuple);
+void php_tp_encode_call(smart_str *str, uint32_t sync, char *proc,
+			uint32_t proc_len, zval *tuple);
+void php_tp_encode_eval(smart_str *str, uint32_t sync, char *proc,
+			uint32_t proc_len, zval *tuple);
+void php_tp_encode_update(smart_str *str, uint32_t sync, uint32_t space_no,
+			  uint32_t index_no, zval *key, zval *args);
+void php_tp_encode_upsert(smart_str *str, uint32_t sync, uint32_t space_no,
+			  zval *tuple, zval *args);
 #endif /* PHP_TP_H */

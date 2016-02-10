@@ -344,6 +344,7 @@ const zend_function_entry tarantool_class_methods[] = {
 	PHP_ME(tarantool_class, eval, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(tarantool_class, delete, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(tarantool_class, update, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(tarantool_class, upsert, NULL, ZEND_ACC_PUBLIC)
 	PHP_MALIAS(tarantool_class, evaluate, eval, NULL, ZEND_ACC_PUBLIC)
 	PHP_MALIAS(tarantool_class, flushSchema, flush_schema, NULL, ZEND_ACC_PUBLIC)
 	PHP_MALIAS(tarantool_class, disconnect, close, NULL, ZEND_ACC_PUBLIC)
@@ -1053,6 +1054,30 @@ PHP_METHOD(tarantool_class, update) {
 		zval_ptr_dtor(&key_new);
 	}
 	//zval_ptr_dtor(&args);
+	if (tarantool_stream_send(obj TSRMLS_CC) == FAILURE)
+		RETURN_FALSE;
+
+	zval *header, *body;
+	if (tarantool_step_recv(obj, sync, &header, &body TSRMLS_CC) == FAILURE)
+		RETURN_FALSE;
+
+	TARANTOOL_RETURN_DATA(body, header, body);
+}
+
+PHP_METHOD(tarantool_class, upsert) {
+	zval *space = NULL, *tuple = NULL, *index = NULL, *args = NULL;
+
+	TARANTOOL_PARSE_PARAMS(id, "zaa", &space, &tuple, &args);
+	TARANTOOL_FETCH_OBJECT(obj, id);
+	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
+
+	long space_no = get_spaceno_by_name(obj, id, space TSRMLS_CC);
+	if (space_no == FAILURE) RETURN_FALSE;
+
+	args = tarantool_update_verify_args(args TSRMLS_CC);
+	if (!args) RETURN_FALSE;
+	long sync = TARANTOOL_G(sync_counter)++;
+	php_tp_encode_upsert(obj->value, sync, space_no, tuple, args);
 	if (tarantool_stream_send(obj TSRMLS_CC) == FAILURE)
 		RETURN_FALSE;
 
