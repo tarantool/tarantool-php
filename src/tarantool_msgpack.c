@@ -1,5 +1,6 @@
 #include <zend.h>
 #include <zend_API.h>
+#include <zend_exceptions.h>
 
 #include "php_tarantool.h"
 #include "tarantool_msgpack.h"
@@ -8,12 +9,6 @@
 #ifndef    HASH_KEY_NON_EXISTENT
 #define    HASH_KEY_NON_EXISTENT HASH_KEY_NON_EXISTANT
 #endif  /* HASH_KEY_NON_EXISTENT */
-
-#ifndef    TRHOW_EXC
-#define    THROW_EXC(...) zend_throw_exception_ex(\
-		zend_exception_get_default(TSRMLS_C),\
-		0 TSRMLS_CC, __VA_ARGS__)
-#endif  /* TRHOW_EXC */
 
 /* UTILITES */
 
@@ -344,11 +339,18 @@ ptrdiff_t php_mp_unpack_map(zval **oval, char **str) {
 		case IS_DOUBLE:
 			/* convert to INT/STRING for future uses */
 			/* FALLTHROUGH */
-		default:
-			THROW_EXC("Can't create Array - key value"
-				" not of type %s", op_to_string(Z_TYPE_P(key)));
+		default: {
+//			char k[256];
+//			char *op = op_to_string(Z_TYPE_P(key));
+//			printf("oplen: %d\n", strlen(op));
+//			printf("op: %s\n", op);
+//			size_t len = sprintf(k, 256, "Bad key type for PHP "
+//					     "Array: '%s'", op);
+//			THROW_EXC(k);
+			THROW_EXC("Bad key type for PHP Array");
 			goto error;
 			break;
+		}
 		}
 		zval_ptr_dtor(&key);
 		continue;
@@ -381,39 +383,28 @@ ssize_t php_mp_unpack(zval **oval, char **str) {
 	switch (mp_typeof(**str)) {
 	case MP_NIL:
 		return php_mp_unpack_nil(oval, str);
-		break;
 	case MP_UINT:
 		return php_mp_unpack_uint(oval, str);
-		break;
 	case MP_INT:
 		return php_mp_unpack_int(oval, str);
-		break;
 	case MP_STR:
 		return php_mp_unpack_str(oval, str);
-		break;
 	case MP_BIN:
 		return php_mp_unpack_bin(oval, str);
-		break;
 	case MP_ARRAY:
 		return php_mp_unpack_array(oval, str);
-		break;
 	case MP_MAP:
 		return php_mp_unpack_map(oval, str);
-		break;
 	case MP_BOOL:
 		return php_mp_unpack_bool(oval, str);
-		break;
 	case MP_FLOAT:
 		return php_mp_unpack_float(oval, str);
-		break;
 	case MP_DOUBLE:
 		return php_mp_unpack_double(oval, str);
-		break;
 	case MP_EXT:
 		break;
-	default:
-		return FAILURE;
 	}
+	return FAILURE;
 }
 
 /* SIZEOF ROUTINES */

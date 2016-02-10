@@ -27,8 +27,8 @@ extern zend_module_entry tarantool_module_entry;
 #include <ext/standard/php_smart_str.h>
 #include <php_network.h>
 
-typedef pool_manager;
-typedef tarantool_schema;
+struct pool_manager;
+struct tarantool_schema;
 
 #define SSTR_BEG(str) (str->c)
 #define SSTR_END(str) (str->c + str->a)
@@ -87,5 +87,8 @@ typedef struct tarantool_object {
 #else
 #  define TARANTOOL_G(v) (tarantool_globals.v)
 #endif
+
+#define THROW_EXC(...) zend_throw_exception_ex(					\
+	zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC, __VA_ARGS__)
 
 #endif  /* PHP_TARANTOOL_H */

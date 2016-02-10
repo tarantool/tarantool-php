@@ -5,8 +5,9 @@
 #include <assert.h>
 
 #include "php_tarantool.h"
-#include "tarantool_manager.h"
 #include "tarantool_proto.h"
+#include "tarantool_manager.h"
+#include "tarantool_network.h"
 
 #include <ext/standard/php_rand.h>
 
@@ -28,6 +29,8 @@ typedef const char           *mh_key_t;
 #define MH_SOURCE             1
 #define MH_INCREMENTAL_RESIZE 1
 #include                      "third_party/mhash.h"
+
+int manager_entry_dequeue_delete (struct manager_entry *entry);
 
 char *tarantool_tostr (
 		struct tarantool_object *obj,
@@ -77,6 +80,7 @@ int pool_manager_free (struct pool_manager *manager) {
 #ifdef    ZTS
 	tsrm_mutex_free(manager->mutex);
 #endif /* ZTS */
+	return 0;
 }
 
 struct manager_entry *manager_entry_create (
@@ -111,6 +115,7 @@ int manager_entry_dequeue_delete (struct manager_entry *entry) {
 	pval->next = NULL;
 	entry->size--;
 	pefree(pval, 1);
+	return 0;
 }
 
 int manager_entry_pop_apply (

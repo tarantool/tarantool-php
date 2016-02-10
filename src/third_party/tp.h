@@ -6,7 +6,7 @@
 #include <assert.h>
 #include "msgpuck.h"
 #include "sha1.h"
-#include "base64.h"
+#include "base64_tp.h"
 #include <stdarg.h>
 
 #ifdef __cplusplus
@@ -1310,7 +1310,7 @@ tp_auth(struct tp *p, const char *salt_base64, const char *user, int ulen, const
 		h = mp_encode_str(h, 0, 0);
 
 		char salt[64];
-		base64_decode(salt_base64, 44, salt, 64);
+		base64_tp_decode(salt_base64, 44, salt, 64);
 		char scramble[SCRAMBLE_SIZE];
 		tp_scramble_prepare(scramble, salt, pass, plen);
 		h = mp_encode_str(h, scramble, SCRAMBLE_SIZE);

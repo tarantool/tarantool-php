@@ -45,4 +45,7 @@ size_t php_mp_sizeof_hash(size_t len);
 size_t php_mp_sizeof_array(size_t len);
 size_t php_mp_sizeof_array_recursively(zval *val);
 size_t php_mp_sizeof_hash_recursively(zval *val);
+
+int smart_str_ensure(smart_str *str, size_t len);
+
 #endif /* PHP_MSGPACK_H */

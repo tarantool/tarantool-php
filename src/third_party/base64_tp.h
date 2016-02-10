@@ -40,7 +40,7 @@ extern "C" {
 #define BASE64_CHARS_PER_LINE 72
 
 static inline int
-base64_bufsize(int binsize)
+base64_tp_bufsize(int binsize)
 {
 	int datasize = binsize * 4/3 + 4;
 	int newlines = ((datasize + BASE64_CHARS_PER_LINE - 1)/
@@ -54,23 +54,23 @@ base64_bufsize(int binsize)
  * @pre the buffer size is at least 4/3 of the stream
  * size + stream_size/72 (newlines) + 4
  *
- * @param[in]  in_bin           the binary input stream to decode
+ * @param[in]  in_bin		the binary input stream to decode
  * @param[in]  in_len		size of the input
- * @param[out] out_base64       output buffer for the encoded data
- * @param[in]  out_len          buffer size, must be at least
+ * @param[out] out_base64_tp	output buffer for the encoded data
+ * @param[in]  out_len		buffer size, must be at least
  *				4/3 of the input size
  *
  * @return the size of encoded output
  */
 
 int
-base64_encode(const char *in_bin, int in_len,
-	      char *out_base64, int out_len);
+base64_tp_encode(const char *in_bin, int in_len,
+	      char *out_base64_tp, int out_len);
 
 /**
  * Decode a BASE64 text into a binary
  *
- * @param[in]  in_base64	the BASE64 stream to decode
+ * @param[in]  in_base64_tp	the BASE64 stream to decode
  * @param[in]  in_len		size of the input
  * @param[out] out_bin		output buffer size
  * @param[in]  out_len		buffer size
@@ -81,7 +81,7 @@ base64_encode(const char *in_bin, int in_len,
  * @return the size of decoded output
  */
 
-int base64_decode(const char *in_base64, int in_len,
+int base64_tp_decode(const char *in_base64_tp, int in_len,
 		  char *out_bin, int out_len);
 
 #ifdef __cplusplus

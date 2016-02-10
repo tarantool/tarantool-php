@@ -21,6 +21,8 @@
 #include "tarantool_schema.h"
 #include "tarantool_tp.h"
 
+int __tarantool_authenticate(tarantool_object *obj);
+
 double
 now_gettimeofday(void)
 {
@@ -55,9 +57,6 @@ ZEND_DECLARE_MODULE_GLOBALS(tarantool)
 	if (CON->stream && php_stream_eof(CON->stream) != 0)			\
 		if (__tarantool_reconnect(CON, ID TSRMLS_CC) == FAILURE)	\
 			RETURN_FALSE;
-
-#define THROW_EXC(...) zend_throw_exception_ex(					\
-	zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC, __VA_ARGS__)
 
 #define TARANTOOL_RETURN_DATA(HT, HEAD, BODY)					\
 	HashTable *ht_ ## HT = HASH_OF(HT);					\

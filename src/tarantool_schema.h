@@ -26,7 +26,7 @@ struct schema_index_value {
 //	uint32_t   index_parts_len;
 };
 
-typedef mh_schema_index_t;
+struct mh_schema_index_t;
 
 struct schema_space_value {
 	struct schema_key key;
@@ -38,7 +38,7 @@ struct schema_space_value {
 //	uint32_t   schema_list_len;
 };
 
-typedef mh_schema_space_t;
+struct mh_schema_space_t;
 
 struct tarantool_schema {
 	struct mh_schema_space_t *space_hash;

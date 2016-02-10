@@ -26,7 +26,7 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#include "base64.h"
+#include "base64_tp.h"
 /*
  * This is part of the libb64 project, and has been placed in the
  * public domain. For details, see
@@ -35,16 +35,16 @@
 
 /* {{{ encode */
 
-enum base64_encodestep { step_A, step_B, step_C };
+enum base64_tp_encodestep { step_A, step_B, step_C };
 
-struct base64_encodestate {
-	enum base64_encodestep step;
+struct base64_tp_encodestate {
+	enum base64_tp_encodestep step;
 	char result;
 	int stepcount;
 };
 
 static inline void
-base64_encodestate_init(struct base64_encodestate *state)
+base64_tp_encodestate_init(struct base64_tp_encodestate *state)
 {
 	state->step = step_A;
 	state->result = 0;
@@ -52,7 +52,7 @@ base64_encodestate_init(struct base64_encodestate *state)
 }
 
 static inline char
-base64_encode_value(char value)
+base64_tp_encode_value(char value)
 {
 	static const char encoding[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 	unsigned codepos = (unsigned) value;
@@ -62,14 +62,14 @@ base64_encode_value(char value)
 }
 
 static int
-base64_encode_block(const char *in_bin, int in_len,
-		    char *out_base64, int out_len,
-		    struct base64_encodestate *state)
+base64_tp_encode_block(const char *in_bin, int in_len,
+		    char *out_base64_tp, int out_len,
+		    struct base64_tp_encodestate *state)
 {
 	const char *const in_end = in_bin + in_len;
 	const char *in_pos = in_bin;
-	char *out_pos = out_base64;
-	char *out_end = out_base64  + out_len;
+	char *out_pos = out_base64_tp;
+	char *out_end = out_base64_tp  + out_len;
 	char result;
 	char fragment;
 
@@ -83,33 +83,33 @@ base64_encode_block(const char *in_bin, int in_len,
 			if (in_pos == in_end || out_pos >= out_end) {
 				state->result = result;
 				state->step = step_A;
-				return out_pos - out_base64;
+				return out_pos - out_base64_tp;
 			}
 			fragment = *in_pos++;
 			result = (fragment & 0x0fc) >> 2;
-			*out_pos++ = base64_encode_value(result);
+			*out_pos++ = base64_tp_encode_value(result);
 			result = (fragment & 0x003) << 4;
 	case step_B:
 			if (in_pos == in_end || out_pos >= out_end) {
 				state->result = result;
 				state->step = step_B;
-				return out_pos - out_base64;
+				return out_pos - out_base64_tp;
 			}
 			fragment = *in_pos++;
 			result |= (fragment & 0x0f0) >> 4;
-			*out_pos++ = base64_encode_value(result);
+			*out_pos++ = base64_tp_encode_value(result);
 			result = (fragment & 0x00f) << 2;
 	case step_C:
 			if (in_pos == in_end || out_pos + 2 >= out_end) {
 				state->result = result;
 				state->step = step_C;
-				return out_pos - out_base64;
+				return out_pos - out_base64_tp;
 			}
 			fragment = *in_pos++;
 			result |= (fragment & 0x0c0) >> 6;
-			*out_pos++ = base64_encode_value(result);
+			*out_pos++ = base64_tp_encode_value(result);
 			result  = (fragment & 0x03f) >> 0;
-			*out_pos++ = base64_encode_value(result);
+			*out_pos++ = base64_tp_encode_value(result);
 
 			/*
 			 * Each full step (A->B->C) yields
@@ -117,61 +117,61 @@ base64_encode_block(const char *in_bin, int in_len,
 			 */
 			if (++state->stepcount * 4 == BASE64_CHARS_PER_LINE) {
 				if (out_pos >= out_end)
-					return out_pos - out_base64;
+					return out_pos - out_base64_tp;
 				*out_pos++ = '\n';
 				state->stepcount = 0;
 			}
 		}
 	}
 	/* control should not reach here */
-	return out_pos - out_base64;
+	return out_pos - out_base64_tp;
 }
 
 static int
-base64_encode_blockend(char *out_base64, int out_len,
-		       struct base64_encodestate *state)
+base64_tp_encode_blockend(char *out_base64_tp, int out_len,
+		       struct base64_tp_encodestate *state)
 {
-	char *out_pos = out_base64;
-	char *out_end = out_base64 + out_len;
+	char *out_pos = out_base64_tp;
+	char *out_end = out_base64_tp + out_len;
 
 	switch (state->step) {
 	case step_B:
 		if (out_pos + 2 >= out_end)
-			return out_pos - out_base64;
-		*out_pos++ = base64_encode_value(state->result);
+			return out_pos - out_base64_tp;
+		*out_pos++ = base64_tp_encode_value(state->result);
 		*out_pos++ = '=';
 		*out_pos++ = '=';
 		break;
 	case step_C:
 		if (out_pos + 1 >= out_end)
-			return out_pos - out_base64;
-		*out_pos++ = base64_encode_value(state->result);
+			return out_pos - out_base64_tp;
+		*out_pos++ = base64_tp_encode_value(state->result);
 		*out_pos++ = '=';
 		break;
 	case step_A:
 		break;
 	}
 	if (out_pos >= out_end)
-		return out_pos - out_base64;
+		return out_pos - out_base64_tp;
 #if 0
 	/* Sometimes the output is useful without a newline. */
 	*out_pos++ = '\n';
 	if (out_pos >= out_end)
-		return out_pos - out_base64;
+		return out_pos - out_base64_tp;
 #endif
 	*out_pos = '\0';
-	return out_pos - out_base64;
+	return out_pos - out_base64_tp;
 }
 
 int
-base64_encode(const char *in_bin, int in_len,
-	      char *out_base64, int out_len)
+base64_tp_encode(const char *in_bin, int in_len,
+	      char *out_base64_tp, int out_len)
 {
-	struct base64_encodestate state;
-	base64_encodestate_init(&state);
-	int res = base64_encode_block(in_bin, in_len, out_base64,
+	struct base64_tp_encodestate state;
+	base64_tp_encodestate_init(&state);
+	int res = base64_tp_encode_block(in_bin, in_len, out_base64_tp,
 				      out_len, &state);
-	return res + base64_encode_blockend(out_base64 + res, out_len - res,
+	return res + base64_tp_encode_blockend(out_base64_tp + res, out_len - res,
 					    &state);
 }
 
@@ -179,16 +179,16 @@ base64_encode(const char *in_bin, int in_len,
 
 /* {{{ decode */
 
-enum base64_decodestep { step_a, step_b, step_c, step_d };
+enum base64_tp_decodestep { step_a, step_b, step_c, step_d };
 
-struct base64_decodestate
+struct base64_tp_decodestate
 {
-	enum base64_decodestep step;
+	enum base64_tp_decodestep step;
 	char result;
 };
 
 static char
-base64_decode_value(char value)
+base64_tp_decode_value(char value)
 {
 	static const char decoding[] = {
 		62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57, 58,
@@ -208,19 +208,19 @@ base64_decode_value(char value)
 }
 
 static inline void
-base64_decodestate_init(struct base64_decodestate *state)
+base64_tp_decodestate_init(struct base64_tp_decodestate *state)
 {
 	state->step = step_a;
 	state->result = 0;
 }
 
 static int
-base64_decode_block(const char *in_base64, int in_len,
+base64_tp_decode_block(const char *in_base64_tp, int in_len,
 		    char *out_bin, int out_len,
-		    struct base64_decodestate *state)
+		    struct base64_tp_decodestate *state)
 {
-	const char *in_pos = in_base64;
-	const char *in_end = in_base64 + in_len;
+	const char *in_pos = in_base64_tp;
+	const char *in_end = in_base64_tp + in_len;
 	char *out_pos = out_bin;
 	char *out_end = out_bin + out_len;
 	char fragment;
@@ -239,7 +239,7 @@ base64_decode_block(const char *in_base64, int in_len,
 					state->result = *out_pos;
 					return out_pos - out_bin;
 				}
-				fragment = base64_decode_value(*in_pos++);
+				fragment = base64_tp_decode_value(*in_pos++);
 			} while (fragment < 0);
 			*out_pos    = (fragment & 0x03f) << 2;
 	case step_b:
@@ -250,7 +250,7 @@ base64_decode_block(const char *in_base64, int in_len,
 					state->result = *out_pos;
 					return out_pos - out_bin;
 				}
-				fragment = base64_decode_value(*in_pos++);
+				fragment = base64_tp_decode_value(*in_pos++);
 			} while (fragment < 0);
 			*out_pos++ |= (fragment & 0x030) >> 4;
 			if (out_pos < out_end)
@@ -263,7 +263,7 @@ base64_decode_block(const char *in_base64, int in_len,
 					state->result = *out_pos;
 					return out_pos - out_bin;
 				}
-				fragment = base64_decode_value(*in_pos++);
+				fragment = base64_tp_decode_value(*in_pos++);
 			} while (fragment < 0);
 			*out_pos++ |= (fragment & 0x03c) >> 2;
 			if (out_pos < out_end)
@@ -276,7 +276,7 @@ base64_decode_block(const char *in_base64, int in_len,
 					state->result = *out_pos;
 					return out_pos - out_bin;
 				}
-				fragment = base64_decode_value(*in_pos++);
+				fragment = base64_tp_decode_value(*in_pos++);
 			} while (fragment < 0);
 			*out_pos++   |= (fragment & 0x03f);
 		}
@@ -288,12 +288,12 @@ base64_decode_block(const char *in_base64, int in_len,
 
 
 int
-base64_decode(const char *in_base64, int in_len,
+base64_tp_decode(const char *in_base64_tp, int in_len,
 	      char *out_bin, int out_len)
 {
-	struct base64_decodestate state;
-	base64_decodestate_init(&state);
-	return base64_decode_block(in_base64, in_len,
+	struct base64_tp_decodestate state;
+	base64_tp_decodestate_init(&state);
+	return base64_tp_decode_block(in_base64_tp, in_len,
 				   out_bin, out_len, &state);
 }
 
