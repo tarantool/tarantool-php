@@ -810,9 +810,8 @@ PHP_METHOD(tarantool_class, authenticate) {
 	obj->passwd = estrdup(passwd);
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
 
-	if (__tarantool_authenticate(obj))
-		RETURN_FALSE;
-	RETURN_TRUE;
+	__tarantool_authenticate(obj);
+	RETURN_NULL();
 }
 
 PHP_METHOD(tarantool_class, flush_schema) {
