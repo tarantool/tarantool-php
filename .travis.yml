@@ -2,7 +2,7 @@ sudo: required
 services:
   - docker
 
-language: php 
+language: php
 
 php:
   - 5.4
@@ -32,6 +32,19 @@ env:
 
 # multiple php version exclusion matrix
 matrix:
+    allow_failures:
+      - env: OS=el DIST=6 PACK=rpm
+      - env: OS=el DIST=7 PACK=rpm
+      - env: OS=fedora DIST=20 PACK=rpm
+      - env: OS=fedora DIST=21 PACK=rpm
+      - env: OS=fedora DIST=22 PACK=rpm
+      - env: OS=fedora DIST=23 PACK=rpm
+      - env: OS=ubuntu DIST=trusty PACK=deb
+      - env: OS=ubuntu DIST=precise PACK=deb
+      - env: OS=ubuntu DIST=vivid PACK=deb
+      - env: OS=debian DIST=jessie PACK=deb
+      - env: OS=debian DIST=wheezy PACK=deb
+      - env: OS=debian DIST=stretch PACK=deb
     exclude:
       - env: OS=el DIST=6 PACK=rpm
         php: 5.3
