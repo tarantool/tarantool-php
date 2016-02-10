@@ -62,7 +62,6 @@ ZEND_BEGIN_MODULE_GLOBALS(tarantool)
 	double retry_sleep;
 	struct pool_manager *manager;
 	zend_bool persistent;
-	zend_bool deauthorize;
 ZEND_END_MODULE_GLOBALS(tarantool)
 
 ZEND_EXTERN_MODULE_GLOBALS(tarantool)

@@ -8,12 +8,15 @@
 #include "tarantool_manager.h"
 #include "tarantool_proto.h"
 
+#include <ext/standard/php_rand.h>
+
 #define mh_arg_t void *
 
 #define mh_eq(a, b, arg)      (strcmp((*a)->prep_line, (*b)->prep_line) == 0)
 #define mh_eq_key(a, b, arg)  (strcmp(a, (*b)->prep_line) == 0)
 #define mh_hash(x, arg)       PMurHash32(MUR_SEED, (*x)->prep_line, strlen((*x)->prep_line))
 #define mh_hash_key(x, arg)   PMurHash32(MUR_SEED, x, strlen(x));
+
 
 typedef struct manager_entry *mh_node_t;
 typedef const char           *mh_key_t;
@@ -31,31 +34,26 @@ char *tarantool_tostr (
 		struct pool_manager *pool
 ) {
 	char *login = obj->login ? obj->login : "";
-	char *fmt = (!pool->deauthorize ? "%s:%d:%s" : "%s:%d:");
 	char *retval = pecalloc(256, sizeof(char), 1);
-	snprintf(retval, 256, fmt, obj->host, obj->port, login);
+	snprintf(retval, 256, "%s:%d:%s", obj->host, obj->port, login);
 	return retval;
 }
 
-char *tarantool_stream_persistentid(
-		struct tarantool_object *obj
-) {
-	char  *persistent_id = pecalloc(256, sizeof(char), 1);
+char *tarantool_stream_pid(struct tarantool_object *obj) {
 	TSRMLS_FETCH();
-	snprintf(persistent_id, 256, "tarantool:%s:%d:%d",
-		obj->host, obj->port, TARANTOOL_G(sync_counter));
-	return persistent_id;
+	char *pid = pecalloc(256, sizeof(char), 1);
+	snprintf(pid, 256, "tarantool:%s:%d:%d", obj->host, obj->port,
+		 php_rand(TSRMLS_C));
+	return pid;
 }
 
 struct pool_manager *pool_manager_create (
 		zend_bool persistent,
-		int max_per_host,
-		zend_bool deauthorize
+		int max_per_host
 ) {
 	struct pool_manager *manager = pemalloc(sizeof(struct pool_manager), 1);
 	manager->max_per_host = max_per_host;
 	manager->persistent = persistent;
-	manager->deauthorize = deauthorize;
 	manager->pool = mh_manager_new();
 #ifdef    ZTS
 	manager->mutex = tsrm_mutex_alloc();
@@ -98,7 +96,10 @@ int manager_entry_dequeue_delete (struct manager_entry *entry) {
 	TSRMLS_FETCH();
 
 	if (pval->greeting)      pefree(pval->greeting, 1);
-	if (pval->persistent_id) pefree(pval->persistent_id, 1);
+	if (pval->persistent_id) {
+		tntll_stream_close(NULL, pval->persistent_id);
+		pefree(pval->persistent_id, 1);
+	}
 	if (pval->schema) {
 		tarantool_schema_delete(pval->schema);
 		pval->schema = NULL;
@@ -127,7 +128,6 @@ int manager_entry_pop_apply (
 	if (obj->persistent_id) pefree(obj->persistent_id, 1);
 	if (obj->greeting)      pefree(obj->greeting, 1);
 	obj->persistent_id = pval->persistent_id;
-//	printf("%p %p\n", obj->greeting, pval->greeting);
 	obj->greeting = pval->greeting;
 	obj->salt = pval->greeting + SALT_PREFIX_SIZE;
 	obj->schema = pval->schema;
@@ -140,8 +140,10 @@ int manager_entry_enqueue_assure (
 		struct manager_entry *entry,
 		struct tarantool_object *obj
 ) {
-	if (entry->size == pool->max_per_host)
+	if (entry->size == pool->max_per_host) {
 		manager_entry_dequeue_delete(entry);
+		obj->stream = NULL;
+	}
 	struct pool_value *temp_con = pemalloc(sizeof(struct pool_value), 1);
 	temp_con->persistent_id = obj->persistent_id;
 	temp_con->greeting = obj->greeting;

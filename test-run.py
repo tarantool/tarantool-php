@@ -53,7 +53,7 @@ def main():
     test_cwd = os.path.dirname(srv.vardir)
     test_lib_path = ""
     try:
-        shutil.copy('test/shared/phpunit.xml', test_cwd)
+        shutil.copy('test/shared/phpunit_bas.xml', os.path.join(test_cwd, 'phpunit.xml'))
         cmd = ''
         test_lib_path = os.path.join(test_dir_path, 'phpunit.phar')
         shutil.copy('test/shared/tarantool.ini', test_cwd)

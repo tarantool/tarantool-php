@@ -29,7 +29,7 @@ class CreateTest extends PHPUnit_Framework_TestCase
 
     /**
      * @expectedException Exception
-     * @expectedExceptionMessage Failed to connect.
+     * @expectedExceptionMessage Name or service not known
      */
     public function test_02_create_error_host() {
         (new Tarantool('very_bad_host'))->connect();
@@ -37,7 +37,7 @@ class CreateTest extends PHPUnit_Framework_TestCase
 
     /**
      * @expectedException Exception
-     * @expectedExceptionMessage Failed to connect.
+     * @expectedExceptionMessage Connection refused
      */
     public function test_03_00_create_error_port() {
         (new Tarantool('localhost', 65500))->connect();

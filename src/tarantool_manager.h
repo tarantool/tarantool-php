@@ -32,7 +32,6 @@ struct mh_manager_t;
 struct pool_manager {
 	zend_bool persistent;
 	int max_per_host;
-	zend_bool deauthorize;
 	struct mh_manager_t *pool;
 #ifdef    ZTS
 	MUTEX_T mutex;
@@ -41,9 +40,9 @@ struct pool_manager {
 
 struct tarantool_object;
 
-char *tarantool_stream_persistentid(struct tarantool_object *);
+char *tarantool_stream_pid(struct tarantool_object *);
 
-struct pool_manager *pool_manager_create (zend_bool, int, zend_bool);
+struct pool_manager *pool_manager_create (zend_bool, int);
 int                  pool_manager_free   (struct pool_manager *);
 
 int pool_manager_find_apply  (struct pool_manager *, struct tarantool_object *);

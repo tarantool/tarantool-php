@@ -29,15 +29,7 @@ class AssertTest extends PHPUnit_Framework_TestCase
             $this->assertTrue(strpos($e->getMessage(),
                 "Can't read query") !== False);
         }
-        try {
-            sleep(1);
-            self::$tarantool->select("test");
-            $this->assertFalse(True);
-        } catch (Exception $e) {
-            /* check that we are closing connection */
-            $this->assertTrue(strpos($e->getMessage(),
-                "request sync") !== False);
-        }
+
         /* We can reconnect and everything will be ok */
         self::$tarantool->select("test");
     }

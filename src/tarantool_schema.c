@@ -7,6 +7,7 @@
 
 #include "php_tarantool.h"
 #include "tarantool_schema.h"
+#include "tarantool_network.h"
 
 #include "third_party/PMurHash.h"
 #define MUR_SEED 13

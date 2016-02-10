@@ -41,3 +41,5 @@ debian/files
 debian/php5-tarantool.debhelper.log
 debian/php5-tarantool.substvars
 debian/php5-tarantool/
+build
+.*.swp
