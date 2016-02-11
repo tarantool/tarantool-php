@@ -32,6 +32,7 @@ env:
 
 # multiple php version exclusion matrix
 matrix:
+    fast_finish: true
     allow_failures:
       - env: OS=el DIST=6 PACK=rpm
       - env: OS=el DIST=7 PACK=rpm
