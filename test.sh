@@ -7,4 +7,4 @@ phpize && ./configure
 make
 make install
 sudo pip install PyYAML
-sudo python test-run.py --flags
+/usr/bin/python test-run.py --flags

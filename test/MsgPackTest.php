@@ -49,7 +49,7 @@ class MsgPackTest extends PHPUnit_Framework_TestCase
     }
 
     public function test_04_msgpack_integer_keys_arrays() {
-        self::$tarantool->insert("msgpack", array(4,
+        self::$tarantool->replace("msgpack", array(4,
                 "Integer keys causing server to error",
                 array(2 => 'maria', 5 => 'db')
             )
@@ -57,7 +57,7 @@ class MsgPackTest extends PHPUnit_Framework_TestCase
     }
 
     public function test_05_msgpack_string_keys() {
-        self::$tarantool->insert("msgpack", array(5,
+        self::$tarantool->replace("msgpack", array(5,
                 "String keys in response forbids client to take values by keys",
                 array(2 => 'maria', 5 => 'db', 'lol' => 'lal')
             )

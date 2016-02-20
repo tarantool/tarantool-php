@@ -1,7 +1,16 @@
 #ifndef    PHP_TARANTOOL_H
 #define    PHP_TARANTOOL_H
 
-#include "php.h"
+#include <php.h>
+#include <php_ini.h>
+#include <zend_API.h>
+#include <php_network.h>
+#include <zend_compile.h>
+#include <zend_exceptions.h>
+
+#include <ext/standard/info.h>
+#include <ext/standard/php_smart_str.h>
+
 
 extern zend_module_entry tarantool_module_entry;
 #define phpext_tarantool_ptr &tarantool_module_entry
@@ -61,11 +70,12 @@ ZEND_BEGIN_MODULE_GLOBALS(tarantool)
 	long sync_counter;
 	long retry_count;
 	double retry_sleep;
+	double timeout;
+	double request_timeout;
 	struct pool_manager *manager;
-	zend_bool persistent;
 ZEND_END_MODULE_GLOBALS(tarantool)
 
-ZEND_EXTERN_MODULE_GLOBALS(tarantool)
+ZEND_EXTERN_MODULE_GLOBALS(tarantool);
 
 typedef struct tarantool_object {
 	zend_object zo;

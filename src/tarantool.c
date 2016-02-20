@@ -2,16 +2,6 @@
 #include <stdio.h>
 #include <limits.h>
 
-#include <php.h>
-#include <php_ini.h>
-#include <zend_API.h>
-#include <php_network.h>
-#include <zend_compile.h>
-#include <zend_exceptions.h>
-
-#include <ext/standard/info.h>
-#include <ext/standard/php_smart_str.h>
-
 #include "php_tarantool.h"
 
 #include "tarantool_network.h"
@@ -39,42 +29,42 @@ ZEND_DECLARE_MODULE_GLOBALS(tarantool)
 #include "config.h"
 #endif
 
-#define TARANTOOL_PARSE_PARAMS(ID, FORMAT, ...) zval *ID;			\
-	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC,		\
-				getThis(), "O" FORMAT,				\
-				&ID, tarantool_class_ptr,			\
-				__VA_ARGS__) == FAILURE)			\
+#define TARANTOOL_PARSE_PARAMS(ID, FORMAT, ...) zval *ID;		\
+	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC,	\
+				getThis(), "O" FORMAT,			\
+				&ID, tarantool_class_ptr,		\
+				__VA_ARGS__) == FAILURE)		\
 		RETURN_FALSE;
 
-#define TARANTOOL_FETCH_OBJECT(NAME, ID)					\
-	tarantool_object *NAME = (tarantool_object *)				\
+#define TARANTOOL_FETCH_OBJECT(NAME, ID)				\
+	tarantool_object *NAME = (tarantool_object *)			\
 			zend_object_store_get_object(ID TSRMLS_CC)
 
-#define TARANTOOL_CONNECT_ON_DEMAND(CON, ID)					\
-	if (!CON->stream)							\
-		if (__tarantool_connect(CON, ID TSRMLS_CC) == FAILURE)		\
-			RETURN_FALSE;						\
-	if (CON->stream && php_stream_eof(CON->stream) != 0)			\
-		if (__tarantool_reconnect(CON, ID TSRMLS_CC) == FAILURE)	\
+#define TARANTOOL_CONNECT_ON_DEMAND(CON, ID)				\
+	if (!CON->stream)						\
+		if (__tarantool_connect(CON, ID TSRMLS_CC) == FAILURE)	\
+			RETURN_FALSE;					\
+	if (CON->stream && php_stream_eof(CON->stream) != 0)		\
+		if (__tarantool_reconnect(CON, ID TSRMLS_CC) == FAILURE)\
 			RETURN_FALSE;
 
-#define TARANTOOL_RETURN_DATA(HT, HEAD, BODY)					\
-	HashTable *ht_ ## HT = HASH_OF(HT);					\
-	zval **answer = NULL;							\
-	if (zend_hash_index_find(ht_ ## HT, TNT_DATA,				\
-			(void **)&answer) == FAILURE || !answer) {		\
-		THROW_EXC("No field DATA in body");				\
-		zval_ptr_dtor(&HEAD);						\
-		zval_ptr_dtor(&BODY);						\
-		RETURN_FALSE;							\
-	}									\
-	RETVAL_ZVAL(*answer, 1, 0);						\
-	zval_ptr_dtor(&HEAD);							\
-	zval_ptr_dtor(&BODY);							\
+#define TARANTOOL_RETURN_DATA(HT, HEAD, BODY)				\
+	HashTable *ht_ ## HT = HASH_OF(HT);				\
+	zval **answer = NULL;						\
+	if (zend_hash_index_find(ht_ ## HT, TNT_DATA,			\
+			(void **)&answer) == FAILURE || !answer) {	\
+		THROW_EXC("No field DATA in body");			\
+		zval_ptr_dtor(&HEAD);					\
+		zval_ptr_dtor(&BODY);					\
+		RETURN_FALSE;						\
+	}								\
+	RETVAL_ZVAL(*answer, 1, 0);					\
+	zval_ptr_dtor(&HEAD);						\
+	zval_ptr_dtor(&BODY);						\
 	return;
 
-#define RLCI(NAME)								\
-	REGISTER_LONG_CONSTANT("TARANTOOL_ITER_" # NAME,			\
+#define RLCI(NAME)							\
+	REGISTER_LONG_CONSTANT("TARANTOOL_ITER_" # NAME,		\
 		ITERATOR_ ## NAME, CONST_CS | CONST_PERSISTENT)
 
 zend_function_entry tarantool_module_functions[] = {
@@ -95,10 +85,14 @@ zend_module_entry tarantool_module_entry = {
 };
 
 PHP_INI_BEGIN()
-	PHP_INI_ENTRY("tarantool.con_per_host"   , "5"   , PHP_INI_SYSTEM, NULL)
-	PHP_INI_ENTRY("tarantool.persistent"     , "0"   , PHP_INI_SYSTEM, NULL)
-	PHP_INI_ENTRY("tarantool.timeout"        , "10.0", PHP_INI_SYSTEM, NULL)
-	PHP_INI_ENTRY("tarantool.request_timeout", "10.0", PHP_INI_SYSTEM, NULL)
+	PHP_INI_ENTRY("tarantool.con_per_host", "5", PHP_INI_SYSTEM, NULL)
+	PHP_INI_ENTRY("tarantool.persistent"  , "0", PHP_INI_SYSTEM, NULL)
+	STD_PHP_INI_ENTRY("tarantool.timeout", "10.0", PHP_INI_ALL,
+			  OnUpdateReal, timeout, zend_tarantool_globals,
+			  tarantool_globals)
+	STD_PHP_INI_ENTRY("tarantool.request_timeout", "10.0", PHP_INI_ALL,
+			  OnUpdateReal, request_timeout, zend_tarantool_globals,
+			  tarantool_globals)
 	STD_PHP_INI_ENTRY("tarantool.retry_count", "1", PHP_INI_ALL,
 			  OnUpdateLong, retry_count, zend_tarantool_globals,
 			  tarantool_globals)
@@ -135,10 +129,11 @@ tarantool_stream_close(tarantool_object *obj) {
 	if (obj->stream || obj->persistent_id)
 		tntll_stream_close(obj->stream, obj->persistent_id);
 	obj->stream = NULL;
+	obj->persistent_id = NULL;
 }
 
 int __tarantool_connect(tarantool_object *obj, zval *id TSRMLS_DC) {
-	bool persistent = TARANTOOL_G(persistent);
+	bool persistent = (TARANTOOL_G(manager) != NULL);
 	struct pool_manager *mng = TARANTOOL_G(manager);
 	int status = SUCCESS;
 	long count = TARANTOOL_G(retry_count);
@@ -150,10 +145,8 @@ int __tarantool_connect(tarantool_object *obj, zval *id TSRMLS_DC) {
 		int rv = tntll_stream_fpid(obj->host, obj->port,
 					   obj->persistent_id, &obj->stream,
 					   &err);
-		if (obj->stream == NULL) {
-			count--;
+		if (obj->stream == NULL)
 			goto retry;
-		}
 		return status;
 	}
 	obj->schema = tarantool_schema_new();
@@ -164,6 +157,7 @@ retry:
 			/* If we're here, then there war error */
 			nanosleep(&sleep_time, NULL);
 			efree(err);
+			err = NULL;
 		}
 		if (persistent) {
 			if (obj->persistent_id)
@@ -202,13 +196,17 @@ int __tarantool_reconnect(tarantool_object *obj, zval *id TSRMLS_DC) {
 }
 
 static void tarantool_free(tarantool_object *obj TSRMLS_DC) {
-	int store = TARANTOOL_G(persistent) && !obj->stream;
+	int store = TARANTOOL_G(manager) && !obj->stream;
 	if (!obj) return;
 	if (store) {
 		pool_manager_push_assure(TARANTOOL_G(manager), obj);
 	} else {
 		if (obj->greeting) pefree(obj->greeting, 1);
 		tarantool_stream_close(obj);
+		if (obj->persistent_id) {
+			pefree(obj->persistent_id, 1);
+			obj->persistent_id = NULL;
+		}
 		if (obj->schema) tarantool_schema_delete(obj->schema);
 	}
 	if (obj->host)   pefree(obj->host, 1);
@@ -633,11 +631,19 @@ PHP_RINIT_FUNCTION(tarantool) {
 
 static void
 php_tarantool_init_globals(zend_tarantool_globals *tarantool_globals) {
+	tarantool_globals->sync_counter    = 0;
+	tarantool_globals->retry_count     = 1;
+	tarantool_globals->retry_sleep     = 0.1;
+	tarantool_globals->timeout         = 10.0;
+	tarantool_globals->request_timeout = 10.0;
+	tarantool_globals->manager         = NULL;
 }
 
 PHP_MINIT_FUNCTION(tarantool) {
-	REGISTER_INI_ENTRIES();
 	ZEND_INIT_MODULE_GLOBALS(tarantool, php_tarantool_init_globals, NULL);
+	REGISTER_INI_ENTRIES();
+
+	/* Register constants */
 	RLCI(EQ);
 	RLCI(REQ);
 	RLCI(ALL);
@@ -650,15 +656,19 @@ PHP_MINIT_FUNCTION(tarantool) {
 	RLCI(BITSET_ALL_NOT_SET);
 	RLCI(OVERLAPS);
 	RLCI(NEIGHBOR);
-	TARANTOOL_G(sync_counter) = 0;
-	TARANTOOL_G(retry_count)  = INI_INT("tarantool.retry_count");
-	zend_bool persistent  = INI_BOOL("tarantool.persistent");
-	TARANTOOL_G(persistent) = persistent;
-	TARANTOOL_G(manager) = pool_manager_create(persistent, INI_INT("tarantool.con_per_host"));
+
+	/* Init global variables */
+	TARANTOOL_G(manager) = pool_manager_create(
+			INI_BOOL("tarantool.persistent"),
+			INI_INT("tarantool.con_per_host")
+	);
+
+	/* Init class entries */
 	zend_class_entry tarantool_class;
 	INIT_CLASS_ENTRY(tarantool_class, "Tarantool", tarantool_class_methods);
 	tarantool_class.create_object = tarantool_create;
 	tarantool_class_ptr = zend_register_internal_class(&tarantool_class TSRMLS_CC);
+
 	return SUCCESS;
 }
 
@@ -826,11 +836,12 @@ PHP_METHOD(tarantool_class, close) {
 	TARANTOOL_PARSE_PARAMS(id, "", id);
 	TARANTOOL_FETCH_OBJECT(obj, id);
 
-	if (!TARANTOOL_G(persistent)) {
+	if (TARANTOOL_G(manager) == NULL) {
 		tarantool_stream_close(obj);
 		tarantool_schema_delete(obj->schema);
 		obj->schema = NULL;
 	}
+
 	RETURN_TRUE;
 }
 

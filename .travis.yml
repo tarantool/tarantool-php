@@ -10,115 +10,97 @@ php:
   - 5.6
 
 python:
-  - "2.7"
+  - 2.7
 
 cache: false
 
 env:
-    matrix:
-      - OS=el DIST=6 PACK=rpm
-      - OS=el DIST=7 PACK=rpm
-      - OS=fedora DIST=20 PACK=rpm
-      - OS=fedora DIST=21 PACK=rpm
-      - OS=fedora DIST=22 PACK=rpm
-      - OS=fedora DIST=23 PACK=rpm
-      - OS=ubuntu DIST=trusty PACK=deb
-      - OS=ubuntu DIST=precise PACK=deb
-      - OS=ubuntu DIST=vivid PACK=deb
-      - OS=debian DIST=jessie PACK=deb
-      - OS=debian DIST=wheezy PACK=deb
-      - OS=debian DIST=stretch PACK=deb
-      - PACK=none
+  matrix:
+    - OS=el DIST=6 PACK=rpm
+    - OS=el DIST=7 PACK=rpm
+    - OS=fedora DIST=22 PACK=rpm
+    - OS=fedora DIST=23 PACK=rpm
+    - OS=fedora DIST=rawhide PACK=rpm
+    - OS=ubuntu DIST=trusty PACK=deb
+    - OS=ubuntu DIST=precise PACK=deb
+    - OS=ubuntu DIST=wily PACK=deb
+    - OS=ubuntu DIST=xenial PACK=deb
+    - OS=debian DIST=jessie PACK=deb
+    - OS=debian DIST=wheezy PACK=deb
+    - OS=debian DIST=stretch PACK=deb
+    - OS=debian DIST=sid PACK=deb
+    - PACK=none
 
 # multiple php version exclusion matrix
 matrix:
-    fast_finish: true
-    allow_failures:
-      - env: OS=el DIST=6 PACK=rpm
-      - env: OS=el DIST=7 PACK=rpm
-      - env: OS=fedora DIST=20 PACK=rpm
-      - env: OS=fedora DIST=21 PACK=rpm
-      - env: OS=fedora DIST=22 PACK=rpm
-      - env: OS=fedora DIST=23 PACK=rpm
-      - env: OS=ubuntu DIST=trusty PACK=deb
-      - env: OS=ubuntu DIST=precise PACK=deb
-      - env: OS=ubuntu DIST=vivid PACK=deb
-      - env: OS=debian DIST=jessie PACK=deb
-      - env: OS=debian DIST=wheezy PACK=deb
-      - env: OS=debian DIST=stretch PACK=deb
-    exclude:
-      - env: OS=el DIST=6 PACK=rpm
-        php: 5.3
-      - env: OS=el DIST=7 PACK=rpm
-        php: 5.3
-      - env: OS=fedora DIST=20 PACK=rpm
-        php: 5.3
-      - env: OS=fedora DIST=21 PACK=rpm
-        php: 5.3
-      - env: OS=fedora DIST=22 PACK=rpm
-        php: 5.3
-      - env: OS=fedora DIST=23 PACK=rpm
-        php: 5.3
-      - env: OS=ubuntu DIST=trusty PACK=deb
-        php: 5.3
-      - env: OS=ubuntu DIST=precise PACK=deb
-        php: 5.3
-      - env: OS=ubuntu DIST=vivid PACK=deb
-        php: 5.3
-      - env: OS=debian DIST=jessie PACK=deb
-        php: 5.3
-      - env: OS=debian DIST=wheezy PACK=deb
-        php: 5.3
-      - env: OS=debian DIST=stretch PACK=deb
-        php: 5.3
-      - env: OS=el DIST=6 PACK=rpm
-        php: 5.4
-      - env: OS=el DIST=7 PACK=rpm
-        php: 5.4
-      - env: OS=fedora DIST=20 PACK=rpm
-        php: 5.4
-      - env: OS=fedora DIST=21 PACK=rpm
-        php: 5.4
-      - env: OS=fedora DIST=22 PACK=rpm
-        php: 5.4
-      - env: OS=fedora DIST=23 PACK=rpm
-        php: 5.4
-      - env: OS=ubuntu DIST=trusty PACK=deb
-        php: 5.4
-      - env: OS=ubuntu DIST=precise PACK=deb
-        php: 5.4
-      - env: OS=ubuntu DIST=vivid PACK=deb
-        php: 5.4
-      - env: OS=debian DIST=jessie PACK=deb
-        php: 5.4
-      - env: OS=debian DIST=wheezy PACK=deb
-        php: 5.4
-      - env: OS=debian DIST=stretch PACK=deb
-        php: 5.4
-      - env: OS=el DIST=6 PACK=rpm
-        php: 5.5
-      - env: OS=el DIST=7 PACK=rpm
-        php: 5.5
-      - env: OS=fedora DIST=20 PACK=rpm
-        php: 5.5
-      - env: OS=fedora DIST=21 PACK=rpm
-        php: 5.5
-      - env: OS=fedora DIST=22 PACK=rpm
-        php: 5.5
-      - env: OS=fedora DIST=23 PACK=rpm
-        php: 5.5
-      - env: OS=ubuntu DIST=trusty PACK=deb
-        php: 5.5
-      - env: OS=ubuntu DIST=precise PACK=deb
-        php: 5.5
-      - env: OS=ubuntu DIST=vivid PACK=deb
-        php: 5.5
-      - env: OS=debian DIST=jessie PACK=deb
-        php: 5.5
-      - env: OS=debian DIST=wheezy PACK=deb
-        php: 5.5
-      - env: OS=debian DIST=stretch PACK=deb
-        php: 5.5
+  fast_finish: true
+  allow_failures:
+    - env: OS=el DIST=6 PACK=rpm
+    - env: OS=el DIST=7 PACK=rpm
+    - env: OS=fedora DIST=22 PACK=rpm
+    - env: OS=fedora DIST=23 PACK=rpm
+    - env: OS=fedora DIST=rawhide PACK=rpm
+    - env: OS=ubuntu DIST=precise PACK=deb
+    - env: OS=ubuntu DIST=trusty PACK=deb
+    - env: OS=ubuntu DIST=wily PACK=deb
+    - env: OS=ubuntu DIST=xenial PACK=deb
+    - env: OS=debian DIST=jessie PACK=deb
+    - env: OS=debian DIST=wheezy PACK=deb
+    - env: OS=debian DIST=stretch PACK=deb
+    - env: OS=debian DIST=sid PACK=deb
+  exclude:
+    - env: OS=el DIST=6 PACK=rpm
+      php: 5.4
+    - env: OS=el DIST=7 PACK=rpm
+      php: 5.4
+    - env: OS=fedora DIST=22 PACK=rpm
+      php: 5.4
+    - env: OS=fedora DIST=23 PACK=rpm
+      php: 5.4
+    - env: OS=fedora DIST=rawhide PACK=rpm
+      php: 5.4
+    - env: OS=ubuntu DIST=precise PACK=deb
+      php: 5.4
+    - env: OS=ubuntu DIST=trusty PACK=deb
+      php: 5.4
+    - env: OS=ubuntu DIST=wily PACK=deb
+      php: 5.4
+    - env: OS=ubuntu DIST=xenial PACK=deb
+      php: 5.4
+    - env: OS=debian DIST=jessie PACK=deb
+      php: 5.4
+    - env: OS=debian DIST=wheezy PACK=deb
+      php: 5.4
+    - env: OS=debian DIST=stretch PACK=deb
+      php: 5.4
+    - env: OS=debian DIST=sid PACK=deb
+      php: 5.4
+    - env: OS=el DIST=6 PACK=rpm
+      php: 5.5
+    - env: OS=el DIST=7 PACK=rpm
+      php: 5.5
+    - env: OS=fedora DIST=22 PACK=rpm
+      php: 5.5
+    - env: OS=fedora DIST=23 PACK=rpm
+      php: 5.5
+    - env: OS=fedora DIST=rawhide PACK=rpm
+      php: 5.5
+    - env: OS=ubuntu DIST=precise PACK=deb
+      php: 5.5
+    - env: OS=ubuntu DIST=trusty PACK=deb
+      php: 5.5
+    - env: OS=ubuntu DIST=wily PACK=deb
+      php: 5.5
+    - env: OS=ubuntu DIST=xenial PACK=deb
+      php: 5.5
+    - env: OS=debian DIST=jessie PACK=deb
+      php: 5.5
+    - env: OS=debian DIST=wheezy PACK=deb
+      php: 5.5
+    - env: OS=debian DIST=stretch PACK=deb
+      php: 5.5
+    - env: OS=debian DIST=sid PACK=deb
+      php: 5.5
 
 script:
   - git clone https://github.com/tarantool/build.git

@@ -1,12 +1,17 @@
 <?php
 class CreateTest extends PHPUnit_Framework_TestCase
 {
-    protected static $port;
+    protected static $port, $tm;
 
     public static function setUpBeforeClass() {
         self::$port = getenv('PRIMARY_PORT');
+        self::$tm = ini_get("tarantool.timeout");
+        ini_set("tarantool.timeout", "0.1");
     }
 
+    public static function tearDownAfterClass() {
+        ini_set("tarantool.timeout", self::$tm);
+    }
 
     public function test_00_create_basic()
     {
@@ -15,6 +20,7 @@ class CreateTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($c->ping());
         $c->close();
     }
+
     public function test_01_create_test_ping_and_close()
     {
         $c = new Tarantool('localhost', self::$port);
@@ -27,6 +33,13 @@ class CreateTest extends PHPUnit_Framework_TestCase
         $c->close();
     }
 
+    public function test_01_01_double_disconnect()
+    {
+        $a = new Tarantool('localhost', self::$port);
+        $a->disconnect();
+        $a->disconnect();
+    }
+
     /**
      * @expectedException Exception
      * @expectedExceptionMessageRegExp /Name or service not known|nodename nor servname provided/
@@ -37,7 +50,7 @@ class CreateTest extends PHPUnit_Framework_TestCase
 
     /**
      * @expectedException Exception
-     * @expectedExceptionMessage Connection refused
+     * @expectedExceptionMessageRegExp /Connection refused|Network is unreachable/
      */
     public function test_03_00_create_error_port() {
         (new Tarantool('localhost', 65500))->connect();
@@ -59,6 +72,7 @@ class CreateTest extends PHPUnit_Framework_TestCase
             $a++;
         }
     }
+
     public function test_05_flush()
     {
         $c = new Tarantool('localhost', self::$port);
@@ -70,6 +84,7 @@ class CreateTest extends PHPUnit_Framework_TestCase
         $c->select("test");
         $c->flush_schema();
     }
+
     /**
      * @expectedException Exception
      * @expectedExceptionMessage Query error

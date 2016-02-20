@@ -1,12 +1,18 @@
 <?php
 class AssertTest extends PHPUnit_Framework_TestCase
 {
-    protected static $tarantool;
+    protected static $tarantool, $tm;
 
     public static function setUpBeforeClass()
     {
+        self::$tm = ini_get("tarantool.request_timeout");
+        ini_set("tarantool.request_timeout", "0.1");
         self::$tarantool = new Tarantool('localhost', getenv('PRIMARY_PORT'));
         self::$tarantool->authenticate('test', 'test');
+    }
+
+    public static function tearDownAfterClass() {
+        ini_set("tarantool.request_timeout", self::$tm);
     }
 
     protected function tearDown()
@@ -17,6 +23,7 @@ class AssertTest extends PHPUnit_Framework_TestCase
     }
 
     public function test_00_timedout() {
+
         self::$tarantool->eval("
             function assertf()
                 require('fiber').sleep(1)

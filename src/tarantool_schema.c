@@ -431,6 +431,7 @@ void tarantool_schema_flush(struct tarantool_schema *obj) {
 }
 
 void tarantool_schema_delete(struct tarantool_schema *obj) {
+	if (obj == NULL) return;
 	schema_space_free(obj->space_hash);
 	mh_schema_space_delete(obj->space_hash);
 }

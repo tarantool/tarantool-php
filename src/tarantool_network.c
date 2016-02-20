@@ -3,14 +3,11 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include <php.h>
-#include <php_ini.h>
-#include <php_network.h>
-
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
 
+#include "php_tarantool.h"
 #include "tarantool_network.h"
 
 void double_to_tv(double tm, struct timeval *tv) {
@@ -23,10 +20,7 @@ void double_to_ts(double tm, struct timespec *ts) {
 	ts->tv_nsec = floor((tm - floor(tm)) * pow(10, 9));
 }
 
-/**
- * - `pid` means persistent_id
- **/
-
+/* `pid` means persistent_id */
 void tntll_stream_close(php_stream *stream, const char *pid) {
 	TSRMLS_FETCH();
 	int rv = PHP_STREAM_PERSISTENT_SUCCESS;
@@ -75,7 +69,7 @@ int tntll_stream_open(const char *host, int port, const char *pid,
 	options = ENFORCE_SAFE_MODE | REPORT_ERRORS;
 	if (pid) options |= STREAM_OPEN_PERSISTENT;
 	flags = STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT;
-	double_to_tv(INI_FLT("tarantool.timeout"), &tv);
+	double_to_tv(TARANTOOL_G(timeout), &tv);
 	stream = php_stream_xport_create(addr, addr_len, options, flags, pid,
 					 &tv, NULL, &errstr, &errcode);
 	efree(addr);
@@ -87,7 +81,7 @@ int tntll_stream_open(const char *host, int port, const char *pid,
 	}
 
 	/* Set READ_TIMEOUT */
-	double_to_tv(INI_FLT("tarantool.request_timeout"), &tv);
+	double_to_tv(TARANTOOL_G(request_timeout), &tv);
 	if (tv.tv_sec != 0 || tv.tv_usec != 0) {
 		php_stream_set_option(stream, PHP_STREAM_OPTION_READ_TIMEOUT,
 				      0, &tv);

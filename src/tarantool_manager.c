@@ -133,9 +133,9 @@ int manager_entry_pop_apply (
 	if (obj->persistent_id) pefree(obj->persistent_id, 1);
 	if (obj->greeting)      pefree(obj->greeting, 1);
 	obj->persistent_id = pval->persistent_id;
-	obj->greeting = pval->greeting;
-	obj->salt = pval->greeting + SALT_PREFIX_SIZE;
-	obj->schema = pval->schema;
+	obj->greeting      = pval->greeting;
+	obj->salt          = pval->greeting + SALT_PREFIX_SIZE;
+	obj->schema        = pval->schema;
 	--entry->size;
 	return 0;
 }
