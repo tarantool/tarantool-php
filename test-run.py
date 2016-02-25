@@ -100,8 +100,8 @@ def main():
             print('Running "%s" with "%s"' % (cmd, php_ini))
             proc = subprocess.Popen(cmd, shell=True, cwd=test_cwd)
             rv = proc.wait()
-            if (rv != 0)
-                return rv
+            if rv != 0:
+                return -1
 
     finally:
         a = [

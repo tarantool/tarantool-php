@@ -17,10 +17,10 @@ http://pear.php.net/dtd/package-2.0.xsd">
     <email>bigbes@gmail.com</email>
     <active>yes</active>
   </lead>
-  <date>2015-04-24</date>
+  <date>2015-02-26</date>
   <version>
-    <release>0.0.13</release>
-    <api>0.0.13</api>
+    <release>0.1.0</release>
+    <api>0.1.0</api>
   </version>
   <stability>
     <release>beta</release>
@@ -81,7 +81,7 @@ http://pear.php.net/dtd/package-2.0.xsd">
   <dependencies>
     <required>
       <php>
-        <min>5.3.0</min>
+        <min>5.4.0</min>
         <max>6.0.0</max>
         <exclude>6.0.0</exclude>
       </php>
@@ -93,6 +93,16 @@ http://pear.php.net/dtd/package-2.0.xsd">
   <providesextension>tarantool</providesextension>
   <extsrcrelease/>
   <changelog>
+    <release>
+      <stability><release>beta</release><api>beta</api></stability>
+      <version><release>0.1.0</release><api>0.1.0</api></version>
+      <date>2016-02-26</date>
+      <notes>
+        tarantool-php 0.1.0
+
+        Fix a lot of bugs, added upsert command, added tests
+      </notes>
+    </release>
     <release>
       <stability><release>beta</release><api>beta</api></stability>
       <version><release>0.0.13</release><api>0.0.13</api></version>

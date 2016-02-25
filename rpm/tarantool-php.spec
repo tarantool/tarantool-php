@@ -2,9 +2,8 @@
 %global php_extdir %(php-config --extension-dir 2>/dev/null || echo "undefined")
 %global php_version %(php-config --version 2>/dev/null || echo 0)
 
-
 Name: php-tarantool
-Version: 0.0.13.0
+Version: 0.1.0.0
 Release: 1%{?dist}
 Summary: PECL PHP driver for Tarantool/Box
 Group: Development/Languages
