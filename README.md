@@ -77,7 +77,21 @@ Place it into project library path in your IDE.
 ## Usage
 
 1. [Class Tarantool](#class-tarantool)
-1. [Predefined Constants](#predefined-constants)
+2. [Predefined Constants](#predefined-constants)
+3. [Manipulation connection](#manipulation-connection)
+  * [connect](#connect)
+  * [disconnect, close](#disconnect-close)
+  * [authenticate](#authenticate)
+  * [flushSchema, flush_schema](#flushschema-flush_schema)
+  * [ping](#ping)
+4. [Database queries](#database-queries)
+  * [select](#select)
+  * [insert, replace](#insert-replace)
+  * [call](#call)
+  * [eval, evaluate](#eval-evaluate)
+  * [delete](#delete)
+  * [update](#update)
+  * [upsert](#upsert)
 
 ### Class Tarantool
 
