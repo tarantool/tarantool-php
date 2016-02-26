@@ -3,6 +3,7 @@ Priority: optional
 Maintainer: Dmitry E. Oboukhov <unera@debian.org>
 Build-Depends: cdbs,
  debhelper (>= 8),
+ libtool, libltdl3-dev,
  php5-dev
 Section: php
 Standards-Version: 3.9.4

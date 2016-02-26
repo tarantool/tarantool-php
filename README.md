@@ -55,3 +55,473 @@ For building packages - please, read `README.PACK.md`
 Stubs can be found at [tarantool/tarantool-php-stubs](https://github.com/tarantool/tarantool-php-stubs).
 Place it into project library path in your IDE.
 
+# API and Configuration
+
+## Configuration file
+
+* `tarantool.persistent` - Enable persistent connections (don't close connections between sessions) (defaults: True, can't be changed in runtime)
+* `tarantool.con_per_host` - Count of open connections to every Tarantool server to store (defaults: 5, can't be changed in runtime)
+* `tarantool.timeout` - Connection timeout (defaults: 10 seconds, can be changed in runtime)
+* `tarantool.retry_count` - Count of retries for connecting (defaults: 1, can be changed in runtime)
+* `tarantool.retry_sleep` - Sleep between connecting retries (defaults: 0.1 second, can be changed in runtime)
+* `tarantool.request_timeout` - Read/write timeout for requests (defaults: 10 second, can be changed in runtime)
+
+# Classes and Methods
+
+## Usage
+
+1. [Class Tarantool](#class-tarantool)
+1. [Predefined Constants](#predefined-constants)
+
+### Class Tarantool
+
+_**Description**_: Creates a Tarantool client
+
+``` php
+tarantool_object = new Tarantool([host = 'localhost'[, port = 3301]])
+```
+
+_**Parameters**_
+
+* `host`: string, default is `'localhost'`
+* `port`: number, default is `3301`
+
+_**Return Value**_
+
+Tarantool class instance
+
+#### *Example*
+
+``` php
+$tnt = new Tarantool(); // -> new Tarantool('localhost', 3301);
+$tnt = new Tarantool('tarantool.org'); // -> new Tarantool('tarantool.org', 3301);
+$tnt = new Tarantool('localhost', 16847);
+```
+
+### Predefined Constants
+
+_**Description**_: Available Tarantool Constants
+
+* `TARANTOOL_ITER_EQ` - Equality iterator (ALL)
+* `TARANTOOL_ITER_REQ` - Reverse equality iterator
+* `TARANTOOL_ITER_ALL` - Get all rows
+* `TARANTOOL_ITER_LT` - Less then iterator
+* `TARANTOOL_ITER_LE` - Less and equal iterator
+* `TARANTOOL_ITER_GE` - Greater and equal iterator
+* `TARANTOOL_ITER_GT` - Gtreater then iterator
+* `TARANTOOL_ITER_BITSET_ALL_SET` - check if all given bits are set (BITSET only)
+* `TARANTOOL_ITER_BITSET_ANY_SET` - check if any given bits are set (BITSET only)
+* `TARANTOOL_ITER_BITSET_ALL_NOT_SET` - check if all given bits are not set
+  (BITSET only)
+* `TARANTOOL_ITER_OVERLAPS` - find dots in the n-dimension cube (RTREE only)
+* `TARANTOOL_ITER_NEIGHBOR` - find nearest dots (RTREE only)
+
+## Manipulation connection
+
+### connect
+
+``` php
+$tnt->connect();
+```
+
+_**Description**_: Explicit connect to Tarantool Server. If not used, then connection
+will be opened on demand.
+
+_**Return Value**_
+
+**BOOL**: True on success
+Raises `Exception` if can't connect to Tarantool.
+
+### disconnect, close
+
+``` php
+$tnt->disconnect();
+$tnt->close();
+```
+
+_**Description**_: Explicitly close connection to Tarantool Server. If you're
+using persistent connections, then it'll be saved to connection pool.
+
+_**Return Value**_
+
+**BOOL**: True
+
+### authenticate
+
+``` php
+$tnt->connect(login, password);
+```
+
+_**Description**_: Authenticate to Tarantool using given login/password
+
+_**Parameters**_
+
+* `login`: string - user login (mandatory)
+* `password`: string - user password (mandatory, but ignored, if user is guest)
+
+_**Return Value**_
+
+#### *Example*
+
+``` php
+/**
+ * - user is 'valdis'
+ * - password is 'pelsh'
+ */
+$tnt->connect('valdis', 'pelsh')
+/**
+ * - user is 'guest'
+ * - password is empty and ignored, anyway
+ */
+$tnt->connect('guest', '')
+```
+
+### flushSchema, flush_schema
+
+``` php
+$tnt->flushSchema();
+$tnt->flush_schema()
+```
+
+_**Description**_: Remove space/index schema from client.
+
+_**Return Value**_
+
+**BOOL**: True
+
+### ping
+
+``` php
+$tnt->ping();
+```
+
+_**Description**_: Ping Tarantool server.
+_**Return Value**_
+
+**BOOL**: True
+Throws `Exception` on error.
+
+## Database queries
+
+### select
+
+``` php
+rv = $tnt->select(space[, key[, index[, limit[, offset[, iterator]]]]]);
+```
+
+_**Description**_: Execute select query from Tarantool server.
+
+_**Parameters**_
+
+* `space`: String/Number, Space id to select from (mandatory)
+* `key`: String/Number or Array, key to select (`Array()` by default, selects
+  everything from space)
+* `index`: String/Number, Index id to select from (0 by default)
+* `limit`: Number, limit number of rows to return from select (INT_MAX by default)
+* `offset`: Number, offset to select from (0 by default)
+* `iterator`: Constant, iterator type. See [Predefined Constants](#predefined-constants)
+  for more information (`TARANTOOL_ITER_EQ` by default)
+
+_**Return Value**_
+
+**Array of arrays**: in case of success - list of tuples that satisfy your
+request, or empty array, in nothing was found.
+
+**BOOL**: False and raises `Exception` in case of error.
+
+#### Example
+
+``` php
+/* Select everything from space 'test' */
+$tnt->select("test");
+/* Selects from space 'test' by PK with id == 1*/
+$tnt->select("test", 1);
+/* The same as previous */
+$tnt->select("test", array(1));
+/* Selects from space 'test' by secondary key from index 'isec' and == {1, 'hello'} */
+$tnt->select("test", array(1, "hello"), "isec");
+/* Selects second hundred of rows from space test */
+$tnt->select("test", null, null, 100, 100);
+/* Selects second hundred of rows from space test in reverse equality order */
+/* It meanse: select penultimate hundred */
+$tnt->select("test", null, null, 100, 100, TARANTOOL_ITER_REQ);
+```
+
+### insert, replace
+
+``` php
+rv = $tnt->insert(space, tuple);
+rv = $tnt->replace(space, tuple);
+```
+
+_**Description**_: Insert (if not exists query with same PK) or Replace tuple.
+
+_**Parameters**_
+
+* `space`: String/Number, Space id to select from (mandatory)
+* `tuple`: Array, Tuple to Insert/Replace (mandatory)
+
+_**Return Value**_
+
+**Array** in case of success - tuple that was inserted into Tarantool.
+**BOOL**: False and raises `Exception` in case of error.
+
+#### Example
+
+``` php
+/* It'll be processed OK, since no tuples with PK == 1 are in space 'test' */
+$tnt->insert("test", array(1, 2, "smth"));
+/* We've just inserted tuple with PK == 1, so it'll fail */
+/* error will be ER_TUPLE_FOUND */
+$tnt->insert("test", array(1, 3, "smth completely different"));
+/* But it won't be a problem for replace */
+$tnt->replace("test", array(1, 3, "smth completely different"));
+```
+
+### call
+
+``` php
+rv = $tnt->call(procedure[, args]);
+```
+
+_**Description**_: Call stored procedure
+
+_**Parameters**_
+* `procedure`: String, procedure to call (mandatory)
+* `args`: Any value to pass to procdure as arguments (empty by default)
+
+_**Return Value**_
+
+**Array of arrays** in case of success - tuples that were returned by stored
+ procedure.
+
+**BOOL**: False and raises `Exception` in case of error.
+
+#### Example
+
+``` php
+$tnt->call("test_2");
+$tnt->call("test_3", array(3, 4));
+```
+
+### eval, evaluate
+
+``` php
+rv = $tnt->eval(lua_code[, args]);
+```
+
+_**Description**_: Evaluate given lua code (demands current user to have
+`'execute'` rights for `'universe'` in Tarantool)
+
+_**Parameters**_
+* `procedure`: String, Lua code to evaluate (mandatory)
+* `args`: Any value to pass to procdure as arguments (empty by default)
+
+_**Return Value**_
+
+**Any value**, that was returned from evaluated code.
+**BOOL**: False and raises `Exception` in case of error.
+
+#### Example
+
+``` php
+$tnt->eval("return test_2()");
+$tnt->eval("return test_3(...)", array(3, 4));
+$tnt->evaluate("return test_3(...)", array(3, 4));
+```
+
+### delete
+
+``` php
+rv = $tnt->delete(space, key[, index]);
+```
+
+_**Description**_: Delete record with given key.
+
+_**Parameters**_
+* `space`: String/Number, Space id to delete from (mandatory)
+* `key`: String/Number or Array, key to delete row with (mandatory)
+* `index`: String/Number, Index id to delete from (0 by default)
+
+_**Return Value**_
+
+**Array** in case of success - tuple that was deleted by query.
+**BOOL**: False and raises `Exception` in case of error.
+
+#### Example
+
+``` php
+/* Following code will delete all tuples from space `test` */
+$tuples = $tnt->select("test");
+foreach($tuples as $value)$
+    $tnt->delete("test", Array($value[0]));
+```
+
+### update
+
+``` php
+rv = $tnt->update(space, key, ops[, index]);
+```
+
+_**Description**_: Update record with given key (update in Tarantool is
+apply multiple given operations to tuple)
+
+_**Parameters**_
+
+* `space`: String/Number, Space id to select from (mandatory)
+* `key`: Array/Scalar, Key to match tuple with (mandatory)
+* `ops`: Array of Arrays, Operations to execute if tuple was found
+
+_**Operationa**_
+
+* Splice operation - take `field`'th field, replace `length` bytes from `offset`
+  byte with 'list'.
+  ```
+  array(
+    "field" => <number>,
+    "op"    => ":",
+    "offset"=> <number>,
+    "length"=> <number>,
+    "list"  => <string>
+  ),
+  ```
+* Numeric operations:
+  ```
+  array(
+    "field" => <number>,
+    "op" => ("+"|"-"|"&"|"^"|"|"),
+    "arg" => <number>
+  ),
+  ```
+  - "+" for addition
+  - "-" for substraction
+  - "&" for bitwise AND
+  - "^" for bitwise XOR
+  - "|" for bitwise OR
+* Delete `arg` fields from 'field'
+  ```
+  array(
+    "field" => <number>,
+    "op" => "#",
+    "arg" => <number>
+  )
+  ```
+* Replace/Insert before operations
+  ```
+  array(
+    "field" => <number>,
+    "op"    => ("="|"!"),
+    "arg"   => <serializable>
+  )
+  ```
+  - "=" replace `field`'th field with 'arg'
+  - "=" insert 'arg' before `field`'th field
+
+`<serializable>` - any simple type which converts to MsgPack (scalar/array).
+
+-  ":" - command `splice` - replace "length" bites in "field" to "list" beginning from "offset".
+-  "+" - add "arg" to "field"
+-  "-" - sub "arg" from "field"
+-  "&" - bitwise "AND" with "field" and "arg" and place result to "field"
+-  "|" - bitwise "OR" with "field" and "arg" and place result to "field"
+-  "^" - bitwise "Exclusive OR" (XOR) with "field" and "arg" and place result to "field"
+-  "=" - assign "arg" to "field"
+-  "!" - assign "arg" before "field"
+-  "#" - remove "arg" fields beginning from "field"
+
+_**Return Value**_
+
+**Array** in case of success - tuple after it was updated.
+**BOOL**: False and raises `Exception` in case of error.
+
+#### Example
+
+``` php
+$tnt->update("test", 1, array(
+  array(
+    "field" => 1,
+    "op" => "+",
+    "arg" => 16
+  ),
+  array(
+    "field" => 3,
+    "op" => "=",
+    "arg" => 98
+  ),
+  array(
+    "field" => 4,
+    "op" => "=",
+    "arg" => intval(0x11111)
+  ),
+));
+$tnt->update("test", 1, array(
+  array(
+    "field" => 3,
+    "op" => "-",
+    "arg" => 10
+  ),
+  array(
+    "field" => 4,
+    "op" => "&",
+    "arg" => intval(0x10101)
+  )
+));
+$tnt->update("test", 1, array(
+  array(
+    "field" => 4,
+    "op" => "^",
+    "arg" => intval(0x11100)
+  )
+));
+$tnt->update("test", 1, array(
+  array(
+    "field" => 4,
+    "op" => "|",
+    "arg" => intval(0x00010)
+  )
+));
+$tnt->update("test", 1, array(
+  array(
+    "field" => 2,
+    "op" => ":",
+    "offset" => 2,
+    "length" => 2,
+    "list" => "rrance and phillipe show"
+  )
+));
+```
+
+### upsert
+
+``` php
+rv = $tnt->update(space, tuple, ops[, index]);
+```
+
+_**Description**_: Update or Insert command (If tuple with PK == PK('tuple') exists,
+then it'll update this tuple with 'ops', otherwise 'tuple' will be inserted)
+
+_**Parameters**_
+
+* `space`: String/Number, Space id to select from (mandatory)
+* `tuple`: Array, Tuple to Insert (mandatory)
+* `ops`: Array of Arrays, Operations to execute if tuple was found. Operations
+  are described in update section.
+
+_**Return Value**_
+
+Nothing. In simple cases - it mustn't throw errors and returns nothing, but
+sometimes it'll, check out [documentation](http://tarantool.org/doc/book/box/box_space.html?highlight=upsert#lua-function.space_object.upsert)
+
+**BOOL**: False and raises `Exception` in case of error.
+
+#### Example
+
+``` php
+$tnt->upsert("test", array(124, 10, "new tuple"), array(
+  array(
+    "field" => 1,
+    "op" => "+",
+    "arg" => 10
+  )
+));
+```

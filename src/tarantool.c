@@ -85,8 +85,8 @@ zend_module_entry tarantool_module_entry = {
 };
 
 PHP_INI_BEGIN()
-	PHP_INI_ENTRY("tarantool.con_per_host", "5", PHP_INI_SYSTEM, NULL)
 	PHP_INI_ENTRY("tarantool.persistent"  , "0", PHP_INI_SYSTEM, NULL)
+	PHP_INI_ENTRY("tarantool.con_per_host", "5", PHP_INI_SYSTEM, NULL)
 	STD_PHP_INI_ENTRY("tarantool.timeout", "10.0", PHP_INI_ALL,
 			  OnUpdateReal, timeout, zend_tarantool_globals,
 			  tarantool_globals)
@@ -500,7 +500,6 @@ zval *tarantool_update_verify_args(zval *args TSRMLS_DC) {
 	}
 	return arr;
 cleanup:
-	//zval_ptr_dtor(&arr);
 	return NULL;
 }
 
@@ -1063,7 +1062,6 @@ PHP_METHOD(tarantool_class, update) {
 	if (key != key_new) {
 		zval_ptr_dtor(&key_new);
 	}
-	//zval_ptr_dtor(&args);
 	if (tarantool_stream_send(obj TSRMLS_CC) == FAILURE)
 		RETURN_FALSE;
 
@@ -1075,7 +1073,7 @@ PHP_METHOD(tarantool_class, update) {
 }
 
 PHP_METHOD(tarantool_class, upsert) {
-	zval *space = NULL, *tuple = NULL, *index = NULL, *args = NULL;
+	zval *space = NULL, *tuple = NULL, *args = NULL;
 
 	TARANTOOL_PARSE_PARAMS(id, "zaa", &space, &tuple, &args);
 	TARANTOOL_FETCH_OBJECT(obj, id);
