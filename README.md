@@ -98,7 +98,7 @@ Place it into project library path in your IDE.
 _**Description**_: Creates a Tarantool client
 
 ``` php
-tarantool_object = new Tarantool([host = 'localhost'[, port = 3301]])
+$tarantool_object = new Tarantool([$host = 'localhost'[, $port = 3301]])
 ```
 
 _**Parameters**_
@@ -169,7 +169,7 @@ _**Return Value**_
 ### authenticate
 
 ``` php
-$tnt->connect(login, password);
+$tnt->connect($login, $password);
 ```
 
 _**Description**_: Authenticate to Tarantool using given login/password
@@ -228,7 +228,7 @@ Throws `Exception` on error.
 ### select
 
 ``` php
-rv = $tnt->select(space[, key[, index[, limit[, offset[, iterator]]]]]);
+$rv = $tnt->select($space[, $key[, $index[, $limit[, $offset[, $iterator]]]]]);
 ```
 
 _**Description**_: Execute select query from Tarantool server.
@@ -272,8 +272,8 @@ $tnt->select("test", null, null, 100, 100, TARANTOOL_ITER_REQ);
 ### insert, replace
 
 ``` php
-rv = $tnt->insert(space, tuple);
-rv = $tnt->replace(space, tuple);
+$rv = $tnt->insert(space, tuple);
+$rv = $tnt->replace(space, tuple);
 ```
 
 _**Description**_: Insert (if not exists query with same PK) or Replace tuple.
@@ -304,7 +304,7 @@ $tnt->replace("test", array(1, 3, "smth completely different"));
 ### call
 
 ``` php
-rv = $tnt->call(procedure[, args]);
+$rv = $tnt->call($procedure[, $args]);
 ```
 
 _**Description**_: Call stored procedure
@@ -330,7 +330,7 @@ $tnt->call("test_3", array(3, 4));
 ### eval, evaluate
 
 ``` php
-rv = $tnt->eval(lua_code[, args]);
+$rv = $tnt->eval($lua_code[, $args]);
 ```
 
 _**Description**_: Evaluate given lua code (demands current user to have
@@ -357,7 +357,7 @@ $tnt->evaluate("return test_3(...)", array(3, 4));
 ### delete
 
 ``` php
-rv = $tnt->delete(space, key[, index]);
+$rv = $tnt->delete($space, $key[, $index]);
 ```
 
 _**Description**_: Delete record with given key.
@@ -378,14 +378,15 @@ _**Return Value**_
 ``` php
 /* Following code will delete all tuples from space `test` */
 $tuples = $tnt->select("test");
-foreach($tuples as $value)$
-    $tnt->delete("test", Array($value[0]));
+foreach($tuples as $value) {
+    $tnt->delete("test", array($value[0]));
+}
 ```
 
 ### update
 
 ``` php
-rv = $tnt->update(space, key, ops[, index]);
+$rv = $tnt->update($space, $key, $ops[, $index]);
 ```
 
 _**Description**_: Update record with given key (update in Tarantool is
@@ -538,7 +539,7 @@ $tnt->update("test", 1, array(
 ### upsert
 
 ``` php
-rv = $tnt->update(space, tuple, ops[, index]);
+$rv = $tnt->update($space, $tuple, $ops[, $index]);
 ```
 
 _**Description**_: Update or Insert command (If tuple with PK == PK('tuple') exists,
