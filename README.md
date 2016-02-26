@@ -1,7 +1,13 @@
+<a href="http://tarantool.org">
+  <img src="https://avatars2.githubusercontent.com/u/2344919?v=2&s=250" align="right">
+</a>
+<a href="https://travis-ci.org/tarantool/tarantool-php">
+  <img src="https://travis-ci.org/tarantool/tarantool-php.png?branch=master" align="right">
+</a>
 PHP driver for Tarantool 1.6
 ============================
 
-PECL PHP driver for Tarantool [![Build Status](https://travis-ci.org/tarantool/tarantool-php.png?branch=master)](https://travis-ci.org/tarantool/tarantool-php)
+PECL PHP driver for Tarantool.
 
 If you're looking for 1.5 version, check out branch 'stable'.
 
@@ -196,9 +202,11 @@ $tnt->ping();
 ```
 
 _**Description**_: Ping Tarantool server.
+
 _**Return Value**_
 
 **BOOL**: True
+
 Throws `Exception` on error.
 
 ## Database queries
@@ -225,7 +233,7 @@ _**Parameters**_
 _**Return Value**_
 
 **Array of arrays**: in case of success - list of tuples that satisfy your
-request, or empty array, in nothing was found.
+request, or empty array, if nothing was found.
 
 **BOOL**: False and raises `Exception` in case of error.
 
@@ -264,6 +272,7 @@ _**Parameters**_
 _**Return Value**_
 
 **Array** in case of success - tuple that was inserted into Tarantool.
+
 **BOOL**: False and raises `Exception` in case of error.
 
 #### Example
@@ -320,6 +329,7 @@ _**Parameters**_
 _**Return Value**_
 
 **Any value**, that was returned from evaluated code.
+
 **BOOL**: False and raises `Exception` in case of error.
 
 #### Example
@@ -346,6 +356,7 @@ _**Parameters**_
 _**Return Value**_
 
 **Array** in case of success - tuple that was deleted by query.
+
 **BOOL**: False and raises `Exception` in case of error.
 
 #### Example
@@ -372,10 +383,12 @@ _**Parameters**_
 * `key`: Array/Scalar, Key to match tuple with (mandatory)
 * `ops`: Array of Arrays, Operations to execute if tuple was found
 
-_**Operationa**_
+_**Operations**_
+
+`<serializable>` - any simple type which converts to MsgPack (scalar/array).
 
 * Splice operation - take `field`'th field, replace `length` bytes from `offset`
-  byte with 'list'.
+  byte with 'list':
   ```
   array(
     "field" => <number>,
@@ -398,7 +411,7 @@ _**Operationa**_
   - "&" for bitwise AND
   - "^" for bitwise XOR
   - "|" for bitwise OR
-* Delete `arg` fields from 'field'
+* Delete `arg` fields from 'field':
   ```
   array(
     "field" => <number>,
@@ -406,7 +419,7 @@ _**Operationa**_
     "arg" => <number>
   )
   ```
-* Replace/Insert before operations
+* Replace/Insert before operations:
   ```
   array(
     "field" => <number>,
@@ -417,21 +430,38 @@ _**Operationa**_
   - "=" replace `field`'th field with 'arg'
   - "=" insert 'arg' before `field`'th field
 
-`<serializable>` - any simple type which converts to MsgPack (scalar/array).
+```
+array(
+  array(
+    "field" => <number>,
+    "op"    => ":",
+    "offset"=> <number>,
+    "length"=> <number>,
+    "list"  => <string>
+  ),
+  array(
+    "field" => <number>,
+    "op" => ("+"|"-"|"&"|"^"|"|"),
+    "arg" => <number>
+  ),
+  array(
+    "field" => <number>,
+    "op" => "#",
+    "arg" => <number>
+  ),
+  array(
+    "field" => <number>,
+    "op"    => ("="|"!"),
+    "arg"   => <serializable>
+  )
+)
+```
 
--  ":" - command `splice` - replace "length" bites in "field" to "list" beginning from "offset".
--  "+" - add "arg" to "field"
--  "-" - sub "arg" from "field"
--  "&" - bitwise "AND" with "field" and "arg" and place result to "field"
--  "|" - bitwise "OR" with "field" and "arg" and place result to "field"
--  "^" - bitwise "Exclusive OR" (XOR) with "field" and "arg" and place result to "field"
--  "=" - assign "arg" to "field"
--  "!" - assign "arg" before "field"
--  "#" - remove "arg" fields beginning from "field"
 
 _**Return Value**_
 
 **Array** in case of success - tuple after it was updated.
+
 **BOOL**: False and raises `Exception` in case of error.
 
 #### Example
