@@ -1,10 +1,10 @@
 Source: tarantool-php
 Priority: optional
 Maintainer: Dmitry E. Oboukhov <unera@debian.org>
-Build-Depends: cdbs,
- debhelper (>= 8),
- libtool, libltdl3-dev,
- php5-dev
+Build-Depends: debhelper (>= 9),
+               dh-php,
+               php-all-dev,
+               pkg-config
 Section: php
 Standards-Version: 3.9.4
 Homepage: https://github.com/tarantool/tarantool-php

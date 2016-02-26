@@ -10,7 +10,6 @@ Group: Development/Languages
 License: MIT
 URL: https://github.com/tarantool/tarantool-php/
 Source0: tarantool-php-%{version}.tar.gz
-Source1: tarantool.ini
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: php-devel
 Requires: php(zend-abi) = %{php_zend_api}
@@ -53,7 +52,6 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root,-)
-%config(noreplace) %{_sysconfdir}/php.d/tarantool.ini
 %{php_extdir}/tarantool.so
 %{pecl_xmldir}/tarantool.xml
 %config(noreplace) %{php_inidir}/%{ini_name}
