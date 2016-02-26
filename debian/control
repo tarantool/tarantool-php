@@ -1,9 +1,8 @@
-Source: tarantool-php
+Source: php-tarantool
 Priority: optional
 Maintainer: Dmitry E. Oboukhov <unera@debian.org>
-Build-Depends: debhelper (>= 9),
-               dh-php,
-               php-all-dev,
+Build-Depends: debhelper (>= 8),
+               php5-dev | php-all-dev,
                pkg-config
 Section: php
 Standards-Version: 3.9.4
