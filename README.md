@@ -98,7 +98,7 @@ Place it into project library path in your IDE.
 _**Description**_: Creates a Tarantool client
 
 ``` php
-$tarantool_object = new Tarantool([$host = 'localhost'[, $port = 3301]])
+$tarantool_object = new Tarantool([$host = 'localhost'[, $port = 3301]]);
 ```
 
 _**Parameters**_
@@ -188,19 +188,19 @@ _**Return Value**_
  * - user is 'valdis'
  * - password is 'pelsh'
  */
-$tnt->connect('valdis', 'pelsh')
+$tnt->connect('valdis', 'pelsh');
 /**
  * - user is 'guest'
  * - password is empty and ignored, anyway
  */
-$tnt->connect('guest', '')
+$tnt->connect('guest', '');
 ```
 
 ### flushSchema, flush_schema
 
 ``` php
 $tnt->flushSchema();
-$tnt->flush_schema()
+$tnt->flush_schema();
 ```
 
 _**Description**_: Remove space/index schema from client.
