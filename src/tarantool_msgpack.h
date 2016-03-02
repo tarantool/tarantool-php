@@ -5,17 +5,18 @@
 
 #include <php_tarantool.h>
 
-#define PHP_MP_SERIALIZABLE_PP(v) (Z_TYPE_PP(v) == IS_NULL  || \
-				  Z_TYPE_PP(v) == IS_LONG   || \
-				  Z_TYPE_PP(v) == IS_DOUBLE || \
-				  Z_TYPE_PP(v) == IS_BOOL   || \
-				  Z_TYPE_PP(v) == IS_ARRAY  || \
-				  Z_TYPE_PP(v) == IS_STRING)
+#define PHP_MP_SERIALIZABLE_P(v) (Z_TYPE_P(v) == IS_NULL  || \
+				  Z_TYPE_P(v) == IS_LONG   || \
+				  Z_TYPE_P(v) == IS_DOUBLE || \
+				  Z_TYPE_P(v) == IS_FALSE  || \
+				  Z_TYPE_P(v) == IS_TRUE   || \
+				  Z_TYPE_P(v) == IS_ARRAY  || \
+				  Z_TYPE_P(v) == IS_STRING)
 
-size_t php_mp_check   (const char   *str,  size_t str_size);
-void   php_mp_pack    (smart_string *buf,  zval   *val    );
-ssize_t php_mp_unpack (zval        **oval, char   **str   );
-size_t php_mp_sizeof  (zval *val);
+size_t  php_mp_check  (const char   *str,  size_t str_size);
+void    php_mp_pack   (smart_string *buf,  zval   *val    );
+ssize_t php_mp_unpack (zval         *oval, char   **str   );
+size_t  php_mp_sizeof (zval *val);
 
 void   php_mp_pack_package_size   (smart_string *str, size_t val);
 size_t php_mp_unpack_package_size (char *buf);

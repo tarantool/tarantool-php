@@ -62,11 +62,12 @@ int tntll_stream_open(const char *host, int port, const char *pid,
 	php_stream *stream = NULL;
 	struct timeval tv = {0};
 	int errcode = 0, options = 0, flags = 0;
-	char  *addr = NULL, *errstr = NULL;
+	char  *addr = NULL;
+	zend_string *errstr = NULL;
 	size_t addr_len = 0;
 
 	addr_len = spprintf(&addr, 0, "tcp://%s:%d", host, port);
-	options = ENFORCE_SAFE_MODE | REPORT_ERRORS;
+	options = REPORT_ERRORS;
 	if (pid) options |= STREAM_OPEN_PERSISTENT;
 	flags = STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT;
 	double_to_tv(TARANTOOL_G(timeout), &tv);
@@ -76,7 +77,7 @@ int tntll_stream_open(const char *host, int port, const char *pid,
 
 	if (errcode || !stream) {
 		spprintf(err, 0, "Failed to connect [%d]: %s", errcode,
-			 errstr);
+			 ZSTR_VAL(errstr));
 		goto error;
 	}
 
@@ -100,7 +101,7 @@ int tntll_stream_open(const char *host, int port, const char *pid,
 	*ostream = stream;
 	return 0;
 error:
-	if (errstr) efree(errstr);
+	if (errstr) zend_string_release(errstr);
 	if (stream) tntll_stream_close(stream, pid);
 	return -1;
 }

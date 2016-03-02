@@ -9,7 +9,6 @@
 #include <zend_exceptions.h>
 
 #include <ext/standard/info.h>
-
 #if PHP_VERSION_ID >= 70000
 #  include <ext/standard/php_smart_string.h>
 #else
@@ -82,19 +81,19 @@ ZEND_END_MODULE_GLOBALS(tarantool)
 ZEND_EXTERN_MODULE_GLOBALS(tarantool);
 
 typedef struct tarantool_object {
-	zend_object zo;
-	char         *host;
-	int           port;
-	char         *login;
-	char         *passwd;
-	php_stream   *stream;
-	char         *persistent_id;
-	smart_string *value;
-	struct tp    *tps;
-	char          auth;
-	char         *greeting;
-	char         *salt;
+	char       *host;
+	int         port;
+	char       *login;
+	char       *passwd;
+	php_stream *stream;
+	char       *persistent_id;
+	smart_string  *value;
+	struct tp  *tps;
+	char        auth;
+	char       *greeting;
+	char       *salt;
 	struct tarantool_schema *schema;
+	zend_object zo;
 } tarantool_object;
 
 #ifdef ZTS
