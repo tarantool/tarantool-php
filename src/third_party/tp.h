@@ -1274,7 +1274,7 @@ static inline char *
 tp_auth(struct tp *p, const char *salt_base64, const char *user, int ulen, const char *pass, int plen)
 {
 	//char guest = (strncmp(user, "guest", 6) == 0);
-	char nopass = (plen == 0);
+	char nopass = (pass == NULL);
 	int sz = 5 +
 		mp_sizeof_map(2) +
 		mp_sizeof_uint(TP_CODE) +

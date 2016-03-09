@@ -109,6 +109,18 @@ class CreateTest extends PHPUnit_Framework_TestCase
         $c->authenticate('guest', 'guest');
     }
 
+    /**
+     * @expectedException Exception
+     * @expectedExceptionMessage Query error
+     */
+    public function test_07_01_bad_guest_cridentials()
+    {
+        $c = new Tarantool('localhost', self::$port);
+        $c->connect();
+        $this->assertTrue($c->ping());
+        $c->authenticate('guest', '');
+    }
+
     public function test_08_good_cridentials()
     {
         $c = new Tarantool('localhost', self::$port);
