@@ -184,7 +184,6 @@ retry:
 		return FAILURE;
 	}
 	if (obj->login != NULL && obj->passwd != NULL) {
-		tarantool_schema_flush(obj->schema);
 		status = __tarantool_authenticate(obj);
 	}
 	return status;
@@ -733,6 +732,7 @@ PHP_METHOD(tarantool_class, connect) {
 int __tarantool_authenticate(tarantool_object *obj) {
 	TSRMLS_FETCH();
 
+	tarantool_schema_flush(obj->schema);
 	tarantool_tp_update(obj->tps);
 	int batch_count = 3;
 	size_t passwd_len = (obj->passwd ? strlen(obj->passwd) : 0);
@@ -810,13 +810,15 @@ int __tarantool_authenticate(tarantool_object *obj) {
 
 PHP_METHOD(tarantool_class, authenticate) {
 	char *login; int login_len;
-	char *passwd; int passwd_len;
+	char *passwd = NULL; int passwd_len = 0;
 
 	TARANTOOL_PARSE_PARAMS(id, "s|s", &login, &login_len,
 			&passwd, &passwd_len);
 	TARANTOOL_FETCH_OBJECT(obj, id);
 	obj->login = pestrdup(login, 1);
-	obj->passwd = (passwd ? estrdup(passwd) : NULL);
+	obj->passwd = NULL;
+	if (passwd != NULL)
+		obj->passwd = estrdup(passwd);
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
 
 	__tarantool_authenticate(obj);
