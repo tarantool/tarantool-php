@@ -816,7 +816,9 @@ PHP_METHOD(tarantool_class, authenticate) {
 			&passwd, &passwd_len);
 	TARANTOOL_FETCH_OBJECT(obj, id);
 	obj->login = pestrdup(login, 1);
-	obj->passwd = (passwd ? estrdup(passwd) : NULL);
+	obj->passwd = NULL;
+	if (passwd != NULL)
+		obj->passwd = estrdup(passwd);
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
 
 	__tarantool_authenticate(obj);

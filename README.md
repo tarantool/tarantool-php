@@ -76,47 +76,23 @@ Place it into project library path in your IDE.
 
 ## Usage
 
-1. [Class Tarantool](#class-tarantool)
-2. [Predefined Constants](#predefined-constants)
+1. [Predefined Constants](#predefined-constants)
+2. [Class Tarantool](#class-tarantool)
+  * [Tarantool::_construct](#tarantool__construct)
 3. [Manipulation connection](#manipulation-connection)
-  * [connect](#connect)
-  * [disconnect, close](#disconnect-close)
-  * [authenticate](#authenticate)
-  * [flushSchema, flush_schema](#flushschema-flush_schema)
-  * [ping](#ping)
+  * [Tarantool::connect](#tarantoolconnect)
+  * [Tarantool::disconnect](#tarantooldisconnect)
+  * [Tarantool::authenticate](#tarantoolauthenticate)
+  * [Tarantool::flushSchema](#tarantoolflushschema)
+  * [Tarantool::ping](#tarantoolping)
 4. [Database queries](#database-queries)
-  * [select](#select)
-  * [insert, replace](#insert-replace)
-  * [call](#call)
-  * [eval, evaluate](#eval-evaluate)
-  * [delete](#delete)
-  * [update](#update)
-  * [upsert](#upsert)
-
-### Class Tarantool
-
-_**Description**_: Creates a Tarantool client
-
-``` php
-tarantool_object = new Tarantool([host = 'localhost'[, port = 3301]])
-```
-
-_**Parameters**_
-
-* `host`: string, default is `'localhost'`
-* `port`: number, default is `3301`
-
-_**Return Value**_
-
-Tarantool class instance
-
-#### *Example*
-
-``` php
-$tnt = new Tarantool(); // -> new Tarantool('localhost', 3301);
-$tnt = new Tarantool('tarantool.org'); // -> new Tarantool('tarantool.org', 3301);
-$tnt = new Tarantool('localhost', 16847);
-```
+  * [Tarantool::select](tarantool#select)
+  * [Tarantool::insert, replace](#tarantoolinsert-tarantoolreplace)
+  * [Tarantool::call](#tarantoolcall)
+  * [Tarantool::evaluate](#tarantoolevaluate)
+  * [Tarantool::delete](#tarantooldelete)
+  * [Tarantool::update](#tarantoolupdate)
+  * [Tarantool::upsert](#tarantoolupsert)
 
 ### Predefined Constants
 
@@ -136,12 +112,58 @@ _**Description**_: Available Tarantool Constants
 * `TARANTOOL_ITER_OVERLAPS` - find dots in the n-dimension cube (RTREE only)
 * `TARANTOOL_ITER_NEIGHBOR` - find nearest dots (RTREE only)
 
-## Manipulation connection
-
-### connect
+### Class Tarantool
 
 ``` php
-$tnt->connect();
+Tarantool {
+    public Tarantool::__construct ( [ string $host = 'localhost' [, int $port = 3301 ] ] )
+    public bool Tarantool::connect ( void )
+    public bool Tarantool::disconnect ( void )
+    public Tarantool::authenticate(string $login [, string $password = NULL ] )
+    public bool Tarantool::flushSchema ( void )
+    public bool Tarantool::ping ( void )
+    public array Tarantool::select(mixed $space [, mixed $key = array() [, mixed $index = 0 [, int $limit = PHP_INT_MAX [, int offset = 0 [, iterator = TARANTOOL_ITER_EQ ] ] ] ] ] )
+    public array Tarantool::insert(mixed $space, array $tuple)
+    public array Tarantool::replace(mixed $space, array $tuple)
+    public array Tarantool::call(string $procedure [, mixed args])
+    public array Tarantool::evaluate(string $expression [, mixed args])
+    public array Tarantool::delete(mixed $space, mixed $key [, mixed $index])
+    public array Tarantool::update(mixed $space, mixed $key, array $ops [, number $index] )
+    public array Tarantool::upsert(mixed $space, mixed $key, array $ops [, number $index] )
+}
+```
+
+#### Taratnool::__construct
+
+```
+public Tarantool::__construct ( [ string $host = 'localhost' [, int $port = 3301 ] ] )
+```
+
+_**Description**_: Creates a Tarantool client
+
+_**Parameters**_
+
+* `host`: string, default is `'localhost'`
+* `port`: number, default is `3301`
+
+_**Return Value**_
+
+Tarantool class instance
+
+##### *Example*
+
+``` php
+$tnt = new Tarantool(); // -> new Tarantool('localhost', 3301);
+$tnt = new Tarantool('tarantool.org'); // -> new Tarantool('tarantool.org', 3301);
+$tnt = new Tarantool('localhost', 16847);
+```
+
+## Manipulation connection
+
+### Tarantool::connect
+
+``` php
+public bool Tarantool::connect ( void )
 ```
 
 _**Description**_: Explicit connect to Tarantool Server. If not used, then connection
@@ -152,11 +174,10 @@ _**Return Value**_
 **BOOL**: True on success
 Raises `Exception` if can't connect to Tarantool.
 
-### disconnect, close
+### Tarantool::disconnect
 
 ``` php
-$tnt->disconnect();
-$tnt->close();
+public bool Tarantool::disconnect ( void )
 ```
 
 _**Description**_: Explicitly close connection to Tarantool Server. If you're
@@ -166,10 +187,10 @@ _**Return Value**_
 
 **BOOL**: True
 
-### authenticate
+### Tarantool::authenticate
 
 ``` php
-$tnt->connect(login, password);
+public Tarantool::authenticate(string $login [, string $password = NULL ] )
 ```
 
 _**Description**_: Authenticate to Tarantool using given login/password
@@ -179,7 +200,7 @@ _**Parameters**_
 * `login`: string - user login (mandatory)
 * `password`: string - user password (mandatory, but ignored, if user is guest)
 
-_**Return Value**_
+_**Return Value**_ NULL
 
 #### *Example*
 
@@ -193,14 +214,13 @@ $tnt->connect('valdis', 'pelsh')
  * - user is 'guest'
  * - password is empty and ignored, anyway
  */
-$tnt->connect('guest', '')
+$tnt->connect('guest')
 ```
 
-### flushSchema, flush_schema
+### Tarantool::flushSchema
 
 ``` php
-$tnt->flushSchema();
-$tnt->flush_schema()
+public bool Tarantool::flushSchema ( void )
 ```
 
 _**Description**_: Remove space/index schema from client.
@@ -209,10 +229,10 @@ _**Return Value**_
 
 **BOOL**: True
 
-### ping
+### Tarantool::ping
 
 ``` php
-$tnt->ping();
+public bool Tarantool::ping ( void )
 ```
 
 _**Description**_: Ping Tarantool server.
@@ -225,10 +245,10 @@ Throws `Exception` on error.
 
 ## Database queries
 
-### select
+### Tarantool::select
 
 ``` php
-rv = $tnt->select(space[, key[, index[, limit[, offset[, iterator]]]]]);
+public array Tarantool::select(mixed $space [, mixed $key = array() [, mixed $index = 0 [, int $limit = PHP_INT_MAX [, int offset = 0 [, iterator = TARANTOOL_ITER_EQ ] ] ] ] ] )
 ```
 
 _**Description**_: Execute select query from Tarantool server.
@@ -269,11 +289,11 @@ $tnt->select("test", null, null, 100, 100);
 $tnt->select("test", null, null, 100, 100, TARANTOOL_ITER_REQ);
 ```
 
-### insert, replace
+### Tarantool::insert, Tarantool::replace
 
 ``` php
-rv = $tnt->insert(space, tuple);
-rv = $tnt->replace(space, tuple);
+public array Tarantool::insert(mixed $space, array $tuple)
+public array Tarantool::replace(mixed $space, array $tuple)
 ```
 
 _**Description**_: Insert (if not exists query with same PK) or Replace tuple.
@@ -301,10 +321,10 @@ $tnt->insert("test", array(1, 3, "smth completely different"));
 $tnt->replace("test", array(1, 3, "smth completely different"));
 ```
 
-### call
+### Tarantool::call
 
 ``` php
-rv = $tnt->call(procedure[, args]);
+public array Tarantool::call(string $procedure [, mixed args])
 ```
 
 _**Description**_: Call stored procedure
@@ -327,17 +347,17 @@ $tnt->call("test_2");
 $tnt->call("test_3", array(3, 4));
 ```
 
-### eval, evaluate
+### Tarantool::evaluate
 
 ``` php
-rv = $tnt->eval(lua_code[, args]);
+public array Tarantool::evaluate(string $expression [, mixed args])
 ```
 
 _**Description**_: Evaluate given lua code (demands current user to have
 `'execute'` rights for `'universe'` in Tarantool)
 
 _**Parameters**_
-* `procedure`: String, Lua code to evaluate (mandatory)
+* `expression`: String, Lua code to evaluate (mandatory)
 * `args`: Any value to pass to procdure as arguments (empty by default)
 
 _**Return Value**_
@@ -354,10 +374,10 @@ $tnt->eval("return test_3(...)", array(3, 4));
 $tnt->evaluate("return test_3(...)", array(3, 4));
 ```
 
-### delete
+### Tarantool::delete
 
 ``` php
-rv = $tnt->delete(space, key[, index]);
+public array Tarantool::delete(mixed $space, mixed $key [, mixed $index])
 ```
 
 _**Description**_: Delete record with given key.
@@ -378,14 +398,15 @@ _**Return Value**_
 ``` php
 /* Following code will delete all tuples from space `test` */
 $tuples = $tnt->select("test");
-foreach($tuples as $value)$
+foreach($tuples as $value) {
     $tnt->delete("test", Array($value[0]));
+    }
 ```
 
-### update
+### Tarantool::update
 
 ``` php
-rv = $tnt->update(space, key, ops[, index]);
+public array Tarantool::update(mixed $space, mixed $key, array $ops [, number $index] )
 ```
 
 _**Description**_: Update record with given key (update in Tarantool is
@@ -535,10 +556,10 @@ $tnt->update("test", 1, array(
 ));
 ```
 
-### upsert
+### Tarantool::upsert
 
 ``` php
-rv = $tnt->update(space, tuple, ops[, index]);
+public array Tarantool::upsert(mixed $space, mixed $key, array $ops [, number $index] )
 ```
 
 _**Description**_: Update or Insert command (If tuple with PK == PK('tuple') exists,

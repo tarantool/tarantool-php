@@ -61,7 +61,6 @@ def main():
         shutil.copy('test/shared/phpunit.xml', os.path.join(test_cwd, 'phpunit.xml'))
         shutil.copy('modules/tarantool.so', test_cwd)
         test_lib_path = os.path.join(test_dir_path, 'phpunit.phar')
-        cmd = ''
 
         version = read_popen_config('--version').strip(' \n\t') + '.'
         version1 = read_popen_config('--extension-dir').strip(' \n\t')
@@ -74,15 +73,18 @@ def main():
             'test/shared/tarantool-2.ini',
             'test/shared/tarantool-3.ini'
         ]:
+            cmd = ''
             shutil.copy(php_ini, os.path.join(test_cwd, 'tarantool.ini'))
             if '--flags' in sys.argv:
                 os.environ['ZEND_DONT_UNLOAD_MODULES'] = '1'
                 os.environ['USE_ZEND_ALLOC'] = '0'
                 os.environ['MALLOC_CHECK_'] = '1'
             if '--valgrind' in sys.argv:
-                cmd = cmd + 'valgrind --leak-check=full --log-file=php.out '
+                cmd = cmd + 'valgrind --leak-check=full --log-file='
+                cmd = cmd + os.path.basename(php_ini).split('.')[0] + '.out '
                 cmd = cmd + '--suppressions=test/shared/valgrind.sup '
-                cmd = cmd + '--keep-stacktraces=alloc-and-free --freelist-vol=2000000000 '
+                cmd = cmd + '--keep-stacktraces=alloc-and-free'
+                cmd = cmd + ' --freelist-vol=2000000000 '
                 cmd = cmd + '--malloc-fill=0 --free-fill=0 '
                 cmd = cmd + '--num-callers=50 ' + find_php_bin()
                 cmd = cmd + ' -c tarantool.ini {0}'.format(test_lib_path)
