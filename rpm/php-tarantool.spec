@@ -44,8 +44,6 @@ rm -rf $RPM_BUILD_ROOT
 make install INSTALL_ROOT=$RPM_BUILD_ROOT
 # Drop in the bit of configuration
 install -D -m 644 %{ini_name} %{buildroot}%{php_inidir}/%{ini_name}
-# Install XML package description
-install -D -m 644 package.xml %{buildroot}%{pecl_xmldir}/tarantool.xml
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -53,5 +51,4 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root,-)
 %{php_extdir}/tarantool.so
-%{pecl_xmldir}/tarantool.xml
 %config(noreplace) %{php_inidir}/%{ini_name}

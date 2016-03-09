@@ -15,6 +15,8 @@ python:
 cache: false
 
 env:
+  global:
+    - PRODUCT=php-tarantool
   matrix:
     - OS=el DIST=6 PACK=rpm
     - OS=el DIST=7 PACK=rpm
@@ -24,7 +26,8 @@ env:
     - OS=ubuntu DIST=trusty PACK=deb
     - OS=ubuntu DIST=precise PACK=deb
     - OS=ubuntu DIST=wily PACK=deb
-    - OS=ubuntu DIST=xenial PACK=deb
+#    phpize is, currently, broken on xenial. can't test, still not stable
+#    - OS=ubuntu DIST=xenial PACK=deb
     - OS=debian DIST=jessie PACK=deb
     - OS=debian DIST=wheezy PACK=deb
     - OS=debian DIST=stretch PACK=deb
@@ -43,7 +46,7 @@ matrix:
     - env: OS=ubuntu DIST=precise PACK=deb
     - env: OS=ubuntu DIST=trusty PACK=deb
     - env: OS=ubuntu DIST=wily PACK=deb
-    - env: OS=ubuntu DIST=xenial PACK=deb
+#    - env: OS=ubuntu DIST=xenial PACK=deb
     - env: OS=debian DIST=jessie PACK=deb
     - env: OS=debian DIST=wheezy PACK=deb
     - env: OS=debian DIST=stretch PACK=deb
@@ -65,7 +68,7 @@ matrix:
       php: 5.4
     - env: OS=ubuntu DIST=wily PACK=deb
       php: 5.4
-    - env: OS=ubuntu DIST=xenial PACK=deb
+#    - env: OS=ubuntu DIST=xenial PACK=deb
       php: 5.4
     - env: OS=debian DIST=jessie PACK=deb
       php: 5.4
@@ -91,7 +94,7 @@ matrix:
       php: 5.5
     - env: OS=ubuntu DIST=wily PACK=deb
       php: 5.5
-    - env: OS=ubuntu DIST=xenial PACK=deb
+#    - env: OS=ubuntu DIST=xenial PACK=deb
       php: 5.5
     - env: OS=debian DIST=jessie PACK=deb
       php: 5.5
