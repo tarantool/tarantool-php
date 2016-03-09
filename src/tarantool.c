@@ -812,11 +812,11 @@ PHP_METHOD(tarantool_class, authenticate) {
 	char *login; int login_len;
 	char *passwd; int passwd_len;
 
-	TARANTOOL_PARSE_PARAMS(id, "ss", &login, &login_len,
+	TARANTOOL_PARSE_PARAMS(id, "s|s", &login, &login_len,
 			&passwd, &passwd_len);
 	TARANTOOL_FETCH_OBJECT(obj, id);
 	obj->login = pestrdup(login, 1);
-	obj->passwd = estrdup(passwd);
+	obj->passwd = (passwd ? estrdup(passwd) : NULL);
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
 
 	__tarantool_authenticate(obj);
@@ -974,7 +974,7 @@ PHP_METHOD(tarantool_class, delete) {
 	key_new = pack_key(key, 0);
 
 	long sync = TARANTOOL_G(sync_counter)++;
-	php_tp_encode_delete(obj->value, sync, space_no, index_no, key);
+	php_tp_encode_delete(obj->value, sync, space_no, index_no, key_new);
 	if (key != key_new) {
 		zval_ptr_dtor(&key_new);
 	}

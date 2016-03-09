@@ -1273,7 +1273,8 @@ tp_scramble_prepare(void *out, const void *salt, const void *password,
 static inline char *
 tp_auth(struct tp *p, const char *salt_base64, const char *user, int ulen, const char *pass, int plen)
 {
-	char guest = (strncmp(user, "guest", 6) == 0);
+	//char guest = (strncmp(user, "guest", 6) == 0);
+	char nopass = (plen == 0);
 	int sz = 5 +
 		mp_sizeof_map(2) +
 		mp_sizeof_uint(TP_CODE) +
@@ -1284,7 +1285,7 @@ tp_auth(struct tp *p, const char *salt_base64, const char *user, int ulen, const
 		mp_sizeof_uint(TP_USERNAME) +
 		mp_sizeof_str(ulen) +
 		mp_sizeof_uint(TP_TUPLE);
-	if (!guest)
+	if (!nopass)
 		sz += mp_sizeof_array(2) +
 		      mp_sizeof_str(0) +
 		      mp_sizeof_str(SCRAMBLE_SIZE);
@@ -1305,7 +1306,7 @@ tp_auth(struct tp *p, const char *salt_base64, const char *user, int ulen, const
 	h = mp_encode_uint(h, TP_USERNAME);
 	h = mp_encode_str(h, user, ulen);
 	h = mp_encode_uint(h, TP_TUPLE);
-	if (!guest) {
+	if (!nopass) {
 		h = mp_encode_array(h, 2);
 		h = mp_encode_str(h, 0, 0);
 
@@ -1698,8 +1699,6 @@ tp_reply(struct tpresponse *r, const char * const buf, size_t size)
 				return -1;
 			r->code = mp_decode_uint(&p);
 			break;
-		default:
-			return -1;
 		}
 		r->bitmap |= (1ULL << key);
 	}
@@ -1716,22 +1715,20 @@ tp_reply(struct tpresponse *r, const char * const buf, size_t size)
 	while (n-- > 0) {
 		uint32_t key = mp_decode_uint(&p);
 		switch (key) {
-		case TP_ERROR: {
+		case TP_ERROR:
 			if (mp_typeof(*p) != MP_STR)
 				return -1;
 			uint32_t elen = 0;
 			r->error = mp_decode_str(&p, &elen);
 			r->error_end = r->error + elen;
 			break;
-		}
-		case TP_DATA: {
+		case TP_DATA:
 			if (mp_typeof(*p) != MP_ARRAY)
 				return -1;
 			r->data = p;
 			mp_next(&p);
 			r->data_end = p;
 			break;
-		}
 		}
 		r->bitmap |= (1ULL << key);
 	}
