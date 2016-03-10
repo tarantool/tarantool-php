@@ -1,12 +1,7 @@
 #ifndef   PHP_MANAGER_H
 #define   PHP_MANAGER_H
 
-#include <php.h>
-#include <php_network.h>
-#include <zend_API.h>
-#include <ext/standard/php_smart_str.h>
-
-#include <sys/queue.h>
+#include <php_tarantool.h>
 
 #include "third_party/PMurHash.h"
 #define MUR_SEED 13

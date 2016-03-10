@@ -9,8 +9,15 @@
 #include <zend_exceptions.h>
 
 #include <ext/standard/info.h>
-#include <ext/standard/php_smart_str.h>
 
+#if PHP_VERSION_ID >= 70000
+#  include <ext/standard/php_smart_string.h>
+#else
+#  include <ext/standard/php_smart_str.h>
+   typedef smart_str smart_string;
+#  define smart_string_alloc4(...) smart_str_alloc4(__VA_ARGS__)
+#  define smart_string_free_ex(...) smart_str_free_ex(__VA_ARGS__)
+#endif
 
 extern zend_module_entry tarantool_module_entry;
 #define phpext_tarantool_ptr &tarantool_module_entry
@@ -32,9 +39,6 @@ extern zend_module_entry tarantool_module_entry;
 #ifdef ZTS
 #include "TSRM.h"
 #endif
-
-#include <ext/standard/php_smart_str.h>
-#include <php_network.h>
 
 struct pool_manager;
 struct tarantool_schema;
@@ -79,17 +83,17 @@ ZEND_EXTERN_MODULE_GLOBALS(tarantool);
 
 typedef struct tarantool_object {
 	zend_object zo;
-	char       *host;
-	int         port;
-	char       *login;
-	char       *passwd;
-	php_stream *stream;
-	char       *persistent_id;
-	smart_str  *value;
-	struct tp  *tps;
-	char        auth;
-	char       *greeting;
-	char       *salt;
+	char         *host;
+	int           port;
+	char         *login;
+	char         *passwd;
+	php_stream   *stream;
+	char         *persistent_id;
+	smart_string *value;
+	struct tp    *tps;
+	char          auth;
+	char         *greeting;
+	char         *salt;
 	struct tarantool_schema *schema;
 } tarantool_object;
 

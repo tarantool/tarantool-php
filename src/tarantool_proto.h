@@ -14,7 +14,8 @@
 #define INDEX_INDEX_NAME    2
 
 #include <stdint.h>
-#include <ext/standard/php_smart_str.h>
+
+#include <php_tarantool.h>
 
 /* header */
 enum tnt_header_key_t {
@@ -87,23 +88,23 @@ struct tnt_response {
 
 int64_t php_tp_response(struct tnt_response *r, char *buf, size_t size);
 
-void php_tp_encode_auth(smart_str *str, uint32_t sync, char * const username,
+void php_tp_encode_auth(smart_string *str, uint32_t sync, char * const username,
 			size_t username_len, char * const scramble);
-void php_tp_encode_ping(smart_str *str, uint32_t sync);
-void php_tp_encode_select(smart_str *str, uint32_t sync, uint32_t space_no,
+void php_tp_encode_ping(smart_string *str, uint32_t sync);
+void php_tp_encode_select(smart_string *str, uint32_t sync, uint32_t space_no,
 			  uint32_t index_no, uint32_t limit, uint32_t offset,
 			  uint32_t iterator, zval *key);
-void php_tp_encode_insert_or_replace(smart_str *str, uint32_t sync,
+void php_tp_encode_insert_or_replace(smart_string *str, uint32_t sync,
 				     uint32_t space_no, zval *tuple,
 				     uint32_t type);
-void php_tp_encode_delete(smart_str *str, uint32_t sync, uint32_t space_no,
+void php_tp_encode_delete(smart_string *str, uint32_t sync, uint32_t space_no,
 			  uint32_t index_no, zval *tuple);
-void php_tp_encode_call(smart_str *str, uint32_t sync, char *proc,
+void php_tp_encode_call(smart_string *str, uint32_t sync, char *proc,
 			uint32_t proc_len, zval *tuple);
-void php_tp_encode_eval(smart_str *str, uint32_t sync, char *proc,
+void php_tp_encode_eval(smart_string *str, uint32_t sync, char *proc,
 			uint32_t proc_len, zval *tuple);
-void php_tp_encode_update(smart_str *str, uint32_t sync, uint32_t space_no,
+void php_tp_encode_update(smart_string *str, uint32_t sync, uint32_t space_no,
 			  uint32_t index_no, zval *key, zval *args);
-void php_tp_encode_upsert(smart_str *str, uint32_t sync, uint32_t space_no,
+void php_tp_encode_upsert(smart_string *str, uint32_t sync, uint32_t space_no,
 			  zval *tuple, zval *args);
 #endif /* PHP_TP_H */
