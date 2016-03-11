@@ -308,14 +308,14 @@ ptrdiff_t php_mp_unpack_map(zval *oval, char **str) {
 	size_t len = mp_decode_map((const char **)str);
 	array_init_size(oval, len);
 	while (len-- > 0) {
-		zval key, value;
+		zval key = {0}, value = {0};
 		ZVAL_UNDEF(&key);
 		ZVAL_UNDEF(&value);
 		if (php_mp_unpack(&key, str) == FAILURE) {
-			goto error;
+			goto error_key;
 		}
 		if (php_mp_unpack(&value, str) == FAILURE) {
-			goto error;
+			goto error_value;
 		}
 		switch (Z_TYPE(key)) {
 		case IS_LONG:
@@ -328,23 +328,17 @@ ptrdiff_t php_mp_unpack_map(zval *oval, char **str) {
 			/* convert to INT/STRING for future uses */
 			/* FALLTHROUGH */
 		default: {
-//			char k[256];
-//			char *op = op_to_string(Z_TYPE_P(key));
-//			printf("oplen: %d\n", strlen(op));
-//			printf("op: %s\n", op);
-//			size_t len = sprintf(k, 256, "Bad key type for PHP "
-//					     "Array: '%s'", op);
-//			THROW_EXC(k);
 			THROW_EXC("Bad key type for PHP Array");
 			goto error;
-			break;
 		}
 		}
 		zval_ptr_dtor(&key);
 		continue;
 error:
-		zval_ptr_dtor(&key);
 		zval_ptr_dtor(&value);
+error_value:
+		zval_ptr_dtor(&key);
+error_key:
 		zval_ptr_dtor(oval);
 		return FAILURE;
 	}

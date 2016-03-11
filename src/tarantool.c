@@ -242,10 +242,14 @@ static int64_t tarantool_step_recv(
 		zval *body) {
 	char pack_len[5] = {0, 0, 0, 0, 0};
 	if (tarantool_stream_read(obj, pack_len, 5) != 5) {
+		header = NULL;
+		body = NULL;
 		THROW_EXC("Can't read query from server");
 		goto error;
 	}
 	if (php_mp_check(pack_len, 5)) {
+		header = NULL;
+		body = NULL;
 		THROW_EXC("Failed verifying msgpack");
 		goto error;
 	}
@@ -253,6 +257,8 @@ static int64_t tarantool_step_recv(
 	smart_string_ensure(obj->value, body_size);
 	if (tarantool_stream_read(obj, SSTR_POS(obj->value),
 				  body_size) != body_size) {
+		header = NULL;
+		body = NULL;
 		THROW_EXC("Can't read query from server");
 		goto error;
 	}
@@ -260,18 +266,24 @@ static int64_t tarantool_step_recv(
 
 	char *pos = SSTR_BEG(obj->value);
 	if (php_mp_check(pos, body_size)) {
+		header = NULL;
+		body = NULL;
 		THROW_EXC("Failed verifying msgpack");
 		goto error;
 	}
 	if (php_mp_unpack(header, &pos) == FAILURE ||
 	    Z_TYPE_P(header) != IS_ARRAY) {
+		header = NULL;
+		body = NULL;
 		goto error;
 	}
 	if (php_mp_check(pos, body_size)) {
+		body = NULL;
 		THROW_EXC("Failed verifying msgpack");
 		goto error;
 	}
 	if (php_mp_unpack(body, &pos) == FAILURE) {
+		body = NULL;
 		goto error;
 	}
 
@@ -341,15 +353,15 @@ const zend_function_entry tarantool_class_methods[] = {
 /* ####################### HELPERS ####################### */
 
 void pack_key(zval *args, char select, zval *arr) {
-	if (args && Z_TYPE_P(args) == IS_ARRAY)
+	if (args && Z_TYPE_P(args) == IS_ARRAY) {
 		ZVAL_DUP(arr, args);
 		return;
+	}
 	if (select && (!args || Z_TYPE_P(args) == IS_NULL)) {
 		array_init(arr);
 		return;
 	}
 	array_init(arr);
-	Z_ADDREF_P(args);
 	add_next_index_zval(arr, args);
 }
 
@@ -447,8 +459,8 @@ int tarantool_update_verify_op(zval *op, long position, zval *arr) {
 		}
 		add_next_index_stringl(arr, Z_STRVAL_P(opstr), 1);
 		add_next_index_long(arr, Z_LVAL_P(oppos));
-		//SEPARATE_ZVAL_TO_MAKE_IS_REF(oparg);
-		Z_ADDREF_P(oparg);
+		// SEPARATE_ZVAL_TO_MAKE_IS_REF(oparg);
+		// Z_ADDREF_P(oparg);
 		add_next_index_zval(arr, oparg);
 		break;
 	default:
@@ -799,13 +811,14 @@ int __tarantool_authenticate(tarantool_object *obj) {
 }
 
 PHP_METHOD(tarantool_class, authenticate) {
-	char *login  = NULL; int login_len  = 0;
-	char *passwd = NULL; int passwd_len = 0;
+	const char *login  = NULL; size_t login_len  = 0;
+	const char *passwd = NULL; size_t passwd_len = 0;
 
 	zval *id;
-	TARANTOOL_PARSE_PARAMS(id, "ss", &login, &login_len, &passwd, &passwd_len);
+	TARANTOOL_PARSE_PARAMS(id, "s|s", &login, &login_len, &passwd, &passwd_len);
+
 	tarantool_object *obj = php_tarantool_object(Z_OBJ_P(getThis()));
-	obj->login = pestrdup(login, 1);
+	obj->login = pestrndup(login, login_len, 1);
 	obj->passwd = NULL;
 	if (passwd != NULL)
 		obj->passwd = estrdup(passwd);
@@ -888,8 +901,8 @@ PHP_METHOD(tarantool_class, select) {
 	pack_key(key, 1, &key_new);
 
 	long sync = TARANTOOL_G(sync_counter)++;
-	php_tp_encode_select(obj->value, sync, space_no, index_no,
-			limit, offset, iterator, &key_new);
+	php_tp_encode_select(obj->value, sync, space_no, index_no, limit,
+			     offset, iterator, &key_new);
 	zval_ptr_dtor(&key_new);
 	if (tarantool_stream_send(obj) == FAILURE)
 		RETURN_FALSE;
@@ -953,7 +966,7 @@ PHP_METHOD(tarantool_class, replace) {
 
 PHP_METHOD(tarantool_class, delete) {
 	zval *space = NULL, *key = NULL, *index = NULL;
-	zval key_new;
+	zval key_new = {0};
 
 	zval *id;
 	TARANTOOL_PARSE_PARAMS(id, "zz|z", &space, &key, &index);
@@ -1008,18 +1021,18 @@ PHP_METHOD(tarantool_class, call) {
 }
 
 PHP_METHOD(tarantool_class, eval) {
-	char *proc; size_t proc_len;
+	char *code; size_t code_len;
 	zval *tuple = NULL, tuple_new;
 
 	zval *id;
-	TARANTOOL_PARSE_PARAMS(id, "s|z", &proc, &proc_len, &tuple);
+	TARANTOOL_PARSE_PARAMS(id, "s|z", &code, &code_len, &tuple);
 	tarantool_object *obj = php_tarantool_object(Z_OBJ_P(getThis()));
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
 
 	pack_key(tuple, 1, &tuple_new);
 
 	long sync = TARANTOOL_G(sync_counter)++;
-	php_tp_encode_eval(obj->value, sync, proc, proc_len, &tuple_new);
+	php_tp_encode_eval(obj->value, sync, code, code_len, &tuple_new);
 	zval_ptr_dtor(&tuple_new);
 	if (tarantool_stream_send(obj) == FAILURE)
 		RETURN_FALSE;
@@ -1071,8 +1084,8 @@ PHP_METHOD(tarantool_class, upsert) {
 	zval v_args;
 
 	zval *id;
-	TARANTOOL_PARSE_PARAMS(id, "zaa", &space, &tuple, &args);
 	tarantool_object *obj = php_tarantool_object(Z_OBJ_P(getThis()));
+	TARANTOOL_PARSE_PARAMS(id, "zaa", &space, &tuple, &args);
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
 
 	long space_no = get_spaceno_by_name(obj, id, space);

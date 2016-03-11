@@ -91,6 +91,8 @@ def main():
             elif '--gdb' in sys.argv:
                 cmd = cmd + 'gdb {0} --ex '.format(find_php_bin())
                 cmd = cmd + '"set args -c tarantool.ini {0}"'.format(test_lib_path)
+            elif '--lldb' in sys.argv:
+                cmd = cmd + 'lldb -- {0} -c tarantool.ini {1}'.format(find_php_bin(), test_lib_path)
             elif '--strace' in sys.argv:
                 cmd = cmd + 'strace ' + find_php_bin()
                 cmd = cmd + ' -c tarantool.ini {0}'.format(test_lib_path)
@@ -102,7 +104,7 @@ def main():
             print('Running "%s" with "%s"' % (cmd, php_ini))
             proc = subprocess.Popen(cmd, shell=True, cwd=test_cwd)
             rv = proc.wait()
-            if rv != 0 or '--gdb' in sys.argv:
+            if rv != 0 or '--gdb' in sys.argv or '--lldb' in sys.argv:
                 return -1
 
     finally:
