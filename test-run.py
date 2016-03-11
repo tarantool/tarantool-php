@@ -102,7 +102,7 @@ def main():
             print('Running "%s" with "%s"' % (cmd, php_ini))
             proc = subprocess.Popen(cmd, shell=True, cwd=test_cwd)
             rv = proc.wait()
-            if rv != 0:
+            if rv != 0 or '--gdb' in sys.argv:
                 return -1
 
     finally:

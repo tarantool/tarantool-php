@@ -29,34 +29,30 @@ ZEND_DECLARE_MODULE_GLOBALS(tarantool)
 #include "config.h"
 #endif
 
-#define TARANTOOL_PARSE_PARAMS(ID, FORMAT, ...) zval *ID;		\
-	if (zend_parse_method_parameters(ZEND_NUM_ARGS(),	\
-				getThis(), "O" FORMAT,			\
-				&ID, tarantool_class_ptr,		\
-				__VA_ARGS__) == FAILURE)		\
-		RETURN_FALSE;
+#define TARANTOOL_PARSE_PARAMS(ID, FORMAT, ...)				\
+	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), getThis(),	\
+				"O" FORMAT, &ID, tarantool_class_ptr,	\
+				##__VA_ARGS__) == FAILURE) {		\
+		RETURN_FALSE;						\
+	}								\
 
 static inline tarantool_object *php_tarantool_object(zend_object *obj) {
 	return (tarantool_object *)((char*)(obj) - XtOffsetOf(tarantool_object, zo));
 }
 
-#define TARANTOOL_FETCH_OBJECT(NAME)                           \
-	tarantool_object *NAME = php_tarantool_object(Z_OBJ_P(getThis()))
-
-
 #define TARANTOOL_CONNECT_ON_DEMAND(CON, ID)				\
 	if (!CON->stream)						\
-		if (__tarantool_connect(CON, ID) == FAILURE)	\
+		if (__tarantool_connect(CON, ID) == FAILURE)		\
 			RETURN_FALSE;					\
 	if (CON->stream && php_stream_eof(CON->stream) != 0)		\
-		if (__tarantool_reconnect(CON, ID) == FAILURE)\
+		if (__tarantool_reconnect(CON, ID) == FAILURE)		\
 			RETURN_FALSE;
 
 #define TARANTOOL_RETURN_DATA(HT, HEAD, BODY)				\
-	HashTable *ht = HASH_OF(HT);				\
-	zval *answer;						\
+	HashTable *ht = HASH_OF(HT);					\
+	zval *answer;							\
 	answer = zend_hash_index_find(ht, TNT_DATA);			\
-	if (!answer) {	\
+	if (!answer) {							\
 		THROW_EXC("No field DATA in body");			\
 		zval_ptr_dtor(HEAD);					\
 		zval_ptr_dtor(BODY);					\
@@ -681,8 +677,9 @@ PHP_METHOD(tarantool_class, __construct) {
 	char *host = NULL; size_t host_len = 0;
 	long port = 0;
 
+	zval *id;
 	TARANTOOL_PARSE_PARAMS(id, "|sl", &host, &host_len, &port);
-	TARANTOOL_FETCH_OBJECT(obj);
+	tarantool_object *obj = php_tarantool_object(Z_OBJ_P(getThis()));
 
 	/*
 	 * validate parameters
@@ -715,8 +712,9 @@ PHP_METHOD(tarantool_class, __construct) {
 }
 
 PHP_METHOD(tarantool_class, connect) {
-	TARANTOOL_PARSE_PARAMS(id, "", id);
-	TARANTOOL_FETCH_OBJECT(obj);
+	zval *id;
+	TARANTOOL_PARSE_PARAMS(id, "");
+	tarantool_object *obj = php_tarantool_object(Z_OBJ_P(getThis()));
 	if (obj->stream && obj->stream->mode) RETURN_TRUE;
 	if (__tarantool_connect(obj, id) == FAILURE)
 		RETURN_FALSE;
@@ -724,8 +722,6 @@ PHP_METHOD(tarantool_class, connect) {
 }
 
 int __tarantool_authenticate(tarantool_object *obj) {
-	TSRMLS_FETCH();
-
 	tarantool_schema_flush(obj->schema);
 	tarantool_tp_update(obj->tps);
 	int batch_count = 3;
@@ -803,12 +799,12 @@ int __tarantool_authenticate(tarantool_object *obj) {
 }
 
 PHP_METHOD(tarantool_class, authenticate) {
-	char *login; int login_len;
+	char *login  = NULL; int login_len  = 0;
 	char *passwd = NULL; int passwd_len = 0;
 
-	TARANTOOL_PARSE_PARAMS(id, "s|s", &login, &login_len,
-			&passwd, &passwd_len);
-	TARANTOOL_FETCH_OBJECT(obj);
+	zval *id;
+	TARANTOOL_PARSE_PARAMS(id, "ss", &login, &login_len, &passwd, &passwd_len);
+	tarantool_object *obj = php_tarantool_object(Z_OBJ_P(getThis()));
 	obj->login = pestrdup(login, 1);
 	obj->passwd = NULL;
 	if (passwd != NULL)
@@ -820,16 +816,18 @@ PHP_METHOD(tarantool_class, authenticate) {
 }
 
 PHP_METHOD(tarantool_class, flush_schema) {
-	TARANTOOL_PARSE_PARAMS(id, "", id);
-	TARANTOOL_FETCH_OBJECT(obj);
+	zval *id;
+	TARANTOOL_PARSE_PARAMS(id, "");
+	tarantool_object *obj = php_tarantool_object(Z_OBJ_P(getThis()));
 
 	tarantool_schema_flush(obj->schema);
 	RETURN_TRUE;
 }
 
 PHP_METHOD(tarantool_class, close) {
-	TARANTOOL_PARSE_PARAMS(id, "", id);
-	TARANTOOL_FETCH_OBJECT(obj);
+	zval *id;
+	TARANTOOL_PARSE_PARAMS(id, "");
+	tarantool_object *obj = php_tarantool_object(Z_OBJ_P(getThis()));
 
 	if (TARANTOOL_G(manager) == NULL) {
 		tarantool_stream_close(obj);
@@ -841,8 +839,9 @@ PHP_METHOD(tarantool_class, close) {
 }
 
 PHP_METHOD(tarantool_class, ping) {
-	TARANTOOL_PARSE_PARAMS(id, "", id);
-	TARANTOOL_FETCH_OBJECT(obj);
+	zval *id;
+	TARANTOOL_PARSE_PARAMS(id, "");
+	tarantool_object *obj = php_tarantool_object(Z_OBJ_P(getThis()));
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
 
 	long sync = TARANTOOL_G(sync_counter)++;
@@ -865,9 +864,10 @@ PHP_METHOD(tarantool_class, select) {
 	zval *zlimit = NULL;
 	long limit = LONG_MAX-1, offset = 0, iterator = 0;
 
+	zval *id;
 	TARANTOOL_PARSE_PARAMS(id, "z|zzzll", &space, &key,
 			&index, &zlimit, &offset, &iterator);
-	TARANTOOL_FETCH_OBJECT(obj);
+	tarantool_object *obj = php_tarantool_object(Z_OBJ_P(getThis()));
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
 
 	if (zlimit != NULL && Z_TYPE_P(zlimit) != IS_NULL && Z_TYPE_P(zlimit) != IS_LONG) {
@@ -904,8 +904,9 @@ PHP_METHOD(tarantool_class, select) {
 PHP_METHOD(tarantool_class, insert) {
 	zval *space, *tuple;
 
+	zval *id;
 	TARANTOOL_PARSE_PARAMS(id, "za", &space, &tuple);
-	TARANTOOL_FETCH_OBJECT(obj);
+	tarantool_object *obj = php_tarantool_object(Z_OBJ_P(getThis()));
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
 
 	long space_no = get_spaceno_by_name(obj, id, space);
@@ -928,8 +929,9 @@ PHP_METHOD(tarantool_class, insert) {
 PHP_METHOD(tarantool_class, replace) {
 	zval *space, *tuple;
 
+	zval *id;
 	TARANTOOL_PARSE_PARAMS(id, "za", &space, &tuple);
-	TARANTOOL_FETCH_OBJECT(obj);
+	tarantool_object *obj = php_tarantool_object(Z_OBJ_P(getThis()));
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
 
 	long space_no = get_spaceno_by_name(obj, id, space);
@@ -953,8 +955,9 @@ PHP_METHOD(tarantool_class, delete) {
 	zval *space = NULL, *key = NULL, *index = NULL;
 	zval key_new;
 
+	zval *id;
 	TARANTOOL_PARSE_PARAMS(id, "zz|z", &space, &key, &index);
-	TARANTOOL_FETCH_OBJECT(obj);
+	tarantool_object *obj = php_tarantool_object(Z_OBJ_P(getThis()));
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
 
 	long space_no = get_spaceno_by_name(obj, id, space);
@@ -984,8 +987,9 @@ PHP_METHOD(tarantool_class, call) {
 	char *proc; size_t proc_len;
 	zval *tuple = NULL, tuple_new;
 
+	zval *id;
 	TARANTOOL_PARSE_PARAMS(id, "s|z", &proc, &proc_len, &tuple);
-	TARANTOOL_FETCH_OBJECT(obj);
+	tarantool_object *obj = php_tarantool_object(Z_OBJ_P(getThis()));
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
 
 	pack_key(tuple, 1, &tuple_new);
@@ -1007,8 +1011,9 @@ PHP_METHOD(tarantool_class, eval) {
 	char *proc; size_t proc_len;
 	zval *tuple = NULL, tuple_new;
 
+	zval *id;
 	TARANTOOL_PARSE_PARAMS(id, "s|z", &proc, &proc_len, &tuple);
-	TARANTOOL_FETCH_OBJECT(obj);
+	tarantool_object *obj = php_tarantool_object(Z_OBJ_P(getThis()));
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
 
 	pack_key(tuple, 1, &tuple_new);
@@ -1030,8 +1035,9 @@ PHP_METHOD(tarantool_class, update) {
 	zval *space = NULL, *key = NULL, *index = NULL, *args = NULL;
 	zval key_new, v_args;
 
+	zval *id;
 	TARANTOOL_PARSE_PARAMS(id, "zza|z", &space, &key, &args, &index);
-	TARANTOOL_FETCH_OBJECT(obj);
+	tarantool_object *obj = php_tarantool_object(Z_OBJ_P(getThis()));
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
 
 	long space_no = get_spaceno_by_name(obj, id, space);
@@ -1064,8 +1070,9 @@ PHP_METHOD(tarantool_class, upsert) {
 	zval *space = NULL, *tuple = NULL, *args = NULL;
 	zval v_args;
 
+	zval *id;
 	TARANTOOL_PARSE_PARAMS(id, "zaa", &space, &tuple, &args);
-	TARANTOOL_FETCH_OBJECT(obj);
+	tarantool_object *obj = php_tarantool_object(Z_OBJ_P(getThis()));
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
 
 	long space_no = get_spaceno_by_name(obj, id, space);
