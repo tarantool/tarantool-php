@@ -26,7 +26,7 @@ $ make install
 
 ## Test
 
-To run tests Taranool server and PHP/PECL package are requred.
+To run tests Tarantool server and PHP/PECL package are requred.
 
 ```sh
 $ ./test-run.py
@@ -133,7 +133,7 @@ Tarantool {
 }
 ```
 
-#### Taratnool::__construct
+#### Tarantool::__construct
 
 ```
 public Tarantool::__construct ( [ string $host = 'localhost' [, int $port = 3301 ] ] )
