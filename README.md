@@ -42,7 +42,7 @@ $ TARANTOOL_BOX_PATH=/path/to/tarantool/bin/tarantool ./test-run.py
 
 ## Installing from PEAR
 
-Tarantool-PHP Have it's own [PEAR repository](https://tarantool.github.io/tarantool-php).
+Tarantool-PHP has its own [PEAR repository](https://tarantool.github.io/tarantool-php).
 You may install it from PEAR with just a few commands:
 
 ```
@@ -78,7 +78,7 @@ Place it into project library path in your IDE.
 
 1. [Predefined Constants](#predefined-constants)
 2. [Class Tarantool](#class-tarantool)
-  * [Tarantool::_construct](#tarantool__construct)
+  * [Tarantool::__construct](#tarantool__construct)
 3. [Manipulation connection](#manipulation-connection)
   * [Tarantool::connect](#tarantoolconnect)
   * [Tarantool::disconnect](#tarantooldisconnect)
@@ -122,7 +122,7 @@ Tarantool {
     public Tarantool::authenticate(string $login [, string $password = NULL ] )
     public bool Tarantool::flushSchema ( void )
     public bool Tarantool::ping ( void )
-    public array Tarantool::select(mixed $space [, mixed $key = array() [, mixed $index = 0 [, int $limit = PHP_INT_MAX [, int offset = 0 [, iterator = TARANTOOL_ITER_EQ ] ] ] ] ] )
+    public array Tarantool::select(mixed $space [, mixed $key = array() [, mixed $index = 0 [, int $limit = PHP_INT_MAX [, int $offset = 0 [, $iterator = TARANTOOL_ITER_EQ ] ] ] ] ] )
     public array Tarantool::insert(mixed $space, array $tuple)
     public array Tarantool::replace(mixed $space, array $tuple)
     public array Tarantool::call(string $procedure [, mixed args])
@@ -248,7 +248,7 @@ Throws `Exception` on error.
 ### Tarantool::select
 
 ``` php
-public array Tarantool::select(mixed $space [, mixed $key = array() [, mixed $index = 0 [, int $limit = PHP_INT_MAX [, int offset = 0 [, iterator = TARANTOOL_ITER_EQ ] ] ] ] ] )
+public array Tarantool::select(mixed $space [, mixed $key = array() [, mixed $index = 0 [, int $limit = PHP_INT_MAX [, int $offset = 0 [, $iterator = TARANTOOL_ITER_EQ ] ] ] ] ] )
 ```
 
 _**Description**_: Execute select query from Tarantool server.
@@ -274,18 +274,18 @@ request, or empty array, if nothing was found.
 #### Example
 
 ``` php
-/* Select everything from space 'test' */
+// Select everything from space 'test'
 $tnt->select("test");
-/* Selects from space 'test' by PK with id == 1*/
+// Selects from space 'test' by PK with id == 1
 $tnt->select("test", 1);
-/* The same as previous */
+// The same as previous
 $tnt->select("test", array(1));
-/* Selects from space 'test' by secondary key from index 'isec' and == {1, 'hello'} */
+// Selects from space 'test' by secondary key from index 'isec' and == {1, 'hello'}
 $tnt->select("test", array(1, "hello"), "isec");
-/* Selects second hundred of rows from space test */
+// Selects second hundred of rows from space test
 $tnt->select("test", null, null, 100, 100);
-/* Selects second hundred of rows from space test in reverse equality order */
-/* It meanse: select penultimate hundred */
+// Selects second hundred of rows from space test in reverse equality order
+// It meanse: select penultimate hundred
 $tnt->select("test", null, null, 100, 100, TARANTOOL_ITER_REQ);
 ```
 
@@ -312,12 +312,12 @@ _**Return Value**_
 #### Example
 
 ``` php
-/* It'll be processed OK, since no tuples with PK == 1 are in space 'test' */
+// It'll be processed OK, since no tuples with PK == 1 are in space 'test'
 $tnt->insert("test", array(1, 2, "smth"));
-/* We've just inserted tuple with PK == 1, so it'll fail */
-/* error will be ER_TUPLE_FOUND */
+// We've just inserted tuple with PK == 1, so it'll fail
+// error will be ER_TUPLE_FOUND
 $tnt->insert("test", array(1, 3, "smth completely different"));
-/* But it won't be a problem for replace */
+// But it won't be a problem for replace
 $tnt->replace("test", array(1, 3, "smth completely different"));
 ```
 
@@ -396,11 +396,11 @@ _**Return Value**_
 #### Example
 
 ``` php
-/* Following code will delete all tuples from space `test` */
+// Following code will delete all tuples from space `test`
 $tuples = $tnt->select("test");
 foreach($tuples as $value) {
-    $tnt->delete("test", Array($value[0]));
-    }
+    $tnt->delete("test", array($value[0]));
+}
 ```
 
 ### Tarantool::update
