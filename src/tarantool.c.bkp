@@ -42,6 +42,7 @@ ZEND_DECLARE_MODULE_GLOBALS(tarantool)
 
 #define TARANTOOL_CONNECT_ON_DEMAND(CON, ID)				\
 	if (!CON->stream) {						\
+		/* printf("!CON->stream\n"); */				\
 		if (__tarantool_connect(CON, ID TSRMLS_CC) == FAILURE)	\
 			RETURN_FALSE;					\
 	}								\
@@ -127,6 +128,7 @@ tarantool_stream_read(tarantool_object *obj, char *buf, size_t size) {
 
 static void
 tarantool_stream_close(tarantool_object *obj) {
+	printf("tarantool_stream_close\n");
 	if (obj->stream || obj->persistent_id) {
 		tntll_stream_close(obj->stream, obj->persistent_id);
 	}
@@ -135,6 +137,7 @@ tarantool_stream_close(tarantool_object *obj) {
 }
 
 int __tarantool_connect(tarantool_object *obj, zval *id TSRMLS_DC) {
+	// printf("__tarantool_connect\n");
 	bool persistent = (TARANTOOL_G(manager) != NULL);
 	struct pool_manager *mng = TARANTOOL_G(manager);
 	int status = SUCCESS;
@@ -143,7 +146,10 @@ int __tarantool_connect(tarantool_object *obj, zval *id TSRMLS_DC) {
 	double_to_ts(INI_FLT("retry_sleep"), &sleep_time);
 	char *err = NULL;
 
+	printf("persistent outside\n");
 	if (persistent && pool_manager_find_apply(mng, obj) == 0) {
+		printf("persistent inside\n");
+		// printf("pid 0x%08x - '%s'\n", (void *)obj->persistent_id, obj->persistent_id);
 		int rv = tntll_stream_fpid(obj->host, obj->port,
 					   obj->persistent_id, &obj->stream,
 					   &err);
@@ -154,6 +160,7 @@ int __tarantool_connect(tarantool_object *obj, zval *id TSRMLS_DC) {
 	}
 	obj->schema = tarantool_schema_new();
 retry:
+	printf("retry\n");
 	while (count > 0) {
 		--count;
 		if (err) {
@@ -184,7 +191,6 @@ retry:
 		char errstr[256];
 		snprintf(errstr, 256, "%s", err);
 		THROW_EXC(errstr);
-		efree(err);
 		return FAILURE;
 	}
 	if (obj->login != NULL && obj->passwd != NULL) {
@@ -194,6 +200,7 @@ retry:
 }
 
 int __tarantool_reconnect(tarantool_object *obj, zval *id TSRMLS_DC) {
+	printf("__tarantool_reconnect\n");
 	tarantool_stream_close(obj);
 	return __tarantool_connect(obj, id TSRMLS_CC);
 }
@@ -203,9 +210,11 @@ static void tarantool_free(tarantool_object *obj TSRMLS_DC) {
 		return;
 	int store = TARANTOOL_G(manager) && obj->stream;
 	if (store) {
+		printf("pushing pid 0x%08x - '%s'\n", (void *)obj->persistent_id, obj->persistent_id);
 		pool_manager_push_assure(TARANTOOL_G(manager), obj);
 	} else {
 		if (obj->greeting) pefree(obj->greeting, 1);
+		printf("inside tarantool_free\n");
 		tarantool_stream_close(obj);
 		if (obj->persistent_id) {
 			pefree(obj->persistent_id, 1);
@@ -336,7 +345,6 @@ error:
 const zend_function_entry tarantool_class_methods[] = {
 	PHP_ME(tarantool_class, __construct, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(tarantool_class, connect, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(tarantool_class, reconnect, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(tarantool_class, close, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(tarantool_class, flush_schema, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(tarantool_class, authenticate, NULL, ZEND_ACC_PUBLIC)
@@ -386,13 +394,14 @@ zval *tarantool_update_verify_op(zval *op, long position TSRMLS_DC) {
 			Z_STRLEN_PP(opstr) != 1) {
 		THROW_EXC("Field OP must be provided and must be STRING with "
 				"length=1 at position %d", position);
-		goto cleanup;
+		return NULL;
 	}
 	if (zend_hash_find(ht, "field", 6, (void **)&oppos) == FAILURE ||
 			!oppos || Z_TYPE_PP(oppos) != IS_LONG) {
 		THROW_EXC("Field FIELD must be provided and must be LONG at "
 				"position %d", position);
-		goto cleanup;
+		return NULL;
+
 	}
 	zval **oparg, **splice_len, **splice_val;
 	switch(Z_STRVAL_PP(opstr)[0]) {
@@ -400,26 +409,26 @@ zval *tarantool_update_verify_op(zval *op, long position TSRMLS_DC) {
 		if (n != 5) {
 			THROW_EXC("Five fields must be provided for splice"
 					" at position %d", position);
-			goto cleanup;
+			return NULL;
 		}
 		if (zend_hash_find(ht, "offset", 7,
 				(void **)&oparg) == FAILURE ||
 				!oparg || Z_TYPE_PP(oparg) != IS_LONG) {
 			THROW_EXC("Field OFFSET must be provided and must be LONG for "
 					"splice at position %d", position);
-			goto cleanup;
+			return NULL;
 		}
 		if (zend_hash_find(ht, "length", 7, (void **)&splice_len) == FAILURE ||
 				!oparg || Z_TYPE_PP(splice_len) != IS_LONG) {
 			THROW_EXC("Field LENGTH must be provided and must be LONG for "
 					"splice at position %d", position);
-			goto cleanup;
+			return NULL;
 		}
 		if (zend_hash_find(ht, "list", 5, (void **)&splice_val) == FAILURE ||
 				!oparg || Z_TYPE_PP(splice_val) != IS_STRING) {
 			THROW_EXC("Field LIST must be provided and must be STRING for "
 					"splice at position %d", position);
-			goto cleanup;
+			return NULL;
 		}
 		add_next_index_stringl(arr, Z_STRVAL_PP(opstr), 1, 1);
 		add_next_index_long(arr, Z_LVAL_PP(oppos));
@@ -437,13 +446,13 @@ zval *tarantool_update_verify_op(zval *op, long position TSRMLS_DC) {
 		if (n != 3) {
 			THROW_EXC("Three fields must be provided for '%s' at "
 					"position %d", Z_STRVAL_PP(opstr), position);
-			goto cleanup;
+			return NULL;
 		}
 		if (zend_hash_find(ht, "arg", 4, (void **)&oparg) == FAILURE ||
 				!oparg || Z_TYPE_PP(oparg) != IS_LONG) {
 			THROW_EXC("Field ARG must be provided and must be LONG for "
 					"'%s' at position %d", Z_STRVAL_PP(opstr), position);
-			goto cleanup;
+			return NULL;
 		}
 		add_next_index_stringl(arr, Z_STRVAL_PP(opstr), 1, 1);
 		add_next_index_long(arr, Z_LVAL_PP(oppos));
@@ -454,13 +463,13 @@ zval *tarantool_update_verify_op(zval *op, long position TSRMLS_DC) {
 		if (n != 3) {
 			THROW_EXC("Three fields must be provided for '%s' at "
 					"position %d", Z_STRVAL_PP(opstr), position);
-			goto cleanup;
+			return NULL;
 		}
 		if (zend_hash_find(ht, "arg", 4, (void **)&oparg) == FAILURE ||
 				!oparg || !PHP_MP_SERIALIZABLE_PP(oparg)) {
 			THROW_EXC("Field ARG must be provided and must be SERIALIZABLE for "
 					"'%s' at position %d", Z_STRVAL_PP(opstr), position);
-			goto cleanup;
+			return NULL;
 		}
 		add_next_index_stringl(arr, Z_STRVAL_PP(opstr), 1, 1);
 		add_next_index_long(arr, Z_LVAL_PP(oppos));
@@ -470,12 +479,10 @@ zval *tarantool_update_verify_op(zval *op, long position TSRMLS_DC) {
 	default:
 		THROW_EXC("Unknown operation '%s' at position %d",
 				Z_STRVAL_PP(opstr), position);
-		goto cleanup;
+		return NULL;
+
 	}
 	return arr;
-cleanup:
-	zval_ptr_dtor(&arr);
-	return NULL;
 }
 
 zval *tarantool_update_verify_args(zval *args TSRMLS_DC) {
@@ -502,14 +509,11 @@ zval *tarantool_update_verify_args(zval *args TSRMLS_DC) {
 			goto cleanup;
 		if (add_next_index_zval(arr, op_arr) == FAILURE) {
 			THROW_EXC("Internal Array Error");
-			if (op_arr)
-				zval_ptr_dtor(&op_arr);
 			goto cleanup;
 		}
 	}
 	return arr;
 cleanup:
-	zval_ptr_dtor(&arr);
 	return NULL;
 }
 
@@ -735,21 +739,15 @@ PHP_METHOD(tarantool_class, connect) {
 	TARANTOOL_PARSE_PARAMS(id, "", id);
 	TARANTOOL_FETCH_OBJECT(obj, id);
 	if (obj->stream && obj->stream->mode) RETURN_TRUE;
+	// printf("called connection\n");
 	if (__tarantool_connect(obj, id TSRMLS_CC) == FAILURE)
-		RETURN_FALSE;
-	RETURN_TRUE;
-}
-
-PHP_METHOD(tarantool_class, reconnect) {
-	TARANTOOL_PARSE_PARAMS(id, "", id);
-	TARANTOOL_FETCH_OBJECT(obj, id);
-	if (__tarantool_reconnect(obj, id TSRMLS_CC) == FAILURE)
 		RETURN_FALSE;
 	RETURN_TRUE;
 }
 
 int __tarantool_authenticate(tarantool_object *obj) {
 	TSRMLS_FETCH();
+	printf("authenticating\n");
 
 	tarantool_schema_flush(obj->schema);
 	tarantool_tp_update(obj->tps);
@@ -869,6 +867,7 @@ PHP_METHOD(tarantool_class, ping) {
 	TARANTOOL_PARSE_PARAMS(id, "", id);
 	TARANTOOL_FETCH_OBJECT(obj, id);
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
+	// printf("pinging\n");
 
 	long sync = TARANTOOL_G(sync_counter)++;
 	php_tp_encode_ping(obj->value, sync);
@@ -893,7 +892,9 @@ PHP_METHOD(tarantool_class, select) {
 	TARANTOOL_PARSE_PARAMS(id, "z|zzzll", &space, &key,
 			&index, &zlimit, &offset, &iterator);
 	TARANTOOL_FETCH_OBJECT(obj, id);
+	// printf("inside select before connect\n");
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
+	// printf("inside select after connect\n");
 
 	if (zlimit != NULL && Z_TYPE_P(zlimit) != IS_NULL && Z_TYPE_P(zlimit) != IS_LONG) {
 		THROW_EXC("wrong type of 'limit' - expected long/null, got '%s'",

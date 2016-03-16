@@ -57,6 +57,7 @@ PHP_MINFO_FUNCTION(tarantool);
 
 PHP_METHOD(tarantool_class, __construct);
 PHP_METHOD(tarantool_class, connect);
+PHP_METHOD(tarantool_class, reconnect);
 PHP_METHOD(tarantool_class, close);
 PHP_METHOD(tarantool_class, authenticate);
 PHP_METHOD(tarantool_class, ping);

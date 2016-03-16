@@ -125,11 +125,12 @@ int manager_entry_pop_apply (
 ) {
 	if (entry->value.end == NULL)
 		return 1;
-	struct pool_value *pval = entry->value.end;
+	struct pool_value *pval = entry->value.begin;
 	if (entry->value.begin == entry->value.end)
 		entry->value.begin = entry->value.end = NULL;
 	else
 		entry->value.begin = entry->value.begin->next;
+	assert(obj->persistent_id != pval->persistent_id);
 	if (obj->persistent_id) pefree(obj->persistent_id, 1);
 	if (obj->greeting)      pefree(obj->greeting, 1);
 	obj->persistent_id = pval->persistent_id;

@@ -25,7 +25,7 @@ void tntll_stream_close(php_stream *stream, const char *pid) {
 	TSRMLS_FETCH();
 	int rv = PHP_STREAM_PERSISTENT_SUCCESS;
 	if (stream == NULL)
-		php_stream_from_persistent_id(pid, &stream TSRMLS_CC);
+		rv = php_stream_from_persistent_id(pid, &stream TSRMLS_CC);
 	int flags = PHP_STREAM_FREE_CLOSE;
 	if (pid)
 		flags = PHP_STREAM_FREE_CLOSE_PERSISTENT;
