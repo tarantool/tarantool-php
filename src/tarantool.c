@@ -74,14 +74,14 @@ zend_function_entry tarantool_module_functions[] = {
 
 zend_module_entry tarantool_module_entry = {
 	STANDARD_MODULE_HEADER,
-	"tarantool",
+	PHP_TARANTOOL_EXTNAME,
 	tarantool_module_functions,
 	PHP_MINIT(tarantool),
 	PHP_MSHUTDOWN(tarantool),
 	PHP_RINIT(tarantool),
 	NULL,
 	PHP_MINFO(tarantool),
-	"1.0",
+	PHP_TARANTOOL_VERSION,
 	STANDARD_MODULE_PROPERTIES
 };
 
