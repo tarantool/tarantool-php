@@ -357,9 +357,9 @@ ZEND_ARG_INFO(0, iterator)
 ZEND_END_ARG_INFO()
 
 // insert, replace
-ZEND_BEGIN_ARG_INFO_EX(arginfo_tarantool_space_tuple, 0, 0, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_tarantool_space_tuple, 0, 0, 2)
 ZEND_ARG_INFO(0, space)
-ZEND_ARG_INFO(0, tuple)
+ZEND_ARG_ARRAY_INFO(0, tuple, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_tarantool_delete, 0, 0, 2)
@@ -377,14 +377,14 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(arginfo_tarantool_update, 0, 0, 3)
 ZEND_ARG_INFO(0, space)
 ZEND_ARG_INFO(0, key)
-ZEND_ARG_INFO(0, args)
+ZEND_ARG_ARRAY_INFO(0, args, 0)
 ZEND_ARG_INFO(0, index)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_tarantool_upset, 0, 0, 3)
 ZEND_ARG_INFO(0, space)
-ZEND_ARG_INFO(0, tupple)
-ZEND_ARG_INFO(0, args)
+ZEND_ARG_ARRAY_INFO(0, tupple, 0)
+ZEND_ARG_ARRAY_INFO(0, args, 0)
 ZEND_END_ARG_INFO()
 
 const zend_function_entry tarantool_class_methods[] = {
