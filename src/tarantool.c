@@ -74,14 +74,14 @@ zend_function_entry tarantool_module_functions[] = {
 
 zend_module_entry tarantool_module_entry = {
 	STANDARD_MODULE_HEADER,
-	"tarantool",
+	PHP_TARANTOOL_EXTNAME,
 	tarantool_module_functions,
 	PHP_MINIT(tarantool),
 	PHP_MSHUTDOWN(tarantool),
 	PHP_RINIT(tarantool),
 	NULL,
 	PHP_MINFO(tarantool),
-	"1.0",
+	PHP_TARANTOOL_VERSION,
 	STANDARD_MODULE_PROPERTIES
 };
 
@@ -333,25 +333,79 @@ error:
 }
 
 
+// connect, reconnect, flush_schema, close, ping
+ZEND_BEGIN_ARG_INFO_EX(arginfo_libvirt_void, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_tarantool_construct, 0, 0, 0)
+ZEND_ARG_INFO(0, host)
+ZEND_ARG_INFO(0, port)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_tarantool_authenticate, 0, 0, 1)
+ZEND_ARG_INFO(0, login)
+ZEND_ARG_INFO(0, password)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_tarantool_select, 0, 0, 1)
+ZEND_ARG_INFO(0, space)
+ZEND_ARG_INFO(0, key)
+ZEND_ARG_INFO(0, index)
+ZEND_ARG_INFO(0, limit)
+ZEND_ARG_INFO(0, offset)
+ZEND_ARG_INFO(0, iterator)
+ZEND_END_ARG_INFO()
+
+// insert, replace
+ZEND_BEGIN_ARG_INFO_EX(arginfo_tarantool_space_tuple, 0, 0, 2)
+ZEND_ARG_INFO(0, space)
+ZEND_ARG_ARRAY_INFO(0, tuple, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_tarantool_delete, 0, 0, 2)
+ZEND_ARG_INFO(0, space)
+ZEND_ARG_INFO(0, key)
+ZEND_ARG_INFO(0, index)
+ZEND_END_ARG_INFO()
+
+// call, eval
+ZEND_BEGIN_ARG_INFO_EX(arginfo_tarantool_proc_tuple, 0, 0, 1)
+ZEND_ARG_INFO(0, proc)
+ZEND_ARG_INFO(0, tuple)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_tarantool_update, 0, 0, 3)
+ZEND_ARG_INFO(0, space)
+ZEND_ARG_INFO(0, key)
+ZEND_ARG_ARRAY_INFO(0, args, 0)
+ZEND_ARG_INFO(0, index)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_tarantool_upset, 0, 0, 3)
+ZEND_ARG_INFO(0, space)
+ZEND_ARG_ARRAY_INFO(0, tupple, 0)
+ZEND_ARG_ARRAY_INFO(0, args, 0)
+ZEND_END_ARG_INFO()
+
 const zend_function_entry tarantool_class_methods[] = {
-	PHP_ME(tarantool_class, __construct, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(tarantool_class, connect, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(tarantool_class, reconnect, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(tarantool_class, close, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(tarantool_class, flush_schema, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(tarantool_class, authenticate, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(tarantool_class, ping, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(tarantool_class, select, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(tarantool_class, insert, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(tarantool_class, replace, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(tarantool_class, call, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(tarantool_class, eval, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(tarantool_class, delete, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(tarantool_class, update, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(tarantool_class, upsert, NULL, ZEND_ACC_PUBLIC)
-	PHP_MALIAS(tarantool_class, evaluate, eval, NULL, ZEND_ACC_PUBLIC)
-	PHP_MALIAS(tarantool_class, flushSchema, flush_schema, NULL, ZEND_ACC_PUBLIC)
-	PHP_MALIAS(tarantool_class, disconnect, close, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(tarantool_class, __construct,  arginfo_tarantool_construct,    ZEND_ACC_PUBLIC)
+	PHP_ME(tarantool_class, connect,      arginfo_libvirt_void,           ZEND_ACC_PUBLIC)
+	PHP_ME(tarantool_class, reconnect,    arginfo_libvirt_void,           ZEND_ACC_PUBLIC)
+	PHP_ME(tarantool_class, close,        arginfo_libvirt_void,           ZEND_ACC_PUBLIC)
+	PHP_ME(tarantool_class, flush_schema, arginfo_libvirt_void,           ZEND_ACC_PUBLIC)
+	PHP_ME(tarantool_class, authenticate, arginfo_tarantool_authenticate, ZEND_ACC_PUBLIC)
+	PHP_ME(tarantool_class, ping,         arginfo_libvirt_void,           ZEND_ACC_PUBLIC)
+	PHP_ME(tarantool_class, select,       arginfo_tarantool_select,       ZEND_ACC_PUBLIC)
+	PHP_ME(tarantool_class, insert,       arginfo_tarantool_space_tuple,  ZEND_ACC_PUBLIC)
+	PHP_ME(tarantool_class, replace,      arginfo_tarantool_space_tuple,  ZEND_ACC_PUBLIC)
+	PHP_ME(tarantool_class, call,         arginfo_tarantool_proc_tuple,   ZEND_ACC_PUBLIC)
+	PHP_ME(tarantool_class, eval,         arginfo_tarantool_proc_tuple,   ZEND_ACC_PUBLIC)
+	PHP_ME(tarantool_class, delete,       arginfo_tarantool_delete,       ZEND_ACC_PUBLIC)
+	PHP_ME(tarantool_class, update,       arginfo_tarantool_update,       ZEND_ACC_PUBLIC)
+	PHP_ME(tarantool_class, upsert,       arginfo_tarantool_upset,        ZEND_ACC_PUBLIC)
+	PHP_MALIAS(tarantool_class, evaluate, eval,            arginfo_tarantool_proc_tuple, ZEND_ACC_PUBLIC)
+	PHP_MALIAS(tarantool_class, flushSchema, flush_schema, arginfo_libvirt_void,         ZEND_ACC_PUBLIC)
+	PHP_MALIAS(tarantool_class, disconnect, close,         arginfo_libvirt_void,         ZEND_ACC_PUBLIC)
 	{NULL, NULL, NULL}
 };
 
