@@ -559,7 +559,7 @@ $tnt->update("test", 1, array(
 ### Tarantool::upsert
 
 ``` php
-public array Tarantool::upsert(mixed $space, mixed $key, array $ops [, number $index] )
+public array Tarantool::upsert(mixed $space, array $tuple, array $ops [, number $index] )
 ```
 
 _**Description**_: Update or Insert command (If tuple with PK == PK('tuple') exists,
