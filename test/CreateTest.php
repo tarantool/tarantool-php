@@ -138,7 +138,7 @@ class CreateTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($c->ping());
     }
 
-    public function provideGoodCridentials()
+    public static function provideGoodCridentials()
     {
         return [
             ['guest'],
