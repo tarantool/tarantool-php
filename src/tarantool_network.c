@@ -29,8 +29,9 @@ void tntll_stream_close(php_stream *stream, const char *pid) {
 	int flags = PHP_STREAM_FREE_CLOSE;
 	if (pid)
 		flags = PHP_STREAM_FREE_CLOSE_PERSISTENT;
-	if (rv == PHP_STREAM_PERSISTENT_SUCCESS && stream)
+	if (rv == PHP_STREAM_PERSISTENT_SUCCESS && stream) {
 		php_stream_free(stream, flags);
+	}
 }
 
 int tntll_stream_fpid2(const char *pid, php_stream **ostream) {
@@ -96,7 +97,6 @@ int tntll_stream_open(const char *host, int port, const char *pid,
 			 strerror(errno));
 		goto error;
 	}
-	
 	*ostream = stream;
 	return 0;
 error:

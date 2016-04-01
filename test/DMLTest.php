@@ -275,9 +275,9 @@ class DMLTest extends PHPUnit_Framework_TestCase
 			self::$tarantool->insert("test", array(2, 3, "hello"));
 			self::$tarantool->insert("test", array(3, 4, "hello"));
 			self::$tarantool->insert("test", array(4, 2, "hello"));
-			$this->assertEquals(count(self::$tarantool->select("test", 3, "secondary", null, null, TARANTOOL_ITER_GT)), 1);
-			$this->assertEquals(count(self::$tarantool->select("test", 3, "secondary", 0,		 null, TARANTOOL_ITER_GT)), 0);
-			$this->assertEquals(count(self::$tarantool->select("test", 3, "secondary", 100,  null, TARANTOOL_ITER_GT)), 1);
+			$this->assertEquals(count(self::$tarantool->select("test", 3, "secondary", null, null, Tarantool::ITERATOR_GT)), 1);
+			$this->assertEquals(count(self::$tarantool->select("test", 3, "secondary", 0,    null, Tarantool::ITERATOR_GT)), 0);
+			$this->assertEquals(count(self::$tarantool->select("test", 3, "secondary", 100,  null, Tarantool::ITERATOR_GT)), 1);
 		}
 
 		public function test_15_upsert() {

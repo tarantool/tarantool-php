@@ -82,7 +82,6 @@ Place it into project library path in your IDE.
 3. [Manipulation connection](#manipulation-connection)
   * [Tarantool::connect](#tarantoolconnect)
   * [Tarantool::disconnect](#tarantooldisconnect)
-  * [Tarantool::authenticate](#tarantoolauthenticate)
   * [Tarantool::flushSchema](#tarantoolflushschema)
   * [Tarantool::ping](#tarantoolping)
 4. [Database queries](#database-queries)
@@ -98,45 +97,44 @@ Place it into project library path in your IDE.
 
 _**Description**_: Available Tarantool Constants
 
-* `TARANTOOL_ITER_EQ` - Equality iterator (ALL)
-* `TARANTOOL_ITER_REQ` - Reverse equality iterator
-* `TARANTOOL_ITER_ALL` - Get all rows
-* `TARANTOOL_ITER_LT` - Less then iterator
-* `TARANTOOL_ITER_LE` - Less and equal iterator
-* `TARANTOOL_ITER_GE` - Greater and equal iterator
-* `TARANTOOL_ITER_GT` - Gtreater then iterator
-* `TARANTOOL_ITER_BITSET_ALL_SET` - check if all given bits are set (BITSET only)
-* `TARANTOOL_ITER_BITSET_ANY_SET` - check if any given bits are set (BITSET only)
-* `TARANTOOL_ITER_BITSET_ALL_NOT_SET` - check if all given bits are not set
+* `Tarantool::ITERATOR_EQ` - Equality iterator (ALL)
+* `Tarantool::ITERATOR_REQ` - Reverse equality iterator
+* `Tarantool::ITERATOR_ALL` - Get all rows
+* `Tarantool::ITERATOR_LT` - Less then iterator
+* `Tarantool::ITERATOR_LE` - Less and equal iterator
+* `Tarantool::ITERATOR_GE` - Greater and equal iterator
+* `Tarantool::ITERATOR_GT` - Gtreater then iterator
+* `Tarantool::ITERATOR_BITSET_ALL_SET` - check if all given bits are set (BITSET only)
+* `Tarantool::ITERATOR_BITSET_ANY_SET` - check if any given bits are set (BITSET only)
+* `Tarantool::ITERATOR_BITSET_ALL_NOT_SET` - check if all given bits are not set
   (BITSET only)
-* `TARANTOOL_ITER_OVERLAPS` - find dots in the n-dimension cube (RTREE only)
-* `TARANTOOL_ITER_NEIGHBOR` - find nearest dots (RTREE only)
+* `Tarantool::ITERATOR_OVERLAPS` - find dots in the n-dimension cube (RTREE only)
+* `Tarantool::ITERATOR_NEIGHBOR` - find nearest dots (RTREE only)
 
 ### Class Tarantool
 
 ``` php
 Tarantool {
-    public Tarantool::__construct ( [ string $host = 'localhost' [, int $port = 3301 ] ] )
-    public bool Tarantool::connect ( void )
-    public bool Tarantool::disconnect ( void )
-    public Tarantool::authenticate(string $login [, string $password = NULL ] )
-    public bool Tarantool::flushSchema ( void )
-    public bool Tarantool::ping ( void )
-    public array Tarantool::select(mixed $space [, mixed $key = array() [, mixed $index = 0 [, int $limit = PHP_INT_MAX [, int $offset = 0 [, $iterator = TARANTOOL_ITER_EQ ] ] ] ] ] )
-    public array Tarantool::insert(mixed $space, array $tuple)
-    public array Tarantool::replace(mixed $space, array $tuple)
-    public array Tarantool::call(string $procedure [, mixed args])
-    public array Tarantool::evaluate(string $expression [, mixed args])
-    public array Tarantool::delete(mixed $space, mixed $key [, mixed $index])
-    public array Tarantool::update(mixed $space, mixed $key, array $ops [, number $index] )
-    public array Tarantool::upsert(mixed $space, mixed $key, array $ops [, number $index] )
+    public       Tarantool::__construct ( [ string $host = 'localhost' [, int $port = 3301 [, string $user = "guest" [, string $password = NULL [, string $persistent_id = NULL ] ] ] ] ] )
+    public bool  Tarantool::connect ( void )
+    public bool  Tarantool::disconnect ( void )
+    public bool  Tarantool::flushSchema ( void )
+    public bool  Tarantool::ping ( void )
+    public array Tarantool::select (mixed $space [, mixed $key = array() [, mixed $index = 0 [, int $limit = PHP_INT_MAX [, int $offset = 0 [, $iterator = TARANTOOL_ITERATOR_EQ ] ] ] ] ] )
+    public array Tarantool::insert (mixed $space, array $tuple)
+    public array Tarantool::replace (mixed $space, array $tuple)
+    public array Tarantool::call (string $procedure [, mixed args] )
+    public array Tarantool::evaluate (string $expression [, mixed args] )
+    public array Tarantool::delete (mixed $space, mixed $key [, mixed $index] )
+    public array Tarantool::update (mixed $space, mixed $key, array $ops [, number $index] )
+    public array Tarantool::upsert (mixed $space, mixed $key, array $ops [, number $index] )
 }
 ```
 
 #### Tarantool::__construct
 
 ```
-public Tarantool::__construct ( [ string $host = 'localhost' [, int $port = 3301 ] ] )
+public Tarantool::__construct ( [ string $host = 'localhost' [, int $port = 3301 [, string $user = "guest" [, string $password = NULL [, string $persistent_id = NULL ] ] ] ] ] )
 ```
 
 _**Description**_: Creates a Tarantool client
@@ -145,6 +143,10 @@ _**Parameters**_
 
 * `host`: string, default is `'localhost'`
 * `port`: number, default is `3301`
+* `user`: string, default is `'guest'`
+* `password`: string
+* `persistent_id`: string (set it, and connection will be persistent, if
+  `persistent` in config isn't set)
 
 _**Return Value**_
 
@@ -187,36 +189,6 @@ _**Return Value**_
 
 **BOOL**: True
 
-### Tarantool::authenticate
-
-``` php
-public Tarantool::authenticate(string $login [, string $password = NULL ] )
-```
-
-_**Description**_: Authenticate to Tarantool using given login/password
-
-_**Parameters**_
-
-* `login`: string - user login (mandatory)
-* `password`: string - user password (mandatory, but ignored, if user is guest)
-
-_**Return Value**_ NULL
-
-#### *Example*
-
-``` php
-/**
- * - user is 'valdis'
- * - password is 'pelsh'
- */
-$tnt->connect('valdis', 'pelsh')
-/**
- * - user is 'guest'
- * - password is empty and ignored, anyway
- */
-$tnt->connect('guest')
-```
-
 ### Tarantool::flushSchema
 
 ``` php
@@ -248,7 +220,7 @@ Throws `Exception` on error.
 ### Tarantool::select
 
 ``` php
-public array Tarantool::select(mixed $space [, mixed $key = array() [, mixed $index = 0 [, int $limit = PHP_INT_MAX [, int $offset = 0 [, $iterator = TARANTOOL_ITER_EQ ] ] ] ] ] )
+public array Tarantool::select(mixed $space [, mixed $key = array() [, mixed $index = 0 [, int $limit = PHP_INT_MAX [, int $offset = 0 [, $iterator = TARANTOOL_ITERATOR_EQ ] ] ] ] ] )
 ```
 
 _**Description**_: Execute select query from Tarantool server.
@@ -262,7 +234,7 @@ _**Parameters**_
 * `limit`: Number, limit number of rows to return from select (INT_MAX by default)
 * `offset`: Number, offset to select from (0 by default)
 * `iterator`: Constant, iterator type. See [Predefined Constants](#predefined-constants)
-  for more information (`TARANTOOL_ITER_EQ` by default)
+  for more information (`TARANTOOL_ITERATOR_EQ` by default)
 
 _**Return Value**_
 
@@ -286,7 +258,7 @@ $tnt->select("test", array(1, "hello"), "isec");
 $tnt->select("test", null, null, 100, 100);
 // Selects second hundred of rows from space test in reverse equality order
 // It meanse: select penultimate hundred
-$tnt->select("test", null, null, 100, 100, TARANTOOL_ITER_REQ);
+$tnt->select("test", null, null, 100, 100, TARANTOOL_ITERATOR_REQ);
 ```
 
 ### Tarantool::insert, Tarantool::replace

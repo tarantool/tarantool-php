@@ -45,8 +45,8 @@ mh_indexcmp_key_eq(
 #define mh_hash(x, arg)       PMurHash32(MUR_SEED, (*x)->key.id, (*x)->key.id_len)
 #define mh_hash_key(x, arg)   PMurHash32(MUR_SEED, (x)->id, (x)->id_len);
 
-#define mh_node_t const struct schema_index_value *
-#define mh_key_t  const struct schema_key *
+#define mh_node_t struct schema_index_value *
+#define mh_key_t  struct schema_key *
 
 #define MH_CALLOC(x, y) pecalloc((x), (y), 1)
 #define MH_FREE(x)      pefree((x), 1)
@@ -125,8 +125,8 @@ mh_spacecmp_key_eq(
 #define mh_hash(x, arg)       PMurHash32(MUR_SEED, (*x)->key.id, (*x)->key.id_len)
 #define mh_hash_key(x, arg)   PMurHash32(MUR_SEED, x->id, x->id_len);
 
-#define mh_node_t const struct schema_space_value *
-#define mh_key_t  const struct schema_key *
+#define mh_node_t struct schema_space_value *
+#define mh_key_t  struct schema_key *
 
 #define MH_CALLOC(x, y) pecalloc((x), (y), 1)
 #define MH_FREE(x)      pefree((x), 1)
@@ -273,10 +273,8 @@ error:
 	return -1;
 }
 
-int tarantool_schema_add_spaces(
-		struct tarantool_schema *schema_obj,
-		const char *data,
-		uint32_t size) {
+int tarantool_schema_add_spaces(tarantool_schema *schema_obj, const char *data,
+				uint32_t size) {
 	struct mh_schema_space_t *schema = schema_obj->space_hash;
 	const char *tuple = data;
 	if (mp_check(&tuple, tuple + size))
@@ -372,10 +370,8 @@ error:
 	return -1;
 }
 
-int tarantool_schema_add_indexes(
-		struct tarantool_schema *schema_obj,
-		const char *data,
-		uint32_t size) {
+int tarantool_schema_add_indexes(tarantool_schema *schema_obj, const char *data,
+				 uint32_t size) {
 	struct mh_schema_space_t *schema = schema_obj->space_hash;
 	const char *tuple = data;
 	if (mp_check(&tuple, tuple + size))
@@ -391,9 +387,9 @@ int tarantool_schema_add_indexes(
 	return 0;
 }
 
-int32_t tarantool_schema_get_sid_by_string(
-		struct tarantool_schema *schema_obj,
-		const char *space_name, uint32_t space_name_len) {
+int32_t tarantool_schema_get_sid_by_string(tarantool_schema *schema_obj,
+					   const char *space_name,
+					   uint32_t space_name_len) {
 	struct mh_schema_space_t *schema = schema_obj->space_hash;
 	struct schema_key space_key = {space_name, space_name_len};
 	mh_int_t space_slot = mh_schema_space_find(schema, &space_key, NULL);
@@ -403,9 +399,9 @@ int32_t tarantool_schema_get_sid_by_string(
 	return space->space_number;
 }
 
-int32_t tarantool_schema_get_iid_by_string(
-		struct tarantool_schema *schema_obj, uint32_t sid,
-		const char *index_name, uint32_t index_name_len) {
+int32_t tarantool_schema_get_iid_by_string(tarantool_schema *schema_obj,
+					   uint32_t sid, const char *index_name,
+					   uint32_t index_name_len) {
 	struct mh_schema_space_t *schema = schema_obj->space_hash;
 	struct schema_key space_key = {(void *)&sid, sizeof(uint32_t)};
 	mh_int_t space_slot = mh_schema_space_find(schema, &space_key, NULL);
@@ -420,18 +416,19 @@ int32_t tarantool_schema_get_iid_by_string(
 	return index->index_number;
 }
 
-struct tarantool_schema *tarantool_schema_new() {
-	struct tarantool_schema *obj = pemalloc(sizeof(struct tarantool_schema *), 1);
+tarantool_schema *tarantool_schema_new(int is_persistent) {
+	tarantool_schema *obj = pemalloc(sizeof(tarantool_schema *), 1);
 	obj->space_hash = mh_schema_space_new();
 	return obj;
 }
 
-void tarantool_schema_flush(struct tarantool_schema *obj) {
+void tarantool_schema_flush(tarantool_schema *obj) {
 	schema_space_free(obj->space_hash);
 }
 
-void tarantool_schema_delete(struct tarantool_schema *obj) {
+void tarantool_schema_delete(tarantool_schema *obj, int is_persistent) {
 	if (obj == NULL) return;
 	schema_space_free(obj->space_hash);
 	mh_schema_space_delete(obj->space_hash);
+	pefree(obj, 1);
 }
