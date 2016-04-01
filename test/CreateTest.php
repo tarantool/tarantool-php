@@ -1,4 +1,5 @@
 <?php
+
 class CreateTest extends PHPUnit_Framework_TestCase
 {
     protected static $port, $tm;
@@ -121,12 +122,28 @@ class CreateTest extends PHPUnit_Framework_TestCase
         $c->authenticate('guest', '');
     }
 
-    public function test_08_good_cridentials()
+    /**
+     * @dataProvider provideGoodCredentials
+     */
+    public function test_08_good_cridentials($username, $password = null)
     {
         $c = new Tarantool('localhost', self::$port);
         $c->connect();
         $this->assertTrue($c->ping());
-        $c->authenticate('guest');
+
+        (1 === func_num_args()) 
+            ? $c->authenticate($username)
+            : $c->authenticate($username, $password);
+
         $this->assertTrue($c->ping());
     }
+
+    public function provideGoodCridentials()
+    {
+        return [
+            ['guest'],
+            ['guest', null],
+        ];
+    }
 }
+

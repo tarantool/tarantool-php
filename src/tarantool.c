@@ -885,7 +885,7 @@ PHP_METHOD(tarantool_class, authenticate) {
 	char *login; int login_len;
 	char *passwd = NULL; int passwd_len = 0;
 
-	TARANTOOL_PARSE_PARAMS(id, "s|s", &login, &login_len,
+	TARANTOOL_PARSE_PARAMS(id, "s|s!", &login, &login_len,
 			&passwd, &passwd_len);
 	TARANTOOL_FETCH_OBJECT(obj, id);
 	obj->login = pestrdup(login, 1);
