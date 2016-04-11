@@ -66,7 +66,6 @@ Place it into project library path in your IDE.
 ## Configuration file
 
 * `tarantool.persistent` - Enable persistent connections (don't close connections between sessions) (defaults: True, **can't be changed in runtime**)
-* `tarantool.con_per_host` - Count of open connections to every Tarantool server to store (defaults: 5, **can't be changed in runtime**)
 * `tarantool.timeout` - Connection timeout (defaults: 10 seconds, can be changed in runtime)
 * `tarantool.retry_count` - Count of retries for connecting (defaults: 1, can be changed in runtime)
 * `tarantool.retry_sleep` - Sleep between connecting retries (defaults: 0.1 second, can be changed in runtime)
@@ -562,3 +561,10 @@ $tnt->upsert("test", array(124, 10, "new tuple"), array(
   )
 ));
 ```
+
+
+## Deprecated
+
+* Global constants, e.g. `TARANTOOL_ITER_<name>`
+* `Tarantool::authenticate` method
+* configuration parameter: `tarantool.con_per_host`
