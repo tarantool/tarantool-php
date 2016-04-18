@@ -121,7 +121,7 @@ tarantool_stream_send(tarantool_object *obj TSRMLS_DC) {
  * See https://bugs.launchpad.net/tarantool/+bug/1182474
  */
 static size_t
-tarantool_stream_read(tarantool_connection *obj, char *buf, size_t size) {
+tarantool_stream_read(tarantool_object *obj, char *buf, size_t size) {
 	return tntll_stream_read2(obj->stream, buf, size);
 }
 
