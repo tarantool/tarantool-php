@@ -9,6 +9,7 @@
       <file>test/CreateTest.php</file>
       <file>test/MsgPackTest.php</file>
       <file>test/AssertTest.php</file>
+      <file>test/RandomTest.php</file>
     </testsuite>
   </testsuites>
 

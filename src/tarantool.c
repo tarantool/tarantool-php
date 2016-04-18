@@ -121,8 +121,8 @@ tarantool_stream_send(tarantool_object *obj TSRMLS_DC) {
  * See https://bugs.launchpad.net/tarantool/+bug/1182474
  */
 static size_t
-tarantool_stream_read(tarantool_object *obj, char *buf, size_t size) {
-	return tntll_stream_read(obj->stream, buf, size);
+tarantool_stream_read(tarantool_connection *obj, char *buf, size_t size) {
+	return tntll_stream_read2(obj->stream, buf, size);
 }
 
 static void
@@ -172,8 +172,8 @@ retry:
 				      &obj->stream, &err) == -1) {
 			continue;
 		}
-		if (tntll_stream_read(obj->stream, obj->greeting,
-				      GREETING_SIZE) == -1) {
+		if (tntll_stream_read2(obj->stream, obj->greeting,
+				       GREETING_SIZE) == -1) {
 			continue;
 		}
 		obj->salt = obj->greeting + SALT_PREFIX_SIZE;
@@ -257,7 +257,7 @@ static int64_t tarantool_step_recv(
 	*header = NULL;
 	*body = NULL;
 	if (tarantool_stream_read(obj, pack_len, 5) != 5) {
-		THROW_EXC("Can't read query from server");
+		THROW_EXC("Can't read query from server (failed to read length)");
 		goto error_con;
 	}
 	if (php_mp_check(pack_len, 5)) {
@@ -268,14 +268,15 @@ static int64_t tarantool_step_recv(
 	smart_string_ensure(obj->value, body_size);
 	if (tarantool_stream_read(obj, SSTR_POS(obj->value),
 				  body_size) != body_size) {
-		THROW_EXC("Can't read query from server");
+		THROW_EXC("Can't read query from server (failed to read %d "
+			  "bytes from server [header + body])", body_size);
 		goto error;
 	}
 	SSTR_LEN(obj->value) += body_size;
 
 	char *pos = SSTR_BEG(obj->value);
 	if (php_mp_check(pos, body_size)) {
-		THROW_EXC("Failed verifying msgpack");
+		THROW_EXC("Failed verifying header [bad msgpack]");
 		goto error;
 	}
 	if (php_mp_unpack(header, &pos) == FAILURE ||
@@ -284,7 +285,7 @@ static int64_t tarantool_step_recv(
 		goto error;
 	}
 	if (php_mp_check(pos, body_size)) {
-		THROW_EXC("Failed verifying msgpack");
+		THROW_EXC("Failed verifying body [bad msgpack]");
 		goto error_con;
 	}
 	if (php_mp_unpack(body, &pos) == FAILURE) {
@@ -591,14 +592,15 @@ int get_spaceno_by_name(tarantool_object *obj, zval *id, zval *name TSRMLS_DC) {
 
 	char pack_len[5] = {0, 0, 0, 0, 0};
 	if (tarantool_stream_read(obj, pack_len, 5) != 5) {
-		THROW_EXC("Can't read query from server");
+		THROW_EXC("Can't read query from server (failed to read length)");
 		return FAILURE;
 	}
 	size_t body_size = php_mp_unpack_package_size(pack_len);
 	smart_string_ensure(obj->value, body_size);
 	if (tarantool_stream_read(obj, obj->value->c,
 				body_size) != body_size) {
-		THROW_EXC("Can't read query from server");
+		THROW_EXC("Can't read query from server (failed to read %d "
+			  "bytes from server [header + body])", body_size);
 		return FAILURE;
 	}
 
@@ -651,14 +653,15 @@ int get_indexno_by_name(tarantool_object *obj, zval *id,
 
 	char pack_len[5] = {0, 0, 0, 0, 0};
 	if (tarantool_stream_read(obj, pack_len, 5) != 5) {
-		THROW_EXC("Can't read query from server");
+		THROW_EXC("Can't read query from server (failed to read length)");
 		return FAILURE;
 	}
 	size_t body_size = php_mp_unpack_package_size(pack_len);
 	smart_string_ensure(obj->value, body_size);
 	if (tarantool_stream_read(obj, obj->value->c,
 				body_size) != body_size) {
-		THROW_EXC("Can't read query from server");
+		THROW_EXC("Can't read query from server (failed to read %d "
+			  "bytes from server [header + body])", body_size);
 		return FAILURE;
 	}
 

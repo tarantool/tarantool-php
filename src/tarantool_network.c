@@ -119,7 +119,7 @@ int tntll_stream_read2(php_stream *stream, char *buf, size_t size) {
 					    size - total_size);
 		assert(read_size + total_size <= size);
 		if (read_size <= 0)
-			 break;
+			break;
 		total_size += read_size;
 	}
 	return total_size;
