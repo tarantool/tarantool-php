@@ -516,7 +516,7 @@ $tnt->update("test", 1, array(
   array(
     "field" => 4,
     "op" => "=",
-    "arg" => intval(0x11111)
+    "arg" => 0x11111,
   ),
 ));
 $tnt->update("test", 1, array(
@@ -528,21 +528,21 @@ $tnt->update("test", 1, array(
   array(
     "field" => 4,
     "op" => "&",
-    "arg" => intval(0x10101)
+    "arg" => 0x10101,
   )
 ));
 $tnt->update("test", 1, array(
   array(
     "field" => 4,
     "op" => "^",
-    "arg" => intval(0x11100)
+    "arg" => 0x11100,
   )
 ));
 $tnt->update("test", 1, array(
   array(
     "field" => 4,
     "op" => "|",
-    "arg" => intval(0x00010)
+    "arg" => 0x00010,
   )
 ));
 $tnt->update("test", 1, array(
