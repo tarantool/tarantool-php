@@ -1,4 +1,5 @@
 <?php
+
 class CreateTest extends PHPUnit_Framework_TestCase
 {
     protected static $port, $tm;
@@ -89,7 +90,7 @@ class CreateTest extends PHPUnit_Framework_TestCase
      * @expectedException Exception
      * @expectedExceptionMessage Query error
      */
-    public function test_06_bad_cridentials()
+    public function test_06_bad_credentials()
     {
         $c = new Tarantool('localhost', self::$port);
         $c->connect();
@@ -101,7 +102,7 @@ class CreateTest extends PHPUnit_Framework_TestCase
      * @expectedException Exception
      * @expectedExceptionMessage Query error
      */
-    public function test_07_bad_guest_cridentials()
+    public function test_07_bad_guest_credentials()
     {
         $c = new Tarantool('localhost', self::$port);
         $c->connect();
@@ -113,7 +114,7 @@ class CreateTest extends PHPUnit_Framework_TestCase
      * @expectedException Exception
      * @expectedExceptionMessage Query error
      */
-    public function test_07_01_bad_guest_cridentials()
+    public function test_07_01_bad_guest_credentials()
     {
         $c = new Tarantool('localhost', self::$port);
         $c->connect();
@@ -121,12 +122,28 @@ class CreateTest extends PHPUnit_Framework_TestCase
         $c->authenticate('guest', '');
     }
 
-    public function test_08_good_cridentials()
+    /**
+     * @dataProvider provideGoodCredentials
+     */
+    public function test_08_good_credentials($username, $password = null)
     {
         $c = new Tarantool('localhost', self::$port);
         $c->connect();
         $this->assertTrue($c->ping());
-        $c->authenticate('guest');
+
+        (1 === func_num_args()) 
+            ? $c->authenticate($username)
+            : $c->authenticate($username, $password);
+
         $this->assertTrue($c->ping());
     }
+
+    public static function provideGoodCredentials()
+    {
+        return [
+            ['guest'],
+            ['guest', null],
+        ];
+    }
 }
+
