@@ -530,6 +530,125 @@ zval *pack_key(zval *args, char select) {
 	return arr;
 }
 
+int convert_iterator(zval *iter, int all) {
+	TSRMLS_FETCH();
+	if (iter == NULL || Z_TYPE_P(iter) == IS_NULL) {
+		if (all) {
+			return ITERATOR_ALL;
+		} else {
+			return ITERATOR_EQ;
+		}
+	} else if (Z_TYPE_P(iter) == IS_LONG) {
+		return Z_LVAL_P(iter);
+	} else if (Z_TYPE_P(iter) != IS_STRING) {
+		THROW_EXC("Bad iterator type, expected null/String/Long, got"
+			   "%s", op_to_string(Z_TYPE_P(iter)));
+	}
+	const char *i = Z_STRVAL_P(iter);
+	size_t i_len = Z_STRLEN_P(iter);
+	int first = toupper(i[0]);
+	switch (first) {
+	case 'A':
+		if (i_len == 3 && toupper(i[1]) == 'L' && toupper(i[2]) == 'L')
+			return ITERATOR_ALL;
+		break;
+	case 'B':
+		if (i_len > 7            && toupper(i[1]) == 'I' &&
+		    toupper(i[2]) == 'T' && toupper(i[3]) == 'S' &&
+		    toupper(i[4]) == 'E' && toupper(i[5]) == 'T' &&
+		    toupper(i[6]) == '_') {
+			if (i_len == 18           && toupper(i[7])  == 'A' &&
+			    toupper(i[8])  == 'L' && toupper(i[9])  == 'L' &&
+			    toupper(i[10]) == '_' && toupper(i[11]) == 'N' &&
+			    toupper(i[12]) == 'O' && toupper(i[13]) == 'T' &&
+			    toupper(i[14]) == '_' && toupper(i[15]) == 'S' &&
+			    toupper(i[16]) == 'E' && toupper(i[17]) == 'T')
+				return ITERATOR_BITSET_ALL_NOT_SET;
+			else if (i_len == 14           && toupper(i[7])  == 'A' &&
+			         toupper(i[8])  == 'L' && toupper(i[9])  == 'L' &&
+			         toupper(i[10]) == '_' && toupper(i[11]) == 'S' &&
+			         toupper(i[12]) == 'E' && toupper(i[13]) == 'T')
+				return ITERATOR_BITSET_ALL_SET;
+			else if (i_len == 14           && toupper(i[7])  == 'A' &&
+			         toupper(i[8])  == 'N' && toupper(i[9])  == 'Y' &&
+			         toupper(i[10]) == '_' && toupper(i[11]) == 'S' &&
+			         toupper(i[12]) == 'E' && toupper(i[13]) == 'T')
+				return ITERATOR_BITSET_ANY_SET;
+		}
+		if (i_len > 4            && toupper(i[1]) == 'I' &&
+		    toupper(i[2]) == 'T' && toupper(i[3]) == 'S' &&
+		    toupper(i[4]) == '_') {
+			if (i_len == 16           && toupper(i[5])  == 'A' &&
+			    toupper(i[6])  == 'L' && toupper(i[7])  == 'L' &&
+			    toupper(i[8])  == '_' && toupper(i[9])  == 'N' &&
+			    toupper(i[10]) == 'O' && toupper(i[11]) == 'T' &&
+			    toupper(i[12]) == '_' && toupper(i[13]) == 'S' &&
+			    toupper(i[14]) == 'E' && toupper(i[15]) == 'T')
+				return ITERATOR_BITSET_ALL_NOT_SET;
+			else if (i_len == 12           && toupper(i[5])  == 'A' &&
+			         toupper(i[6])  == 'L' && toupper(i[7])  == 'L' &&
+			         toupper(i[8])  == '_' && toupper(i[9])  == 'S' &&
+			         toupper(i[10]) == 'E' && toupper(i[11]) == 'T')
+				return ITERATOR_BITSET_ALL_SET;
+			else if (i_len == 12           && toupper(i[5])  == 'A' &&
+			         toupper(i[6])  == 'N' && toupper(i[7])  == 'Y' &&
+			         toupper(i[8])  == '_' && toupper(i[9])  == 'S' &&
+			         toupper(i[10]) == 'E' && toupper(i[11]) == 'T')
+				return ITERATOR_BITSET_ANY_SET;
+		}
+		break;
+	case 'E':
+		if (i_len == 2 && toupper(i[1]) == 'Q')
+			return ITERATOR_EQ;
+		break;
+	case 'G':
+		if (i_len == 2) {
+			int second = toupper(i[1]);
+			switch (second) {
+			case 'E':
+				return ITERATOR_GE;
+			case 'T':
+				return ITERATOR_GT;
+			}
+		}
+		break;
+	case 'L':
+		if (i_len == 2) {
+			int second = toupper(i[1]);
+			switch (second) {
+			case 'T':
+				return ITERATOR_LT;
+			case 'E':
+				return ITERATOR_LE;
+			}
+		}
+		break;
+	case 'N':
+		if (i_len == 8           && toupper(i[1]) == 'E' &&
+		    toupper(i[2]) == 'I' && toupper(i[3]) == 'G' &&
+		    toupper(i[4]) == 'H' && toupper(i[5]) == 'B' &&
+		    toupper(i[6]) == 'O' && toupper(i[7]) == 'R')
+			return ITERATOR_NEIGHBOR;
+		break;
+	case 'O':
+		if (i_len == 8           && toupper(i[1]) == 'V' &&
+		    toupper(i[2]) == 'E' && toupper(i[3]) == 'R' &&
+		    toupper(i[4]) == 'L' && toupper(i[5]) == 'A' &&
+		    toupper(i[6]) == 'P' && toupper(i[7]) == 'S')
+			return ITERATOR_OVERLAPS;
+		break;
+	case 'R':
+		if (i_len == 3 && toupper(i[1]) == 'E' && toupper(i[2]) == 'Q')
+			return ITERATOR_REQ;
+		break;
+	default:
+		break;
+	};
+error:
+	THROW_EXC("Bad iterator name '%.*s'", i_len, i);
+	return -1;
+}
+
 zval *tarantool_update_verify_op(zval *op, long position TSRMLS_DC) {
 	if (Z_TYPE_P(op) != IS_ARRAY || !php_mp_is_hash(op)) {
 		THROW_EXC("Op must be MAP at pos %d", position);
@@ -731,9 +850,11 @@ int get_spaceno_by_name(tarantool_connection *obj, zval *id, zval *name TSRMLS_D
 
 int get_indexno_by_name(tarantool_connection *obj, zval *id,
 		int space_no, zval *name TSRMLS_DC) {
-	if (Z_TYPE_P(name) == IS_LONG)
+	if (Z_TYPE_P(name) == IS_NULL) {
+		return 0;
+	} else if (Z_TYPE_P(name) == IS_LONG) {
 		return Z_LVAL_P(name);
-	if (Z_TYPE_P(name) != IS_STRING) {
+	} else if (Z_TYPE_P(name) != IS_STRING) {
 		THROW_EXC("Index ID must be String or Long");
 		return FAILURE;
 	}
@@ -876,8 +997,11 @@ PHP_MINIT_FUNCTION(tarantool) {
 	REGISTER_TNT_CLASS_CONST_LONG(ITERATOR_LE);
 	REGISTER_TNT_CLASS_CONST_LONG(ITERATOR_GE);
 	REGISTER_TNT_CLASS_CONST_LONG(ITERATOR_GT);
+	REGISTER_TNT_CLASS_CONST_LONG(ITERATOR_BITS_ALL_SET);
 	REGISTER_TNT_CLASS_CONST_LONG(ITERATOR_BITSET_ALL_SET);
+	REGISTER_TNT_CLASS_CONST_LONG(ITERATOR_BITS_ANY_SET);
 	REGISTER_TNT_CLASS_CONST_LONG(ITERATOR_BITSET_ANY_SET);
+	REGISTER_TNT_CLASS_CONST_LONG(ITERATOR_BITS_ALL_NOT_SET);
 	REGISTER_TNT_CLASS_CONST_LONG(ITERATOR_BITSET_ALL_NOT_SET);
 	REGISTER_TNT_CLASS_CONST_LONG(ITERATOR_OVERLAPS);
 	REGISTER_TNT_CLASS_CONST_LONG(ITERATOR_NEIGHBOR);
@@ -918,7 +1042,7 @@ PHP_METHOD(Tarantool, __construct) {
 	const char *plist_id = NULL, *suffix = NULL;
 	int plist_id_len = 0, suffix_len = 0;
 
-	TARANTOOL_PARSE_PARAMS(id, "|slsss", &host, &host_len, &port,
+	TARANTOOL_PARSE_PARAMS(id, "|slss!s", &host, &host_len, &port,
 			       &login, &login_len, &passwd, &passwd_len,
 			       &suffix, &suffix_len);
 	TARANTOOL_FETCH_OBJECT(obj, id);
@@ -1188,10 +1312,10 @@ PHP_METHOD(Tarantool, ping) {
 PHP_METHOD(Tarantool, select) {
 	zval *space = NULL, *index = NULL;
 	zval *key = NULL, *key_new = NULL;
-	zval *zlimit = NULL;
-	long limit = LONG_MAX-1, offset = 0, iterator = 0;
+	zval *zlimit = NULL, *iterator = NULL;
+	long limit = LONG_MAX-1, offset = 0;
 
-	TARANTOOL_PARSE_PARAMS(id, "z|zzzll", &space, &key,
+	TARANTOOL_PARSE_PARAMS(id, "z|zzzlz", &space, &key,
 			&index, &zlimit, &offset, &iterator);
 	TARANTOOL_FETCH_OBJECT(obj, id);
 	TARANTOOL_CONNECT_ON_DEMAND(obj, id);
@@ -1211,14 +1335,22 @@ PHP_METHOD(Tarantool, select) {
 		index_no = get_indexno_by_name(obj, id, space_no, index TSRMLS_CC);
 		if (index_no == FAILURE) RETURN_FALSE;
 	}
+
+	int is_iterator_all = (!key ||
+		Z_TYPE_P(key) == IS_NULL ||
+		(Z_TYPE_P(key) == IS_ARRAY && zend_hash_num_elements(Z_ARRVAL_P(key)) == 0)
+	);
+	int iterator_id = convert_iterator(iterator, is_iterator_all);
+	if (iterator_id == -1)
+		RETURN_FALSE;
+
 	key_new = pack_key(key, 1);
 
 	long sync = TARANTOOL_G(sync_counter)++;
 	php_tp_encode_select(obj->value, sync, space_no, index_no,
-			limit, offset, iterator, key_new);
-	if (key != key_new) {
+			     limit, offset, iterator_id, key_new);
+	if (key != key_new)
 		zval_ptr_dtor(&key_new);
-	}
 	if (tarantool_stream_send(obj TSRMLS_CC) == FAILURE)
 		RETURN_FALSE;
 

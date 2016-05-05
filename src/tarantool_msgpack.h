@@ -19,6 +19,7 @@ void   php_mp_pack_package_size   (smart_string *str, size_t val);
 size_t php_mp_unpack_package_size (char *buf);
 
 int php_mp_is_hash(zval *val);
+const char *op_to_string(zend_uchar type);
 
 void php_mp_pack_nil(smart_string *str);
 void php_mp_pack_long_pos(smart_string *str, long val);
@@ -46,5 +47,4 @@ size_t php_mp_sizeof_hash_recursively(zval *val);
 
 int  smart_string_ensure(smart_string *str, size_t len);
 void smart_string_nullify(smart_string *str);
-
 #endif /* PHP_MSGPACK_H */

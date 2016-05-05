@@ -279,7 +279,7 @@ ptrdiff_t php_mp_unpack_double(zval **oval, char **str) {
 	return mp_sizeof_double(val);
 }
 
-static const char *op_to_string(zend_uchar type) {
+const char *op_to_string(zend_uchar type) {
 	switch(type) {
 	case(IS_NULL):
 		return "NULL";

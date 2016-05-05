@@ -15,8 +15,7 @@ class RandomTest extends PHPUnit_Framework_TestCase
 		protected static $tarantool;
 
 		public static function setUpBeforeClass() {
-			self::$tarantool = new Tarantool('localhost', getenv('PRIMARY_PORT'));
-			self::$tarantool->authenticate('test', 'test');
+			self::$tarantool = new Tarantool('localhost', getenv('PRIMARY_PORT'), 'test', 'test');
 			self::$tarantool->ping();
 		}
 

@@ -61,18 +61,21 @@ enum tnt_request_type {
 };
 
 enum tnt_iterator_type {
-	ITERATOR_EQ  = 0,
-	ITERATOR_REQ = 1,
-	ITERATOR_ALL = 2,
-	ITERATOR_LT  = 3,
-	ITERATOR_LE  = 4,
-	ITERATOR_GE  = 5,
-	ITERATOR_GT  = 6,
-	ITERATOR_BITSET_ALL_SET =     7,
-	ITERATOR_BITSET_ANY_SET =     8,
+	ITERATOR_EQ                 = 0,
+	ITERATOR_REQ                = 1,
+	ITERATOR_ALL                = 2,
+	ITERATOR_LT                 = 3,
+	ITERATOR_LE                 = 4,
+	ITERATOR_GE                 = 5,
+	ITERATOR_GT                 = 6,
+	ITERATOR_BITS_ALL_SET       = 7,
+	ITERATOR_BITSET_ALL_SET     = 7,
+	ITERATOR_BITS_ANY_SET       = 8,
+	ITERATOR_BITSET_ANY_SET     = 8,
+	ITERATOR_BITS_ALL_NOT_SET   = 9,
 	ITERATOR_BITSET_ALL_NOT_SET = 9,
-	ITERATOR_OVERLAPS = 10,
-	ITERATOR_NEIGHBOR = 11,
+	ITERATOR_OVERLAPS           = 10,
+	ITERATOR_NEIGHBOR           = 11,
 };
 
 struct tnt_response {

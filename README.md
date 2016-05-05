@@ -103,9 +103,9 @@ _**Description**_: Available Tarantool Constants
 * `Tarantool::ITERATOR_LE` - Less and equal iterator
 * `Tarantool::ITERATOR_GE` - Greater and equal iterator
 * `Tarantool::ITERATOR_GT` - Gtreater then iterator
-* `Tarantool::ITERATOR_BITSET_ALL_SET` - check if all given bits are set (BITSET only)
-* `Tarantool::ITERATOR_BITSET_ANY_SET` - check if any given bits are set (BITSET only)
-* `Tarantool::ITERATOR_BITSET_ALL_NOT_SET` - check if all given bits are not set
+* `Tarantool::ITERATOR_BITS_ALL_SET` - check if all given bits are set (BITSET only)
+* `Tarantool::ITERATOR_BITS_ANY_SET` - check if any given bits are set (BITSET only)
+* `Tarantool::ITERATOR_BITS_ALL_NOT_SET` - check if all given bits are not set
   (BITSET only)
 * `Tarantool::ITERATOR_OVERLAPS` - find dots in the n-dimension cube (RTREE only)
 * `Tarantool::ITERATOR_NEIGHBOR` - find nearest dots (RTREE only)
@@ -119,7 +119,7 @@ Tarantool {
     public bool  Tarantool::disconnect ( void )
     public bool  Tarantool::flushSchema ( void )
     public bool  Tarantool::ping ( void )
-    public array Tarantool::select (mixed $space [, mixed $key = array() [, mixed $index = 0 [, int $limit = PHP_INT_MAX [, int $offset = 0 [, $iterator = TARANTOOL_ITERATOR_EQ ] ] ] ] ] )
+    public array Tarantool::select (mixed $space [, mixed $key = array() [, mixed $index = 0 [, int $limit = PHP_INT_MAX [, int $offset = 0 [, $iterator = Tarantool::ITERATOR_EQ ] ] ] ] ] )
     public array Tarantool::insert (mixed $space, array $tuple)
     public array Tarantool::replace (mixed $space, array $tuple)
     public array Tarantool::call (string $procedure [, mixed args] )
@@ -219,7 +219,7 @@ Throws `Exception` on error.
 ### Tarantool::select
 
 ``` php
-public array Tarantool::select(mixed $space [, mixed $key = array() [, mixed $index = 0 [, int $limit = PHP_INT_MAX [, int $offset = 0 [, $iterator = TARANTOOL_ITERATOR_EQ ] ] ] ] ] )
+public array Tarantool::select(mixed $space [, mixed $key = array() [, mixed $index = 0 [, int $limit = PHP_INT_MAX [, int $offset = 0 [, $iterator = Tarantool::ITERATOR_EQ ] ] ] ] ] )
 ```
 
 _**Description**_: Execute select query from Tarantool server.
@@ -233,7 +233,11 @@ _**Parameters**_
 * `limit`: Number, limit number of rows to return from select (INT_MAX by default)
 * `offset`: Number, offset to select from (0 by default)
 * `iterator`: Constant, iterator type. See [Predefined Constants](#predefined-constants)
-  for more information (`TARANTOOL_ITERATOR_EQ` by default)
+  for more information (`Tarantool::ITERATOR_EQ` by default). You can also use
+  strings `'eq'`, `'req'`, `'all'`, `'lt'`, `'le'`, `'ge'`, `'gt'`,
+  `'bits_all_set'`, `'bits_any_set'`, `'bits_all_not_set'`, `'overlaps'`,
+  `'neighbor'`, `'bits_all_set'`, `'bits_any_set'`, `'bits_all_not_set'` (in
+  both lowercase/uppercase) instead of constants
 
 _**Return Value**_
 
@@ -257,7 +261,7 @@ $tnt->select("test", array(1, "hello"), "isec");
 $tnt->select("test", null, null, 100, 100);
 // Selects second hundred of rows from space test in reverse equality order
 // It meanse: select penultimate hundred
-$tnt->select("test", null, null, 100, 100, TARANTOOL_ITERATOR_REQ);
+$tnt->select("test", null, null, 100, 100, Tarantool::ITERATOR_REQ);
 ```
 
 ### Tarantool::insert, Tarantool::replace

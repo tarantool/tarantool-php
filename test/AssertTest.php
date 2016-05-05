@@ -5,11 +5,7 @@ class AssertTest extends PHPUnit_Framework_TestCase
 
     public static function setUpBeforeClass()
     {
-        self::$tarantool = new Tarantool('localhost', getenv('PRIMARY_PORT'));
-        self::$tarantool->authenticate('test', 'test');
-    }
-
-    public static function tearDownAfterClass() {
+        self::$tarantool = new Tarantool('localhost', getenv('PRIMARY_PORT'), 'test', 'test');
     }
 
     protected function tearDown()

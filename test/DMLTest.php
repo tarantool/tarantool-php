@@ -5,8 +5,7 @@ class DMLTest extends PHPUnit_Framework_TestCase
 
 		public static function setUpBeforeClass()
 		{
-			self::$tarantool = new Tarantool('localhost', getenv('PRIMARY_PORT'));
-			self::$tarantool->authenticate('test', 'test');
+			self::$tarantool = new Tarantool('localhost', getenv('PRIMARY_PORT'), 'test', 'test');
 		}
 
 		protected function tearDown()
@@ -319,5 +318,80 @@ class DMLTest extends PHPUnit_Framework_TestCase
 			$this->assertEquals(array(), $result_tuple);
 			$result_tuple = self::$tarantool->select("test", 123);
 			$this->assertEquals(array(123, 2, "he---, world"), $result_tuple[0]);
+		}
+
+		public function test_16_hash_select() {
+			self::$tarantool->select("test_hash");
+			self::$tarantool->select("test_hash", []);
+			try {
+				self::$tarantool->select("test_hash", null, null, null, null, TARANTOOL::ITERATOR_EQ);
+				$this->assertFalse(True);
+			} catch (Exception $e) {
+				$this->assertContains('Invalid key part', $e->getMessage());
+			}
+		}
+
+		/**
+		 * @dataProvider provideIteratorExceptions
+		 */
+		public function test_17_iterator_types($spc, $itype, $xcmsg = null) {
+			if (func_num_args() === 3) {
+				try {
+					self::$tarantool->select($spc, null, null, null, null, $itype);
+					$this->assertFalse(True);
+				} catch (Exception $e) {
+					$this->assertContains($xcmsg, $e->getMessage());
+				}
+			} else {
+					self::$tarantool->select($spc, null, null, null, null, $itype);
+					$this->assertTrue(True);
+			}
+		}
+
+		public static function provideIteratorExceptions() {
+			return [
+				['test_hash', 'EQ'                 ,'Invalid key part'],
+				['test_hash', 'REQ'                ,'Invalid key part'],
+				['test_hash', 'ALL'                ,                  ],
+				['test_hash', 'LT'                 ,'Invalid key part'],
+				['test_hash', 'LE'                 ,'Invalid key part'],
+				['test_hash', 'GE'                 ,'Invalid key part'],
+				['test_hash', 'GT'                 ,                  ],
+				['test_hash', 'BITSET_ALL_SET'     ,'Invalid key part'],
+				['test_hash', 'BITSET_ANY_SET'     ,'Invalid key part'],
+				['test_hash', 'BITSET_ALL_NOT_SET' ,'Invalid key part'],
+				['test_hash', 'BITS_ALL_SET'       ,'Invalid key part'],
+				['test_hash', 'BITS_ANY_SET'       ,'Invalid key part'],
+				['test_hash', 'BITS_ALL_NOT_SET'   ,'Invalid key part'],
+				['test_hash', 'OVERLAPS'           ,'Invalid key part'],
+				['test_hash', 'NEIGHBOR'           ,'Invalid key part'],
+				['test_hash', 'eq'                 ,'Invalid key part'],
+				['test_hash', 'req'                ,'Invalid key part'],
+				['test_hash', 'all'                ,                  ],
+				['test_hash', 'lt'                 ,'Invalid key part'],
+				['test_hash', 'le'                 ,'Invalid key part'],
+				['test_hash', 'ge'                 ,'Invalid key part'],
+				['test_hash', 'gt'                 ,                  ],
+				['test_hash', 'bitset_all_set'     ,'Invalid key part'],
+				['test_hash', 'bitset_any_set'     ,'Invalid key part'],
+				['test_hash', 'bitset_all_not_set' ,'Invalid key part'],
+				['test_hash', 'bits_all_set'       ,'Invalid key part'],
+				['test_hash', 'bits_any_set'       ,'Invalid key part'],
+				['test_hash', 'bits_all_not_set'   ,'Invalid key part'],
+				['test_hash', 'overlaps'           ,'Invalid key part'],
+				['test_hash', 'neighbor'           ,'Invalid key part'],
+				['test'     , 'bitset_all_set'     ,'does not support requested iterator type'],
+				['test'     , 'bitset_any_set'     ,'does not support requested iterator type'],
+				['test'     , 'bitset_all_not_set' ,'does not support requested iterator type'],
+				['test'     , 'bits_all_set'       ,'does not support requested iterator type'],
+				['test'     , 'bits_any_set'       ,'does not support requested iterator type'],
+				['test'     , 'bits_all_not_set'   ,'does not support requested iterator type'],
+				['test'     , 'overlaps'           ,'does not support requested iterator type'],
+				['test'     , 'neighbor'           ,'does not support requested iterator type'],
+				['test'     , 'oevrlps'            ,'Bad iterator name'],
+				['test'     , 'e'                  ,'Bad iterator name'],
+				['test'     , 'nghb'               ,'Bad iterator name'],
+				['test'     , 'ltt'                ,'Bad iterator name'],
+			];
 		}
 }
