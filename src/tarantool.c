@@ -123,7 +123,7 @@ tarantool_stream_send(tarantool_object *obj) {
  */
 static size_t
 tarantool_stream_read(tarantool_object *obj, char *buf, size_t size) {
-	return tntll_stream_read(obj->stream, buf, size);
+	return tntll_stream_read2(obj->stream, buf, size);
 }
 
 static void
@@ -173,8 +173,8 @@ retry:
 				      &obj->stream, &err) == -1) {
 			continue;
 		}
-		if (tntll_stream_read(obj->stream, obj->greeting,
-				      GREETING_SIZE) == -1) {
+		if (tntll_stream_read2(obj->stream, obj->greeting,
+				       GREETING_SIZE) == -1) {
 			continue;
 		}
 		obj->salt = obj->greeting + SALT_PREFIX_SIZE;
