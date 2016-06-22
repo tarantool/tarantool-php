@@ -189,6 +189,7 @@ void php_mp_pack(smart_string *str, zval *val) {
 		break;
 	case IS_TRUE:
 		php_mp_pack_bool(str, 1);
+		break;
 	case IS_FALSE:
 		php_mp_pack_bool(str, 0);
 		break;

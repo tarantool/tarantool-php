@@ -223,13 +223,15 @@ class DMLTest extends PHPUnit_Framework_TestCase
 		}
 
 		public function test_12_call() {
+			$result = self::$tarantool->call("test_6", array(true, false, false));
+			$this->assertEquals(array(array(true), array(false), array(false)), $result);
 			$this->assertEquals(
-				self::$tarantool->call("test_2"),
 				array(
 					'0' => array(
 						'0' => array('k1' => 'v2', 'k2' => 'v')
 					)
-				)
+				),
+				self::$tarantool->call("test_2")
 			);
 			$this->assertEquals(
 				self::$tarantool->call("test_3", array(3, 4)), array('0' => array('0' => 7)));
