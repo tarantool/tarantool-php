@@ -316,11 +316,12 @@ static int64_t tarantool_step_recv(
 		}
 		THROW_EXC("Query error %d: %s", errcode, Z_STRVAL_P(errstr),
 				Z_STRLEN_P(errstr));
-		goto error;
+		goto error_noclose;
 	}
 	THROW_EXC("Failed to retrieve answer code");
 error:
 	obj->stream = NULL;
+error_noclose:
 	if (header) zval_ptr_dtor(header);
 	if (body) zval_ptr_dtor(body);
 	SSTR_LEN(obj->value) = 0;
