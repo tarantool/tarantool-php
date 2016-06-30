@@ -44,7 +44,7 @@ extern zend_module_entry tarantool_module_entry;
 #include "TSRM.h"
 #endif
 
-typedef struct tarantool_schema tarantool_schema;
+struct tarantool_schema;
 
 #define SSTR_BEG(str) (str->c)
 #define SSTR_END(str) (str->c + str->a)
@@ -94,7 +94,7 @@ typedef struct tarantool_object {
 		char             *login;
 		char             *passwd;
 		php_stream       *stream;
-		tarantool_schema *schema;
+		struct tarantool_schema *schema;
 		smart_string     *value;
 		struct tp        *tps;
 		char             *greeting;

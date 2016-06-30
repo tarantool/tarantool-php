@@ -40,16 +40,16 @@ struct schema_space_value {
 
 struct mh_schema_space_t;
 
-typedef struct tarantool_schema {
+struct tarantool_schema {
 	struct mh_schema_space_t *space_hash;
-} tarantool_schema;
+};
 
-int tarantool_schema_add_spaces(tarantool_schema *, const char *, uint32_t);
-int tarantool_schema_add_indexes(tarantool_schema *, const char *, uint32_t);
+int tarantool_schema_add_spaces(struct tarantool_schema *, const char *, uint32_t);
+int tarantool_schema_add_indexes(struct tarantool_schema *, const char *, uint32_t);
 
-int32_t tarantool_schema_get_sid_by_string(tarantool_schema *, const char *, uint32_t);
-int32_t tarantool_schema_get_iid_by_string(tarantool_schema *, uint32_t, const char *, uint32_t);
+int32_t tarantool_schema_get_sid_by_string(struct tarantool_schema *, const char *, uint32_t);
+int32_t tarantool_schema_get_iid_by_string(struct tarantool_schema *, uint32_t, const char *, uint32_t);
 
-tarantool_schema *tarantool_schema_new(int is_persistent);
-void tarantool_schema_flush (tarantool_schema *);
-void tarantool_schema_delete(tarantool_schema *, int is_persistent);
+struct tarantool_schema *tarantool_schema_new(int is_persistent);
+void tarantool_schema_flush (struct tarantool_schema *);
+void tarantool_schema_delete(struct tarantool_schema *, int is_persistent);

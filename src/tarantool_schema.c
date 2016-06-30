@@ -273,7 +273,8 @@ error:
 	return -1;
 }
 
-int tarantool_schema_add_spaces(tarantool_schema *schema_obj, const char *data,
+int tarantool_schema_add_spaces(struct tarantool_schema *schema_obj,
+				const char *data,
 				uint32_t size) {
 	struct mh_schema_space_t *schema = schema_obj->space_hash;
 	const char *tuple = data;
@@ -370,7 +371,8 @@ error:
 	return -1;
 }
 
-int tarantool_schema_add_indexes(tarantool_schema *schema_obj, const char *data,
+int tarantool_schema_add_indexes(struct tarantool_schema *schema_obj,
+				 const char *data,
 				 uint32_t size) {
 	struct mh_schema_space_t *schema = schema_obj->space_hash;
 	const char *tuple = data;
@@ -387,7 +389,7 @@ int tarantool_schema_add_indexes(tarantool_schema *schema_obj, const char *data,
 	return 0;
 }
 
-int32_t tarantool_schema_get_sid_by_string(tarantool_schema *schema_obj,
+int32_t tarantool_schema_get_sid_by_string(struct tarantool_schema *schema_obj,
 					   const char *space_name,
 					   uint32_t space_name_len) {
 	struct mh_schema_space_t *schema = schema_obj->space_hash;
@@ -399,7 +401,7 @@ int32_t tarantool_schema_get_sid_by_string(tarantool_schema *schema_obj,
 	return space->space_number;
 }
 
-int32_t tarantool_schema_get_iid_by_string(tarantool_schema *schema_obj,
+int32_t tarantool_schema_get_iid_by_string(struct tarantool_schema *schema_obj,
 					   uint32_t sid, const char *index_name,
 					   uint32_t index_name_len) {
 	struct mh_schema_space_t *schema = schema_obj->space_hash;
@@ -416,17 +418,17 @@ int32_t tarantool_schema_get_iid_by_string(tarantool_schema *schema_obj,
 	return index->index_number;
 }
 
-tarantool_schema *tarantool_schema_new(int is_persistent) {
-	tarantool_schema *obj = pemalloc(sizeof(tarantool_schema *), 1);
+struct tarantool_schema *tarantool_schema_new(int is_persistent) {
+	struct tarantool_schema *obj = pemalloc(sizeof(struct tarantool_schema *), 1);
 	obj->space_hash = mh_schema_space_new();
 	return obj;
 }
 
-void tarantool_schema_flush(tarantool_schema *obj) {
+void tarantool_schema_flush(struct tarantool_schema *obj) {
 	schema_space_free(obj->space_hash);
 }
 
-void tarantool_schema_delete(tarantool_schema *obj, int is_persistent) {
+void tarantool_schema_delete(struct tarantool_schema *obj, int is_persistent) {
 	if (obj == NULL) return;
 	schema_space_free(obj->space_hash);
 	mh_schema_space_delete(obj->space_hash);
