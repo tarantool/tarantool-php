@@ -2,23 +2,23 @@
 
 include /usr/share/cdbs/1/rules/debhelper.mk
 
-phpapi	= $(shell php-config5 --phpapi)
+phpapi	= $(shell php-config7.0 --phpapi)
 version = $(shell dpkg-parsechangelog \
 	|grep ^Version|awk '{print $$2}'|sed 's/-.*//')
 
-makebuilddir/php5-tarantool::
+makebuilddir/php7.0-tarantool::
 	phpize
 	./configure
 	make
-	echo "php:Depends=phpapi-$(phpapi)" > debian/php5-tarantool.substvars
+	echo "php:Depends=phpapi-$(phpapi)" > debian/php7.0-tarantool.substvars
 
-install/php5-tarantool::
-	install -m 0755 -d debian/php5-tarantool/usr/lib/php5/$(phpapi)/
-	install -m 0755 -d debian/php5-tarantool/etc/php5/mods-available/
+install/php7.0-tarantool::
+	install -m 0755 -d debian/php7.0-tarantool/usr/lib/php/$(phpapi)/
+	install -m 0755 -d debian/php7.0-tarantool/etc/php/7.0/mods-available/
 	install -m 0755 modules/tarantool.so \
-		debian/php5-tarantool/usr/lib/php5/$(phpapi)/
+		debian/php7.0-tarantool/usr/lib/php/$(phpapi)/
 	echo extension=tarantool.so \
-		> debian/php5-tarantool/etc/php5/mods-available/tarantool.ini
+		> debian/php7.0-tarantool/etc/php/7.0/mods-available/tarantool.ini
 
 clean::
 	phpize --clean
