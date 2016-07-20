@@ -7,7 +7,7 @@ Version: 0.1.0.0
 Release: 1%{?dist}
 Summary: PECL PHP driver for Tarantool/Box
 Group: Development/Languages
-License: MIT
+License: BSD 2-Clause
 URL: https://github.com/tarantool/tarantool-php/
 Source0: tarantool-php-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)

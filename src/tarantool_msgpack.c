@@ -1,9 +1,8 @@
-#include <zend.h>
-#include <zend_API.h>
-#include <zend_exceptions.h>
-
 #include "php_tarantool.h"
+
 #include "tarantool_msgpack.h"
+#include "tarantool_exception.h"
+
 #include "third_party/msgpuck.h"
 
 #ifndef    HASH_KEY_NON_EXISTENT
@@ -15,11 +14,13 @@
 int smart_string_ensure(smart_string *str, size_t len) {
 	if (SSTR_AWA(str) > SSTR_LEN(str) + len)
 		return 0;
-	size_t needed = str->a * 2;
+	size_t needed = SSTR_AWA(str) * 2;
 	if (SSTR_LEN(str) + len > needed)
 		needed = SSTR_LEN(str) + len;
 	register size_t __n1;
 	smart_string_alloc4(str, needed, 1, __n1);
+	if (SSTR_BEG(str) == NULL)
+		return -1;
 	return 0;
 }
 
@@ -71,7 +72,7 @@ void php_mp_pack_bool(smart_string *str, unsigned char val) {
 	SSTR_LEN(str) += needed;
 }
 
-void php_mp_pack_string(smart_string *str, char *c, size_t len) {
+void php_mp_pack_string(smart_string *str, const char *c, size_t len) {
 	size_t needed = mp_sizeof_str(len);
 	smart_string_ensure(str, needed);
 	mp_encode_str(SSTR_POS(str), c, len);
@@ -140,7 +141,7 @@ void php_mp_pack_hash_recursively(smart_string *str, zval *val) {
 
 	zend_string *key;
 	int key_type;
-	ulong key_index;
+	zend_ulong key_index;
 	zval *data;
 	HashPosition pos;
 
@@ -269,7 +270,8 @@ ptrdiff_t php_mp_unpack_double(zval *oval, char **str) {
 	return mp_sizeof_double(val);
 }
 
-static const char *op_to_string(zend_uchar type) {
+const char *op_to_string(zval *obj) {
+	zend_uchar type = Z_TYPE_P(obj);
 	switch(type) {
 	case(IS_NULL):
 		return "NULL";
@@ -460,7 +462,7 @@ size_t php_mp_sizeof_hash_recursively(zval *val) {
 
 	zend_string *key;
 	int key_type;
-	ulong key_index;
+	zend_ulong key_index;
 	zval *data;
 	HashPosition pos;
 
@@ -535,11 +537,15 @@ size_t php_mp_check(const char *str, size_t str_size) {
 	return mp_check(&str, str + str_size);
 }
 
+void php_mp_pack_package_size_basic(char *pos, size_t val) {
+	*pos = 0xce;
+	*(uint32_t *)(pos + 1) = mp_bswap_u32(val);
+}
+
 void php_mp_pack_package_size(smart_string *str, size_t val) {
 	size_t needed = 5;
 	smart_string_ensure(str, needed);
-	*(SSTR_POS(str)) = 0xce;
-	*(uint32_t *)(SSTR_POS(str) + 1) = mp_bswap_u32(val);
+	php_mp_pack_package_size_basic(SSTR_POS(str), val);
 	SSTR_LEN(str) += needed;
 }
 

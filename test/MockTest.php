@@ -14,7 +14,7 @@ class MockTest extends \PHPUnit_Framework_TestCase
             (new Tarantool('localhost', getenv('PRIMARY_PORT')))->select('_vindex', [], 'name');
             $this->assertFalse(True);
         } catch (Exception $e) {
-            $this->assertTrue(True);
+           $this->assertTrue(True);
         }
     }
 }

@@ -5,8 +5,8 @@ class MsgPackTest extends PHPUnit_Framework_TestCase
 
     public static function setUpBeforeClass()
     {
-        self::$tarantool = new Tarantool('localhost', getenv('PRIMARY_PORT'));
-        self::$tarantool->authenticate('test', 'test');
+        self::$tarantool = new Tarantool('localhost', getenv('PRIMARY_PORT'), 'test', 'test');
+        self::$tarantool->ping();
     }
 
     public function test_00_msgpack_call() {
@@ -25,7 +25,7 @@ class MsgPackTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException Exception
+     * @expectedException TarantoolException
      * @expectedExceptionMessage Bad key type for PHP Array
      **/
     public function test_01_msgpack_array_key() {
@@ -33,7 +33,7 @@ class MsgPackTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException Exception
+     * @expectedException TarantoolException
      * @expectedExceptionMessage Bad key type for PHP Array
      **/
     public function test_02_msgpack_float_key() {
@@ -41,7 +41,7 @@ class MsgPackTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException Exception
+     * @expectedException TarantoolException
      * @expectedExceptionMessage Bad key type for PHP Array
      **/
     public function test_03_msgpack_array_of_float_as_key() {

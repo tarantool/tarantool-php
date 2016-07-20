@@ -1,14 +1,22 @@
 #ifndef    PHP_TARANTOOL_H
 #define    PHP_TARANTOOL_H
 
-#include <php.h>
-#include <php_ini.h>
+#include <zend.h>
 #include <zend_API.h>
-#include <php_network.h>
 #include <zend_compile.h>
 #include <zend_exceptions.h>
 
+#include <php.h>
+#include <php_ini.h>
+#include <php_network.h>
+
 #include <ext/standard/info.h>
+#include <ext/standard/base64.h>
+
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
+
 #if PHP_VERSION_ID >= 70000
 #  include <ext/standard/php_smart_string.h>
 #else
@@ -39,7 +47,6 @@ extern zend_module_entry tarantool_module_entry;
 #include "TSRM.h"
 #endif
 
-struct pool_manager;
 struct tarantool_schema;
 
 #define SSTR_BEG(str) (str->c)
@@ -54,55 +61,65 @@ PHP_RINIT_FUNCTION(tarantool);
 PHP_MSHUTDOWN_FUNCTION(tarantool);
 PHP_MINFO_FUNCTION(tarantool);
 
-PHP_METHOD(tarantool_class, __construct);
-PHP_METHOD(tarantool_class, connect);
-PHP_METHOD(tarantool_class, close);
-PHP_METHOD(tarantool_class, authenticate);
-PHP_METHOD(tarantool_class, ping);
-PHP_METHOD(tarantool_class, select);
-PHP_METHOD(tarantool_class, insert);
-PHP_METHOD(tarantool_class, replace);
-PHP_METHOD(tarantool_class, call);
-PHP_METHOD(tarantool_class, eval);
-PHP_METHOD(tarantool_class, delete);
-PHP_METHOD(tarantool_class, update);
-PHP_METHOD(tarantool_class, upsert);
-PHP_METHOD(tarantool_class, flush_schema);
+PHP_METHOD(Tarantool, __construct);
+PHP_METHOD(Tarantool, connect);
+PHP_METHOD(Tarantool, reconnect);
+PHP_METHOD(Tarantool, close);
+PHP_METHOD(Tarantool, authenticate);
+PHP_METHOD(Tarantool, ping);
+PHP_METHOD(Tarantool, select);
+PHP_METHOD(Tarantool, insert);
+PHP_METHOD(Tarantool, replace);
+PHP_METHOD(Tarantool, call);
+PHP_METHOD(Tarantool, eval);
+PHP_METHOD(Tarantool, delete);
+PHP_METHOD(Tarantool, update);
+PHP_METHOD(Tarantool, upsert);
+PHP_METHOD(Tarantool, flush_schema);
 
 ZEND_BEGIN_MODULE_GLOBALS(tarantool)
+	zend_bool persistent;
 	long sync_counter;
 	long retry_count;
 	double retry_sleep;
 	double timeout;
 	double request_timeout;
-	struct pool_manager *manager;
 ZEND_END_MODULE_GLOBALS(tarantool)
 
 ZEND_EXTERN_MODULE_GLOBALS(tarantool);
 
 typedef struct tarantool_object {
-	char       *host;
-	int         port;
-	char       *login;
-	char       *passwd;
-	php_stream *stream;
-	char       *persistent_id;
-	smart_string  *value;
-	struct tp  *tps;
-	char        auth;
-	char       *greeting;
-	char       *salt;
-	struct tarantool_schema *schema;
-	zend_object zo;
+	struct tarantool_connection  {
+		char                    *host;
+		int                      port;
+		char                    *login;
+		char                    *passwd;
+		php_stream              *stream;
+		struct tarantool_schema *schema;
+		smart_string            *value;
+		struct tp               *tps;
+		char                    *greeting;
+		char                    *salt;
+		/* Only for persistent connections */
+		char                    *orig_login;
+		char                    *suffix;
+		int                     suffix_len;
+		zend_string             *persistent_id;
+	}            *obj;
+
+	zend_bool     is_persistent;
+
+	zend_object   zo;
 } tarantool_object;
+
+typedef struct tarantool_connection tarantool_connection;
+
+PHP_TARANTOOL_API zend_class_entry *php_tarantool_get_ce(void);
 
 #ifdef ZTS
 #  define TARANTOOL_G(v) TSRMG(tarantool_globals_id, zend_tarantool_globals *, v)
 #else
 #  define TARANTOOL_G(v) (tarantool_globals.v)
 #endif
-
-#define THROW_EXC(...) zend_throw_exception_ex(					\
-	zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC, __VA_ARGS__)
 
 #endif  /* PHP_TARANTOOL_H */

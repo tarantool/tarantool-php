@@ -1,11 +1,11 @@
-#ifndef PHP_TP_H
-#define PHP_TP_H
+#ifndef   PHP_TNT_PROTO_H
+#define   PHP_TNT_PROTO_H
 
-#define SALT64_SIZE       44
-#define SALT_SIZE         64
-#define PHP_SCRAMBLE_SIZE 20
-#define GREETING_SIZE     128
-#define SALT_PREFIX_SIZE  64
+#define SALT64_SIZE      44
+#define SALT_SIZE        64
+// #define SCRAMBLE_SIZE    20
+#define GREETING_SIZE    128
+#define SALT_PREFIX_SIZE 64
 
 #define SPACE_SPACE 281
 #define SPACE_INDEX 289
@@ -61,18 +61,21 @@ enum tnt_request_type {
 };
 
 enum tnt_iterator_type {
-	ITERATOR_EQ  = 0,
-	ITERATOR_REQ = 1,
-	ITERATOR_ALL = 2,
-	ITERATOR_LT  = 3,
-	ITERATOR_LE  = 4,
-	ITERATOR_GE  = 5,
-	ITERATOR_GT  = 6,
-	ITERATOR_BITSET_ALL_SET =     7,
-	ITERATOR_BITSET_ANY_SET =     8,
+	ITERATOR_EQ                 = 0,
+	ITERATOR_REQ                = 1,
+	ITERATOR_ALL                = 2,
+	ITERATOR_LT                 = 3,
+	ITERATOR_LE                 = 4,
+	ITERATOR_GE                 = 5,
+	ITERATOR_GT                 = 6,
+	ITERATOR_BITS_ALL_SET       = 7,
+	ITERATOR_BITSET_ALL_SET     = 7,
+	ITERATOR_BITS_ANY_SET       = 8,
+	ITERATOR_BITSET_ANY_SET     = 8,
+	ITERATOR_BITS_ALL_NOT_SET   = 9,
 	ITERATOR_BITSET_ALL_NOT_SET = 9,
-	ITERATOR_OVERLAPS = 10,
-	ITERATOR_NEIGHBOR = 11,
+	ITERATOR_OVERLAPS           = 10,
+	ITERATOR_NEIGHBOR           = 11,
 };
 
 struct tnt_response {
@@ -103,8 +106,20 @@ void php_tp_encode_call(smart_string *str, uint32_t sync, char *proc,
 			uint32_t proc_len, zval *tuple);
 void php_tp_encode_eval(smart_string *str, uint32_t sync, char *proc,
 			uint32_t proc_len, zval *tuple);
-void php_tp_encode_update(smart_string *str, uint32_t sync, uint32_t space_no,
-			  uint32_t index_no, zval *key, zval *args);
-void php_tp_encode_upsert(smart_string *str, uint32_t sync, uint32_t space_no,
-			  zval *tuple, zval *args);
-#endif /* PHP_TP_H */
+
+char *php_tp_encode_update(smart_string *str, uint32_t sync,
+			   uint32_t space_no, uint32_t index_no,
+			   zval *key);
+char *php_tp_encode_upsert(smart_string *str, uint32_t sync,
+			   uint32_t space_no, zval *tuple);
+void php_tp_encode_uheader(smart_string *str, size_t op_count);
+void php_tp_encode_uother(smart_string *str, char type, uint32_t fieldno,
+			  zval *value);
+void php_tp_encode_usplice(smart_string *str, uint32_t fieldno,
+			   uint32_t position, uint32_t offset,
+			   const char *buffer, size_t buffer_len);
+void php_tp_reencode_length(smart_string *str, char *sz);
+
+int convert_iter_str(const char *i, size_t i_len);
+
+#endif /* PHP_TNT_PROTO_H */

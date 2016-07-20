@@ -21,30 +21,32 @@ void double_to_ts(double tm, struct timespec *ts) {
 }
 
 /* `pid` means persistent_id */
-void tntll_stream_close(php_stream *stream, const char *pid) {
+// void tntll_stream_close(php_stream *stream, const char *pid) {
+void tntll_stream_close(php_stream *stream, zend_string *pid) {
 	TSRMLS_FETCH();
 	int rv = PHP_STREAM_PERSISTENT_SUCCESS;
 	if (stream == NULL)
-		php_stream_from_persistent_id(pid, &stream TSRMLS_CC);
+		rv = tntll_stream_fpid2(pid, &stream);
 	int flags = PHP_STREAM_FREE_CLOSE;
 	if (pid)
 		flags = PHP_STREAM_FREE_CLOSE_PERSISTENT;
-	if (rv == PHP_STREAM_PERSISTENT_SUCCESS && stream)
+	if (rv == PHP_STREAM_PERSISTENT_SUCCESS && stream) {
 		php_stream_free(stream, flags);
+	}
 }
 
-int tntll_stream_fpid2(const char *pid, php_stream **ostream) {
+int tntll_stream_fpid2(zend_string *pid, php_stream **ostream) {
 	TSRMLS_FETCH();
-	return php_stream_from_persistent_id(pid, ostream TSRMLS_CC);
+	return php_stream_from_persistent_id(pid->val, ostream TSRMLS_CC);
 }
 
-int tntll_stream_fpid(const char *host, int port, const char *pid,
+int tntll_stream_fpid(const char *host, int port, zend_string *pid,
 		      php_stream **ostream, char **err) {
 	TSRMLS_FETCH();
 	*ostream = NULL;
 	int rv = 0;
 	if (pid) {
-		rv = php_stream_from_persistent_id(pid, ostream TSRMLS_CC);
+		rv = php_stream_from_persistent_id(pid->val, ostream TSRMLS_CC);
 		if (rv == PHP_STREAM_PERSISTENT_FAILURE) {
 			spprintf(err, 0, "Failed to load persistent stream.");
 			return -1;
@@ -56,7 +58,7 @@ int tntll_stream_fpid(const char *host, int port, const char *pid,
 	return 0;
 }
 
-int tntll_stream_open(const char *host, int port, const char *pid,
+int tntll_stream_open(const char *host, int port, zend_string *pid,
 		      php_stream **ostream, char **err) {
 	TSRMLS_FETCH();
 	php_stream *stream = NULL;
@@ -71,8 +73,11 @@ int tntll_stream_open(const char *host, int port, const char *pid,
 	if (pid) options |= STREAM_OPEN_PERSISTENT;
 	flags = STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT;
 	double_to_tv(TARANTOOL_G(timeout), &tv);
-	stream = php_stream_xport_create(addr, addr_len, options, flags, pid,
-					 &tv, NULL, &errstr, &errcode);
+
+	const char *pid_str = pid == NULL ? NULL : pid->val;
+	stream = php_stream_xport_create(addr, addr_len, options, flags,
+					 pid_str, &tv, NULL, &errstr,
+					 &errcode);
 	efree(addr);
 
 	if (errcode || !stream) {
@@ -97,7 +102,6 @@ int tntll_stream_open(const char *host, int port, const char *pid,
 			 strerror(errno));
 		goto error;
 	}
-	
 	*ostream = stream;
 	return 0;
 error:
@@ -120,7 +124,7 @@ int tntll_stream_read2(php_stream *stream, char *buf, size_t size) {
 					    size - total_size);
 		assert(read_size + total_size <= size);
 		if (read_size <= 0)
-			 break;
+			break;
 		total_size += read_size;
 	}
 	return total_size;

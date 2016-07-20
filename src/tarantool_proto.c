@@ -1,3 +1,6 @@
+#include "php_tarantool.h"
+
+#include "tarantool_tp.h"
 #include "tarantool_proto.h"
 #include "tarantool_msgpack.h"
 
@@ -11,14 +14,16 @@ static size_t php_tp_sizeof_header(uint32_t request, uint32_t sync) {
 	       php_mp_sizeof_long(sync)     ;
 }
 
-static void php_tp_pack_header(smart_string *str, size_t size,
-		uint32_t request, uint32_t sync) {
+static char *php_tp_pack_header(smart_string *str, size_t size,
+				      uint32_t request, uint32_t sync) {
+	char *sz = SSTR_POS(str);
 	php_mp_pack_package_size(str, size);
 	php_mp_pack_hash(str, 2);
 	php_mp_pack_long(str, TNT_CODE);
 	php_mp_pack_long(str, request);
 	php_mp_pack_long(str, TNT_SYNC);
 	php_mp_pack_long(str, sync);
+	return sz;
 }
 
 size_t php_tp_sizeof_auth(uint32_t sync, size_t ulen, zend_bool nopass) {
@@ -30,7 +35,7 @@ size_t php_tp_sizeof_auth(uint32_t sync, size_t ulen, zend_bool nopass) {
 		     php_mp_sizeof_array((nopass ? 0 : 2));
 	if (!nopass) {
 		val += php_mp_sizeof_string(9)      +
-		php_mp_sizeof_string(PHP_SCRAMBLE_SIZE) ;
+		php_mp_sizeof_string(SCRAMBLE_SIZE) ;
 	}
 	return val;
 }
@@ -53,7 +58,7 @@ void php_tp_encode_auth(
 	php_mp_pack_array(str, (nopass ? 0 : 2));
 	if (!nopass) {
 		php_mp_pack_string(str, "chap-sha1", 9);
-		php_mp_pack_string(str, scramble, PHP_SCRAMBLE_SIZE);
+		php_mp_pack_string(str, scramble, SCRAMBLE_SIZE);
 	}
 }
 
@@ -204,72 +209,69 @@ void php_tp_encode_eval(smart_string *str, uint32_t sync,
 		char *proc, uint32_t proc_len, zval *tuple) {
 	size_t packet_size = php_tp_sizeof_eval(sync,
 			proc_len, tuple);
-	smart_string_ensure(str, packet_size + 5);
-	php_tp_pack_header(str, packet_size, TNT_EVAL, sync);
-	php_mp_pack_hash(str, 2);
-	php_mp_pack_long(str, TNT_EXPRESSION);
-	php_mp_pack_string(str, proc, proc_len);
-	php_mp_pack_long(str, TNT_TUPLE);
-	php_mp_pack(str, tuple);
+	smart_string_ensure (str, packet_size + 5);
+	php_tp_pack_header  (str, packet_size, TNT_EVAL, sync);
+	php_mp_pack_hash    (str, 2);
+	php_mp_pack_long    (str, TNT_EXPRESSION);
+	php_mp_pack_string  (str, proc, proc_len);
+	php_mp_pack_long    (str, TNT_TUPLE);
+	php_mp_pack         (str, tuple);
 }
 
-size_t php_tp_sizeof_update(uint32_t sync,
-			    uint32_t space_no, uint32_t index_no,
-			    zval *key, zval *args) {
-	return  php_tp_sizeof_header(TNT_UPDATE, sync) +
-		php_mp_sizeof_hash(4)                  +
-		php_mp_sizeof_long(TNT_SPACE)          +
-		php_mp_sizeof_long(space_no)           +
-		php_mp_sizeof_long(TNT_INDEX)          +
-		php_mp_sizeof_long(index_no)           +
-		php_mp_sizeof_long(TNT_KEY)            +
-		php_mp_sizeof(key)                     +
-		php_mp_sizeof_long(TNT_TUPLE)          +
-		php_mp_sizeof(args);
+char *php_tp_encode_update(smart_string *str, uint32_t sync,
+			   uint32_t space_no, uint32_t index_no,
+			   zval *key) {
+	char *sz = php_tp_pack_header(str, 0, TNT_UPDATE, sync);
+	php_mp_pack_hash (str, 4);
+	php_mp_pack_long (str, TNT_SPACE);
+	php_mp_pack_long (str, space_no);
+	php_mp_pack_long (str, TNT_INDEX);
+	php_mp_pack_long (str, index_no);
+	php_mp_pack_long (str, TNT_KEY);
+	php_mp_pack      (str, key);
+	php_mp_pack_long (str, TNT_TUPLE);
+	return sz;
 }
 
-void php_tp_encode_update(smart_string *str, uint32_t sync,
-			  uint32_t space_no, uint32_t index_no,
-			  zval *key, zval *args) {
-	size_t packet_size = php_tp_sizeof_update(sync,
-			space_no, index_no, key, args);
-	smart_string_ensure(str, packet_size + 5);
-	php_tp_pack_header(str, packet_size, TNT_UPDATE, sync);
-	php_mp_pack_hash(str, 4);
-	php_mp_pack_long(str, TNT_SPACE);
-	php_mp_pack_long(str, space_no);
-	php_mp_pack_long(str, TNT_INDEX);
-	php_mp_pack_long(str, index_no);
-	php_mp_pack_long(str, TNT_KEY);
-	php_mp_pack(str, key);
-	php_mp_pack_long(str, TNT_TUPLE);
-	php_mp_pack(str, args);
+char *php_tp_encode_upsert(smart_string *str, uint32_t sync,
+			   uint32_t space_no, zval *tuple) {
+	char *sz = php_tp_pack_header(str, 0, TNT_UPSERT, sync);
+	php_mp_pack_hash (str, 3);
+	php_mp_pack_long (str, TNT_SPACE);
+	php_mp_pack_long (str, space_no);
+	php_mp_pack_long (str, TNT_TUPLE);
+	php_mp_pack      (str, tuple);
+	php_mp_pack_long (str, TNT_OPS);
+	return sz;
 }
 
-size_t php_tp_sizeof_upsert(uint32_t sync, uint32_t space_no, zval *tuple,
-			    zval *args) {
-	return  php_tp_sizeof_header(TNT_UPSERT, sync) +
-		php_mp_sizeof_hash(3)                  +
-		php_mp_sizeof_long(TNT_SPACE)          +
-		php_mp_sizeof_long(space_no)           +
-		php_mp_sizeof_long(TNT_TUPLE)          +
-		php_mp_sizeof(tuple)                   +
-		php_mp_sizeof_long(TNT_OPS)            +
-		php_mp_sizeof(args);
+void php_tp_encode_uheader(smart_string *str, size_t op_count) {
+	php_mp_pack_array(str, op_count);
 }
 
-void php_tp_encode_upsert(smart_string *str, uint32_t sync, uint32_t space_no,
-			  zval *tuple, zval *args) {
-	size_t packet_size = php_tp_sizeof_upsert(sync, space_no, tuple, args);
-	smart_string_ensure(str, packet_size + 5);
-	php_tp_pack_header(str, packet_size, TNT_UPSERT, sync);
-	php_mp_pack_hash(str, 3);
-	php_mp_pack_long(str, TNT_SPACE);
-	php_mp_pack_long(str, space_no);
-	php_mp_pack_long(str, TNT_TUPLE);
-	php_mp_pack(str, tuple);
-	php_mp_pack_long(str, TNT_OPS);
-	php_mp_pack(str, args);
+void php_tp_encode_uother(smart_string *str, char type, uint32_t fieldno,
+			  zval *value) {
+	php_mp_pack_array(str, 3);
+	php_mp_pack_string(str, (const char *)&type, 1);
+	php_mp_pack_long(str, fieldno);
+	php_mp_pack(str, value);
+}
+
+void php_tp_encode_usplice(smart_string *str, uint32_t fieldno,
+			   uint32_t position, uint32_t offset,
+			   const char *buffer, size_t buffer_len) {
+	php_mp_pack_array(str, 5);
+	php_mp_pack_string(str, ":", 1);
+	php_mp_pack_long(str, fieldno);
+	php_mp_pack_long(str, position);
+	php_mp_pack_long(str, offset);
+	php_mp_pack_string(str, buffer, buffer_len);
+}
+
+void php_tp_reencode_length(smart_string *str, char *sz) {
+	ssize_t package_size = (SSTR_POS(str) - sz) - 5;
+	assert(package_size > 0);
+	php_mp_pack_package_size_basic(sz, package_size);
 }
 
 int64_t php_tp_response(struct tnt_response *r, char *buf, size_t size)
@@ -330,3 +332,104 @@ int64_t php_tp_response(struct tnt_response *r, char *buf, size_t size)
 	return p - buf;
 }
 
+int convert_iter_str(const char *i, size_t i_len) {
+	int first = toupper(i[0]);
+	switch (first) {
+	case 'A':
+		if (i_len == 3 && toupper(i[1]) == 'L' && toupper(i[2]) == 'L')
+			return ITERATOR_ALL;
+		break;
+	case 'B':
+		if (i_len > 7            && toupper(i[1]) == 'I' &&
+		    toupper(i[2]) == 'T' && toupper(i[3]) == 'S' &&
+		    toupper(i[4]) == 'E' && toupper(i[5]) == 'T' &&
+		    toupper(i[6]) == '_') {
+			if (i_len == 18           && toupper(i[7])  == 'A' &&
+			    toupper(i[8])  == 'L' && toupper(i[9])  == 'L' &&
+			    toupper(i[10]) == '_' && toupper(i[11]) == 'N' &&
+			    toupper(i[12]) == 'O' && toupper(i[13]) == 'T' &&
+			    toupper(i[14]) == '_' && toupper(i[15]) == 'S' &&
+			    toupper(i[16]) == 'E' && toupper(i[17]) == 'T')
+				return ITERATOR_BITSET_ALL_NOT_SET;
+			else if (i_len == 14           && toupper(i[7])  == 'A' &&
+			         toupper(i[8])  == 'L' && toupper(i[9])  == 'L' &&
+			         toupper(i[10]) == '_' && toupper(i[11]) == 'S' &&
+			         toupper(i[12]) == 'E' && toupper(i[13]) == 'T')
+				return ITERATOR_BITSET_ALL_SET;
+			else if (i_len == 14           && toupper(i[7])  == 'A' &&
+			         toupper(i[8])  == 'N' && toupper(i[9])  == 'Y' &&
+			         toupper(i[10]) == '_' && toupper(i[11]) == 'S' &&
+			         toupper(i[12]) == 'E' && toupper(i[13]) == 'T')
+				return ITERATOR_BITSET_ANY_SET;
+		}
+		if (i_len > 4            && toupper(i[1]) == 'I' &&
+		    toupper(i[2]) == 'T' && toupper(i[3]) == 'S' &&
+		    toupper(i[4]) == '_') {
+			if (i_len == 16           && toupper(i[5])  == 'A' &&
+			    toupper(i[6])  == 'L' && toupper(i[7])  == 'L' &&
+			    toupper(i[8])  == '_' && toupper(i[9])  == 'N' &&
+			    toupper(i[10]) == 'O' && toupper(i[11]) == 'T' &&
+			    toupper(i[12]) == '_' && toupper(i[13]) == 'S' &&
+			    toupper(i[14]) == 'E' && toupper(i[15]) == 'T')
+				return ITERATOR_BITSET_ALL_NOT_SET;
+			else if (i_len == 12           && toupper(i[5])  == 'A' &&
+			         toupper(i[6])  == 'L' && toupper(i[7])  == 'L' &&
+			         toupper(i[8])  == '_' && toupper(i[9])  == 'S' &&
+			         toupper(i[10]) == 'E' && toupper(i[11]) == 'T')
+				return ITERATOR_BITSET_ALL_SET;
+			else if (i_len == 12           && toupper(i[5])  == 'A' &&
+			         toupper(i[6])  == 'N' && toupper(i[7])  == 'Y' &&
+			         toupper(i[8])  == '_' && toupper(i[9])  == 'S' &&
+			         toupper(i[10]) == 'E' && toupper(i[11]) == 'T')
+				return ITERATOR_BITSET_ANY_SET;
+		}
+		break;
+	case 'E':
+		if (i_len == 2 && toupper(i[1]) == 'Q')
+			return ITERATOR_EQ;
+		break;
+	case 'G':
+		if (i_len == 2) {
+			int second = toupper(i[1]);
+			switch (second) {
+			case 'E':
+				return ITERATOR_GE;
+			case 'T':
+				return ITERATOR_GT;
+			}
+		}
+		break;
+	case 'L':
+		if (i_len == 2) {
+			int second = toupper(i[1]);
+			switch (second) {
+			case 'T':
+				return ITERATOR_LT;
+			case 'E':
+				return ITERATOR_LE;
+			}
+		}
+		break;
+	case 'N':
+		if (i_len == 8           && toupper(i[1]) == 'E' &&
+		    toupper(i[2]) == 'I' && toupper(i[3]) == 'G' &&
+		    toupper(i[4]) == 'H' && toupper(i[5]) == 'B' &&
+		    toupper(i[6]) == 'O' && toupper(i[7]) == 'R')
+			return ITERATOR_NEIGHBOR;
+		break;
+	case 'O':
+		if (i_len == 8           && toupper(i[1]) == 'V' &&
+		    toupper(i[2]) == 'E' && toupper(i[3]) == 'R' &&
+		    toupper(i[4]) == 'L' && toupper(i[5]) == 'A' &&
+		    toupper(i[6]) == 'P' && toupper(i[7]) == 'S')
+			return ITERATOR_OVERLAPS;
+		break;
+	case 'R':
+		if (i_len == 3 && toupper(i[1]) == 'E' && toupper(i[2]) == 'Q')
+			return ITERATOR_REQ;
+		break;
+	default:
+		break;
+	};
+	return -1;
+}

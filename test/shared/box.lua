@@ -13,7 +13,7 @@ box.cfg{
    slab_alloc_arena = 0.2
 }
 
-box.once('init', function()
+box.once('initialization', function()
     box.schema.user.create('test', { password = 'test' })
     box.schema.user.create('test_empty', { password = '' })
     box.schema.user.create('test_big', {
@@ -21,7 +21,13 @@ box.once('init', function()
     })
     box.schema.user.grant('test', 'read,write,execute', 'universe')
 
-    local space = box.schema.space.create('test')
+    local space = box.schema.space.create('test', {
+        format = {
+            {type = 'STR', name = 'name'},
+            {type = 'NUM', name = 's1'},
+            {type = 'STR', name = 's2'},
+        }
+    })
     space:create_index('primary', {
         type   = 'TREE',
         unique = true,
@@ -32,6 +38,7 @@ box.once('init', function()
         unique = false,
         parts  = {2, 'NUM', 3, 'STR'}
     })
+
     local space = box.schema.space.create('msgpack')
     space:create_index('primary', {
         parts = {1, 'NUM'}
@@ -51,6 +58,15 @@ box.once('init', function()
     space:insert{6, 'array with string key as key', {
         ['megusta'] = {1, 2, 3}
     }}
+
+    local test_hash = box.schema.space.create('test_hash')
+    test_hash:create_index('primary', {
+        type = 'HASH',
+        unique = true
+    })
+    test_hash:insert{1, 'hash-loc'}
+    test_hash:insert{2, 'hash-col'}
+test_hash:insert{3, 'hash-olc'}
 end)
 
 function test_1()

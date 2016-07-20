@@ -26,7 +26,7 @@ $ make install
 
 ## Test
 
-To run tests Taranool server and PHP/PECL package are requred.
+To run tests Tarantool server and PHP/PECL package are requred.
 
 ```sh
 $ ./test-run.py
@@ -42,7 +42,7 @@ $ TARANTOOL_BOX_PATH=/path/to/tarantool/bin/tarantool ./test-run.py
 
 ## Installing from PEAR
 
-Tarantool-PHP Have it's own [PEAR repository](https://tarantool.github.io/tarantool-php).
+Tarantool-PHP has its own [PEAR repository](https://tarantool.github.io/tarantool-php).
 You may install it from PEAR with just a few commands:
 
 ```
@@ -66,7 +66,6 @@ Place it into project library path in your IDE.
 ## Configuration file
 
 * `tarantool.persistent` - Enable persistent connections (don't close connections between sessions) (defaults: True, **can't be changed in runtime**)
-* `tarantool.con_per_host` - Count of open connections to every Tarantool server to store (defaults: 5, **can't be changed in runtime**)
 * `tarantool.timeout` - Connection timeout (defaults: 10 seconds, can be changed in runtime)
 * `tarantool.retry_count` - Count of retries for connecting (defaults: 1, can be changed in runtime)
 * `tarantool.retry_sleep` - Sleep between connecting retries (defaults: 0.1 second, can be changed in runtime)
@@ -78,11 +77,10 @@ Place it into project library path in your IDE.
 
 1. [Predefined Constants](#predefined-constants)
 2. [Class Tarantool](#class-tarantool)
-  * [Tarantool::_construct](#tarantool__construct)
+  * [Tarantool::__construct](#tarantool__construct)
 3. [Manipulation connection](#manipulation-connection)
   * [Tarantool::connect](#tarantoolconnect)
   * [Tarantool::disconnect](#tarantooldisconnect)
-  * [Tarantool::authenticate](#tarantoolauthenticate)
   * [Tarantool::flushSchema](#tarantoolflushschema)
   * [Tarantool::ping](#tarantoolping)
 4. [Database queries](#database-queries)
@@ -98,45 +96,44 @@ Place it into project library path in your IDE.
 
 _**Description**_: Available Tarantool Constants
 
-* `TARANTOOL_ITER_EQ` - Equality iterator (ALL)
-* `TARANTOOL_ITER_REQ` - Reverse equality iterator
-* `TARANTOOL_ITER_ALL` - Get all rows
-* `TARANTOOL_ITER_LT` - Less then iterator
-* `TARANTOOL_ITER_LE` - Less and equal iterator
-* `TARANTOOL_ITER_GE` - Greater and equal iterator
-* `TARANTOOL_ITER_GT` - Gtreater then iterator
-* `TARANTOOL_ITER_BITSET_ALL_SET` - check if all given bits are set (BITSET only)
-* `TARANTOOL_ITER_BITSET_ANY_SET` - check if any given bits are set (BITSET only)
-* `TARANTOOL_ITER_BITSET_ALL_NOT_SET` - check if all given bits are not set
+* `Tarantool::ITERATOR_EQ` - Equality iterator (ALL)
+* `Tarantool::ITERATOR_REQ` - Reverse equality iterator
+* `Tarantool::ITERATOR_ALL` - Get all rows
+* `Tarantool::ITERATOR_LT` - Less then iterator
+* `Tarantool::ITERATOR_LE` - Less and equal iterator
+* `Tarantool::ITERATOR_GE` - Greater and equal iterator
+* `Tarantool::ITERATOR_GT` - Gtreater then iterator
+* `Tarantool::ITERATOR_BITS_ALL_SET` - check if all given bits are set (BITSET only)
+* `Tarantool::ITERATOR_BITS_ANY_SET` - check if any given bits are set (BITSET only)
+* `Tarantool::ITERATOR_BITS_ALL_NOT_SET` - check if all given bits are not set
   (BITSET only)
-* `TARANTOOL_ITER_OVERLAPS` - find dots in the n-dimension cube (RTREE only)
-* `TARANTOOL_ITER_NEIGHBOR` - find nearest dots (RTREE only)
+* `Tarantool::ITERATOR_OVERLAPS` - find dots in the n-dimension cube (RTREE only)
+* `Tarantool::ITERATOR_NEIGHBOR` - find nearest dots (RTREE only)
 
 ### Class Tarantool
 
 ``` php
 Tarantool {
-    public Tarantool::__construct ( [ string $host = 'localhost' [, int $port = 3301 ] ] )
-    public bool Tarantool::connect ( void )
-    public bool Tarantool::disconnect ( void )
-    public Tarantool::authenticate(string $login [, string $password = NULL ] )
-    public bool Tarantool::flushSchema ( void )
-    public bool Tarantool::ping ( void )
-    public array Tarantool::select(mixed $space [, mixed $key = array() [, mixed $index = 0 [, int $limit = PHP_INT_MAX [, int offset = 0 [, iterator = TARANTOOL_ITER_EQ ] ] ] ] ] )
-    public array Tarantool::insert(mixed $space, array $tuple)
-    public array Tarantool::replace(mixed $space, array $tuple)
-    public array Tarantool::call(string $procedure [, mixed args])
-    public array Tarantool::evaluate(string $expression [, mixed args])
-    public array Tarantool::delete(mixed $space, mixed $key [, mixed $index])
-    public array Tarantool::update(mixed $space, mixed $key, array $ops [, number $index] )
-    public array Tarantool::upsert(mixed $space, mixed $key, array $ops [, number $index] )
+    public       Tarantool::__construct ( [ string $host = 'localhost' [, int $port = 3301 [, string $user = "guest" [, string $password = NULL [, string $persistent_id = NULL ] ] ] ] ] )
+    public bool  Tarantool::connect ( void )
+    public bool  Tarantool::disconnect ( void )
+    public bool  Tarantool::flushSchema ( void )
+    public bool  Tarantool::ping ( void )
+    public array Tarantool::select (mixed $space [, mixed $key = array() [, mixed $index = 0 [, int $limit = PHP_INT_MAX [, int $offset = 0 [, $iterator = Tarantool::ITERATOR_EQ ] ] ] ] ] )
+    public array Tarantool::insert (mixed $space, array $tuple)
+    public array Tarantool::replace (mixed $space, array $tuple)
+    public array Tarantool::call (string $procedure [, mixed args] )
+    public array Tarantool::evaluate (string $expression [, mixed args] )
+    public array Tarantool::delete (mixed $space, mixed $key [, mixed $index] )
+    public array Tarantool::update (mixed $space, mixed $key, array $ops [, number $index] )
+    public array Tarantool::upsert (mixed $space, mixed $key, array $ops [, number $index] )
 }
 ```
 
-#### Taratnool::__construct
+#### Tarantool::__construct
 
 ```
-public Tarantool::__construct ( [ string $host = 'localhost' [, int $port = 3301 ] ] )
+public Tarantool::__construct ( [ string $host = 'localhost' [, int $port = 3301 [, string $user = "guest" [, string $password = NULL [, string $persistent_id = NULL ] ] ] ] ] )
 ```
 
 _**Description**_: Creates a Tarantool client
@@ -145,6 +142,10 @@ _**Parameters**_
 
 * `host`: string, default is `'localhost'`
 * `port`: number, default is `3301`
+* `user`: string, default is `'guest'`
+* `password`: string
+* `persistent_id`: string (set it, and connection will be persistent, if
+  `persistent` in config isn't set)
 
 _**Return Value**_
 
@@ -187,36 +188,6 @@ _**Return Value**_
 
 **BOOL**: True
 
-### Tarantool::authenticate
-
-``` php
-public Tarantool::authenticate(string $login [, string $password = NULL ] )
-```
-
-_**Description**_: Authenticate to Tarantool using given login/password
-
-_**Parameters**_
-
-* `login`: string - user login (mandatory)
-* `password`: string - user password (mandatory, but ignored, if user is guest)
-
-_**Return Value**_ NULL
-
-#### *Example*
-
-``` php
-/**
- * - user is 'valdis'
- * - password is 'pelsh'
- */
-$tnt->connect('valdis', 'pelsh')
-/**
- * - user is 'guest'
- * - password is empty and ignored, anyway
- */
-$tnt->connect('guest')
-```
-
 ### Tarantool::flushSchema
 
 ``` php
@@ -248,7 +219,7 @@ Throws `Exception` on error.
 ### Tarantool::select
 
 ``` php
-public array Tarantool::select(mixed $space [, mixed $key = array() [, mixed $index = 0 [, int $limit = PHP_INT_MAX [, int offset = 0 [, iterator = TARANTOOL_ITER_EQ ] ] ] ] ] )
+public array Tarantool::select(mixed $space [, mixed $key = array() [, mixed $index = 0 [, int $limit = PHP_INT_MAX [, int $offset = 0 [, $iterator = Tarantool::ITERATOR_EQ ] ] ] ] ] )
 ```
 
 _**Description**_: Execute select query from Tarantool server.
@@ -262,7 +233,11 @@ _**Parameters**_
 * `limit`: Number, limit number of rows to return from select (INT_MAX by default)
 * `offset`: Number, offset to select from (0 by default)
 * `iterator`: Constant, iterator type. See [Predefined Constants](#predefined-constants)
-  for more information (`TARANTOOL_ITER_EQ` by default)
+  for more information (`Tarantool::ITERATOR_EQ` by default). You can also use
+  strings `'eq'`, `'req'`, `'all'`, `'lt'`, `'le'`, `'ge'`, `'gt'`,
+  `'bits_all_set'`, `'bits_any_set'`, `'bits_all_not_set'`, `'overlaps'`,
+  `'neighbor'`, `'bits_all_set'`, `'bits_any_set'`, `'bits_all_not_set'` (in
+  both lowercase/uppercase) instead of constants
 
 _**Return Value**_
 
@@ -274,19 +249,19 @@ request, or empty array, if nothing was found.
 #### Example
 
 ``` php
-/* Select everything from space 'test' */
+// Select everything from space 'test'
 $tnt->select("test");
-/* Selects from space 'test' by PK with id == 1*/
+// Selects from space 'test' by PK with id == 1
 $tnt->select("test", 1);
-/* The same as previous */
+// The same as previous
 $tnt->select("test", array(1));
-/* Selects from space 'test' by secondary key from index 'isec' and == {1, 'hello'} */
+// Selects from space 'test' by secondary key from index 'isec' and == {1, 'hello'}
 $tnt->select("test", array(1, "hello"), "isec");
-/* Selects second hundred of rows from space test */
+// Selects second hundred of rows from space test
 $tnt->select("test", null, null, 100, 100);
-/* Selects second hundred of rows from space test in reverse equality order */
-/* It meanse: select penultimate hundred */
-$tnt->select("test", null, null, 100, 100, TARANTOOL_ITER_REQ);
+// Selects second hundred of rows from space test in reverse equality order
+// It meanse: select penultimate hundred
+$tnt->select("test", null, null, 100, 100, Tarantool::ITERATOR_REQ);
 ```
 
 ### Tarantool::insert, Tarantool::replace
@@ -312,12 +287,12 @@ _**Return Value**_
 #### Example
 
 ``` php
-/* It'll be processed OK, since no tuples with PK == 1 are in space 'test' */
+// It'll be processed OK, since no tuples with PK == 1 are in space 'test'
 $tnt->insert("test", array(1, 2, "smth"));
-/* We've just inserted tuple with PK == 1, so it'll fail */
-/* error will be ER_TUPLE_FOUND */
+// We've just inserted tuple with PK == 1, so it'll fail
+// error will be ER_TUPLE_FOUND
 $tnt->insert("test", array(1, 3, "smth completely different"));
-/* But it won't be a problem for replace */
+// But it won't be a problem for replace
 $tnt->replace("test", array(1, 3, "smth completely different"));
 ```
 
@@ -396,11 +371,11 @@ _**Return Value**_
 #### Example
 
 ``` php
-/* Following code will delete all tuples from space `test` */
+// Following code will delete all tuples from space `test`
 $tuples = $tnt->select("test");
 foreach($tuples as $value) {
-    $tnt->delete("test", Array($value[0]));
-    }
+    $tnt->delete("test", array($value[0]));
+}
 ```
 
 ### Tarantool::update
@@ -516,7 +491,7 @@ $tnt->update("test", 1, array(
   array(
     "field" => 4,
     "op" => "=",
-    "arg" => intval(0x11111)
+    "arg" => 0x11111,
   ),
 ));
 $tnt->update("test", 1, array(
@@ -528,21 +503,21 @@ $tnt->update("test", 1, array(
   array(
     "field" => 4,
     "op" => "&",
-    "arg" => intval(0x10101)
+    "arg" => 0x10101,
   )
 ));
 $tnt->update("test", 1, array(
   array(
     "field" => 4,
     "op" => "^",
-    "arg" => intval(0x11100)
+    "arg" => 0x11100,
   )
 ));
 $tnt->update("test", 1, array(
   array(
     "field" => 4,
     "op" => "|",
-    "arg" => intval(0x00010)
+    "arg" => 0x00010,
   )
 ));
 $tnt->update("test", 1, array(
@@ -559,7 +534,7 @@ $tnt->update("test", 1, array(
 ### Tarantool::upsert
 
 ``` php
-public array Tarantool::upsert(mixed $space, mixed $key, array $ops [, number $index] )
+public array Tarantool::upsert(mixed $space, array $tuple, array $ops [, number $index] )
 ```
 
 _**Description**_: Update or Insert command (If tuple with PK == PK('tuple') exists,
@@ -590,3 +565,10 @@ $tnt->upsert("test", array(124, 10, "new tuple"), array(
   )
 ));
 ```
+
+
+## Deprecated
+
+* Global constants, e.g. `TARANTOOL_ITER_<name>`
+* `Tarantool::authenticate` method
+* configuration parameter: `tarantool.con_per_host`

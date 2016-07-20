@@ -48,7 +48,7 @@ def main():
         path = '.'
     os.chdir(path)
     if '--prepare' in sys.argv:
-        prepare_env('test/shared/tarantool.ini')
+        prepare_env('test/shared/tarantool-1.ini')
         exit(0)
     srv = None
     srv = TarantoolServer()
@@ -78,9 +78,9 @@ def main():
             if '--flags' in sys.argv:
                 os.environ['ZEND_DONT_UNLOAD_MODULES'] = '1'
                 os.environ['USE_ZEND_ALLOC'] = '0'
-                os.environ['MALLOC_CHECK_'] = '1'
+                os.environ['MALLOC_CHECK_'] = '3'
             if '--valgrind' in sys.argv:
-                cmd = cmd + 'valgrind --leak-check=full --log-file='
+                cmd = cmd + 'valgrind --leak-check=full --show-leak-kinds=all --log-file='
                 cmd = cmd + os.path.basename(php_ini).split('.')[0] + '.out '
                 cmd = cmd + '--suppressions=test/shared/valgrind.sup '
                 cmd = cmd + '--keep-stacktraces=alloc-and-free'
@@ -104,7 +104,10 @@ def main():
             print('Running "%s" with "%s"' % (cmd, php_ini))
             proc = subprocess.Popen(cmd, shell=True, cwd=test_cwd)
             rv = proc.wait()
-            if rv != 0 or '--gdb' in sys.argv or '--lldb' in sys.argv:
+            if rv != 0:
+                print('Error')
+                return -1
+            if '--gdb' in sys.argv or '--lldb' in sys.argv:
                 return -1
 
     finally:

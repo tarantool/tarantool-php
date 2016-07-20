@@ -5,8 +5,7 @@ class DMLTest extends PHPUnit_Framework_TestCase
 
 		public static function setUpBeforeClass()
 		{
-			self::$tarantool = new Tarantool('localhost', getenv('PRIMARY_PORT'));
-			self::$tarantool->authenticate('test', 'test');
+			self::$tarantool = new Tarantool('localhost', getenv('PRIMARY_PORT'), 'test', 'test');
 		}
 
 		protected function tearDown()
@@ -75,8 +74,8 @@ class DMLTest extends PHPUnit_Framework_TestCase
 		}
 
 		/**
-		 * @expectedException Exception
-		 * @expectedExceptionMessage Query error 3
+		 * @expectedException TarantoolClientError
+		 * @expectedExceptionMessage Duplicate key exists
 		 **/
 		public function test_03_insert_error() {
 			self::$tarantool->insert("test", array(1, 2, "smth"));
@@ -123,7 +122,7 @@ class DMLTest extends PHPUnit_Framework_TestCase
 			));
 			self::$tarantool->update("test", 1, array(
 				array(
-					"field" => 3,
+					"field" => "s2",
 					"op" => "-",
 					"arg" => 10
 				),
@@ -149,7 +148,7 @@ class DMLTest extends PHPUnit_Framework_TestCase
 			));
 			$tuple = self::$tarantool->update("test", 1, array(
 				array(
-					"field" => 2,
+					"field" => "s1",
 					"op" => ":",
 					"offset" => 2,
 					"length" => 2,
@@ -164,7 +163,20 @@ class DMLTest extends PHPUnit_Framework_TestCase
 		}
 
 		/**
-		 * @expectedException Exception
+		 * @expectedException TarantoolException
+		 * @ExpectedExceptionMessage No field 'nosuchfield' defined
+		 */
+		public function test_08_update_error_nosuchfield() {
+			self::$tarantool->update("test", 0, array(
+				array(
+					"field" => "nosuchfield",
+					"op" => ":"
+				)
+			));
+		}
+
+		/**
+		 * @expectedException TarantoolException
 		 * @ExpectedExceptionMessage Five fields
 		 */
 		public function test_08_update_error() {
@@ -179,7 +191,7 @@ class DMLTest extends PHPUnit_Framework_TestCase
 		}
 
 		/**
-		 * @expectedException Exception
+		 * @expectedException TarantoolException
 		 * @ExpectedExceptionMessage Field OP must be provided
 		 */
 		public function test_09_update_error() {
@@ -193,7 +205,7 @@ class DMLTest extends PHPUnit_Framework_TestCase
 		}
 
 		/**
-		 * @expectedException Exception
+		 * @expectedException TarantoolException
 		 * @ExpectedExceptionMessage Field OP must be provided
 		 */
 		public function test_10_update_error() {
@@ -206,7 +218,7 @@ class DMLTest extends PHPUnit_Framework_TestCase
 		}
 
 		/**
-		 * @expectedException Exception
+		 * @expectedException TarantoolException
 		 * @ExpectedExceptionMessage Three fields must be provided
 		 */
 		public function test_11_update_error() {
@@ -277,9 +289,9 @@ class DMLTest extends PHPUnit_Framework_TestCase
 			self::$tarantool->insert("test", array(2, 3, "hello"));
 			self::$tarantool->insert("test", array(3, 4, "hello"));
 			self::$tarantool->insert("test", array(4, 2, "hello"));
-			$this->assertEquals(count(self::$tarantool->select("test", 3, "secondary", null, null, TARANTOOL_ITER_GT)), 1);
-			$this->assertEquals(count(self::$tarantool->select("test", 3, "secondary", 0,		 null, TARANTOOL_ITER_GT)), 0);
-			$this->assertEquals(count(self::$tarantool->select("test", 3, "secondary", 100,  null, TARANTOOL_ITER_GT)), 1);
+			$this->assertEquals(count(self::$tarantool->select("test", 3, "secondary", null, null, Tarantool::ITERATOR_GT)), 1);
+			$this->assertEquals(count(self::$tarantool->select("test", 3, "secondary", 0,    null, Tarantool::ITERATOR_GT)), 0);
+			$this->assertEquals(count(self::$tarantool->select("test", 3, "secondary", 100,  null, Tarantool::ITERATOR_GT)), 1);
 		}
 
 		public function test_15_upsert() {
@@ -321,5 +333,109 @@ class DMLTest extends PHPUnit_Framework_TestCase
 			$this->assertEquals(array(), $result_tuple);
 			$result_tuple = self::$tarantool->select("test", 123);
 			$this->assertEquals(array(123, 2, "he---, world"), $result_tuple[0]);
+		}
+
+		public function test_16_hash_select() {
+			self::$tarantool->select("test_hash");
+			self::$tarantool->select("test_hash", []);
+			try {
+				self::$tarantool->select("test_hash", null, null, null, null, TARANTOOL::ITERATOR_EQ);
+				$this->assertFalse(True);
+			} catch (TarantoolClientError $e) {
+				$this->assertContains('Invalid key part', $e->getMessage());
+			}
+		}
+
+		/**
+		 * @dataProvider provideIteratorClientError
+		 */
+		public function test_17_01_it_clienterror($spc, $itype, $xcmsg) {
+			try {
+				self::$tarantool->select($spc, null, null, null, null, $itype);
+				$this->assertFalse(True);
+			} catch (TarantoolClientError $e) {
+				$this->assertContains($xcmsg, $e->getMessage());
+			}
+		}
+
+		/**
+		 * @dataProvider provideIteratorException
+		 */
+		public function test_17_02_it_exception($spc, $itype, $xcmsg) {
+			try {
+				self::$tarantool->select($spc, null, null, null, null, $itype);
+				$this->assertFalse(True);
+			} catch (TarantoolException $e) {
+				$this->assertContains($xcmsg, $e->getMessage());
+			}
+		}
+
+		/**
+		 * @dataProvider provideIteratorGood
+		 */
+		public function test_17_03_it_good($spc, $itype) {
+			try {
+				self::$tarantool->select($spc, null, null, null, null, $itype);
+				$this->assertTrue(True);
+			} catch (Exception $e) {
+				$this->assertContains($xcmsg, $e->getMessage());
+			}
+		}
+
+		public static function provideIteratorClientError() {
+			return [
+				['test_hash', 'EQ'                ,'Invalid key part'],
+				['test_hash', 'REQ'               ,'Invalid key part'],
+				['test_hash', 'LT'                ,'Invalid key part'],
+				['test_hash', 'LE'                ,'Invalid key part'],
+				['test_hash', 'GE'                ,'Invalid key part'],
+				['test_hash', 'BITSET_ALL_SET'    ,'Invalid key part'],
+				['test_hash', 'BITSET_ANY_SET'    ,'Invalid key part'],
+				['test_hash', 'BITSET_ALL_NOT_SET','Invalid key part'],
+				['test_hash', 'BITS_ALL_SET'      ,'Invalid key part'],
+				['test_hash', 'BITS_ANY_SET'      ,'Invalid key part'],
+				['test_hash', 'BITS_ALL_NOT_SET'  ,'Invalid key part'],
+				['test_hash', 'OVERLAPS'          ,'Invalid key part'],
+				['test_hash', 'NEIGHBOR'          ,'Invalid key part'],
+				['test_hash', 'eq'                ,'Invalid key part'],
+				['test_hash', 'req'               ,'Invalid key part'],
+				['test_hash', 'lt'                ,'Invalid key part'],
+				['test_hash', 'le'                ,'Invalid key part'],
+				['test_hash', 'ge'                ,'Invalid key part'],
+				['test_hash', 'bitset_all_set'    ,'Invalid key part'],
+				['test_hash', 'bitset_any_set'    ,'Invalid key part'],
+				['test_hash', 'bitset_all_not_set','Invalid key part'],
+				['test_hash', 'bits_all_set'      ,'Invalid key part'],
+				['test_hash', 'bits_any_set'      ,'Invalid key part'],
+				['test_hash', 'bits_all_not_set'  ,'Invalid key part'],
+				['test_hash', 'overlaps'          ,'Invalid key part'],
+				['test_hash', 'neighbor'          ,'Invalid key part'],
+				['test'     , 'bitset_all_set'    ,'does not support requested iterator type'],
+				['test'     , 'bitset_any_set'    ,'does not support requested iterator type'],
+				['test'     , 'bitset_all_not_set','does not support requested iterator type'],
+				['test'     , 'bits_all_set'      ,'does not support requested iterator type'],
+				['test'     , 'bits_any_set'      ,'does not support requested iterator type'],
+				['test'     , 'bits_all_not_set'  ,'does not support requested iterator type'],
+				['test'     , 'overlaps'          ,'does not support requested iterator type'],
+				['test'     , 'neighbor'          ,'does not support requested iterator type'],
+			];
+		}
+
+		public static function provideIteratorException() {
+			return [
+				['test', 'oevrlps','Bad iterator name'],
+				['test', 'e'      ,'Bad iterator name'],
+				['test', 'nghb'   ,'Bad iterator name'],
+				['test', 'ltt'    ,'Bad iterator name'],
+			];
+		}
+
+		public static function provideIteratorGood() {
+			return [
+				['test_hash', 'ALL'],
+				['test_hash', 'GT' ],
+				['test_hash', 'all'],
+				['test_hash', 'gt' ],
+			];
 		}
 }

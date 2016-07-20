@@ -29,8 +29,8 @@ class AssertTest extends PHPUnit_Framework_TestCase
 		try {
 			self::$tarantool->call("assertf");
 			$this->assertFalse(True);
-		} catch (Exception $e) {
-			$this->assertTrue(strpos($e->getMessage(), "Can't read query") !== False);
+		} catch (TarantoolException $e) {
+			$this->assertContains("Failed to read", $e->getMessage());
 		}
 
 		/* We can reconnect and everything will be ok */
@@ -41,8 +41,8 @@ class AssertTest extends PHPUnit_Framework_TestCase
 		for ($i = 0; $i < 20000; $i++) {
 			try {
 				self::$tarantool->call("nonexistentfunction");
-			} catch (Exception $e) {
-				$this->assertTrue(strpos($e->getMessage(), "is not defined") !== False);
+			} catch (TarantoolClientError $e) {
+				continue;
 			}
 		}
 	}
