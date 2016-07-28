@@ -1,5 +1,9 @@
 #include "php_tarantool.h"
 
+#include "tarantool_internal.h"
+
+#include "tarantool_exception.h"
+
 zend_class_entry *TarantoolException_ptr;
 zend_class_entry *TarantoolIOException_ptr;
 zend_class_entry *TarantoolClientError_ptr;
@@ -112,22 +116,28 @@ ZEND_MINIT_FUNCTION(tarantool_exception) {
 	zend_class_entry tarantool_client_er_class;
 	zend_class_entry tarantool_parsing_xc_class;
 
-	INIT_CLASS_ENTRY(tarantool_xc_class, "TarantoolException", NULL);
+	TNT_INIT_CLASS_ENTRY(tarantool_xc_class, "TarantoolException",
+			     "Tarantool\\Exception", NULL);
 	TarantoolException_ptr = zend_register_internal_class_ex(
 			&tarantool_xc_class,
 			php_tarantool_get_exception_base(0)
 	);
-	INIT_CLASS_ENTRY(tarantool_io_xc_class, "TarantoolIOException", NULL);
+	TNT_INIT_CLASS_ENTRY(tarantool_io_xc_class, "TarantoolIOException",
+			     "Tarantool\\Exception\\IOException", NULL);
 	TarantoolIOException_ptr = zend_register_internal_class_ex(
 			&tarantool_io_xc_class,
 			TarantoolException_ptr
 	);
-	INIT_CLASS_ENTRY(tarantool_client_er_class, "TarantoolClientError", NULL);
+	TNT_INIT_CLASS_ENTRY(tarantool_client_er_class, "TarantoolClientError",
+			     "Tarantool\\Exception\\ClientError", NULL);
 	TarantoolClientError_ptr = zend_register_internal_class_ex(
 			&tarantool_client_er_class,
 			TarantoolException_ptr
 	);
-	INIT_CLASS_ENTRY(tarantool_parsing_xc_class, "TarantoolParsingException", NULL);
+	TNT_INIT_CLASS_ENTRY(tarantool_parsing_xc_class,
+			     "TarantoolParsingException",
+			     "Tarantool\\Exception\\ParsingException",
+			     NULL);
 	TarantoolParsingException_ptr = zend_register_internal_class_ex(
 			&tarantool_parsing_xc_class,
 			TarantoolException_ptr

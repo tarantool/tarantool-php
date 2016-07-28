@@ -368,8 +368,7 @@ schema_add_space(
 				goto error;
 			break;
 		default:
-			/* unreacheable */
-			assert(false);
+			break;
 		}
 	}
 	space_string->index_hash = mh_schema_index_new();
@@ -487,8 +486,7 @@ static inline int schema_add_index(
 				goto error;
 			break;
 		default:
-			/* unreacheable */
-			assert(false);
+			break;
 		}
 	}
 	mh_int_t space_slot = mh_schema_space_find(schema, &space_key, NULL);

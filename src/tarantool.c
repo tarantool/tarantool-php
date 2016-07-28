@@ -3,6 +3,7 @@
 #include <limits.h>
 
 #include "php_tarantool.h"
+#include "tarantool_internal.h"
 
 #include "tarantool_tp.h"
 #include "tarantool_proto.h"
@@ -98,9 +99,15 @@ zend_module_entry tarantool_module_entry = {
 };
 
 PHP_INI_BEGIN()
-	STD_PHP_INI_ENTRY("tarantool.persistent", "0", PHP_INI_ALL,
-			  OnUpdateBool, persistent, zend_tarantool_globals,
-			  tarantool_globals)
+	STD_PHP_INI_BOOLEAN("tarantool.persistent", "0", PHP_INI_ALL,
+			    OnUpdateBool, persistent, zend_tarantool_globals,
+			    tarantool_globals)
+	STD_PHP_INI_BOOLEAN("tarantool.use_namespace", "0", PHP_INI_SYSTEM,
+			    OnUpdateBool, use_namespace,
+			    zend_tarantool_globals, tarantool_globals)
+	STD_PHP_INI_BOOLEAN("tarantool.connection_alias", "0", PHP_INI_SYSTEM,
+			    OnUpdateBool, connection_alias,
+			    zend_tarantool_globals, tarantool_globals)
 	STD_PHP_INI_ENTRY("tarantool.timeout", "10.0", PHP_INI_ALL,
 			  OnUpdateReal, timeout, zend_tarantool_globals,
 			  tarantool_globals)
@@ -938,7 +945,7 @@ static void php_tarantool_init_globals(zend_tarantool_globals *tarantool_globals
 	tarantool_globals->sync_counter    = 0;
 	tarantool_globals->retry_count     = 1;
 	tarantool_globals->retry_sleep     = 0.1;
-	tarantool_globals->timeout         = 10.0;
+	tarantool_globals->timeout         = 1.0;
 	tarantool_globals->request_timeout = 10.0;
 }
 
@@ -982,7 +989,15 @@ PHP_MINIT_FUNCTION(tarantool) {
 	zend_class_entry tarantool_class;
 
 	/* Initialize class entry */
-	INIT_CLASS_ENTRY(tarantool_class, "Tarantool", Tarantool_methods);
+	if (TARANTOOL_G(connection_alias)) {
+		TNT_INIT_CLASS_ENTRY(tarantool_class, "Tarantool16",
+				     "Tarantool\\Connection16",
+				     Tarantool_methods);
+	} else {
+		TNT_INIT_CLASS_ENTRY(tarantool_class, "Tarantool",
+				     "Tarantool\\Connection",
+				     Tarantool_methods);
+	}
 	tarantool_class.create_object = tarantool_create;
 	Tarantool_ptr = zend_register_internal_class(&tarantool_class);
 	/* Initialize object handlers */

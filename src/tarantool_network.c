@@ -73,6 +73,7 @@ int tntll_stream_open(const char *host, int port, zend_string *pid,
 	if (pid) options |= STREAM_OPEN_PERSISTENT;
 	flags = STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT;
 	double_to_tv(TARANTOOL_G(timeout), &tv);
+	// printf("'tm - %lu, %lu' ", tv.tv_sec, tv.tv_usec);
 
 	const char *pid_str = pid == NULL ? NULL : pid->val;
 	stream = php_stream_xport_create(addr, addr_len, options, flags,
@@ -88,6 +89,8 @@ int tntll_stream_open(const char *host, int port, zend_string *pid,
 
 	/* Set READ_TIMEOUT */
 	double_to_tv(TARANTOOL_G(request_timeout), &tv);
+	// printf("'rtv - %lu, %lu' ", tv.tv_sec, tv.tv_usec);
+
 	if (tv.tv_sec != 0 || tv.tv_usec != 0) {
 		php_stream_set_option(stream, PHP_STREAM_OPTION_READ_TIMEOUT,
 				      0, &tv);

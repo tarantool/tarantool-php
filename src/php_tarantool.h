@@ -79,6 +79,8 @@ PHP_METHOD(Tarantool, flush_schema);
 
 ZEND_BEGIN_MODULE_GLOBALS(tarantool)
 	zend_bool persistent;
+	zend_bool use_namespace;
+	zend_bool connection_alias;
 	long sync_counter;
 	long retry_count;
 	double retry_sleep;
@@ -115,6 +117,11 @@ typedef struct tarantool_object {
 typedef struct tarantool_connection tarantool_connection;
 
 PHP_TARANTOOL_API zend_class_entry *php_tarantool_get_ce(void);
+PHP_TARANTOOL_API zend_class_entry *php_tarantool_get_exception(void);
+PHP_TARANTOOL_API zend_class_entry *php_tarantool_get_ioexception(void);
+PHP_TARANTOOL_API zend_class_entry *php_tarantool_get_clienterror(void);
+PHP_TARANTOOL_API zend_class_entry *php_tarantool_get_parsingexception(void);
+PHP_TARANTOOL_API zend_class_entry *php_tarantool_get_exception_base(int root TSRMLS_DC);
 
 #ifdef ZTS
 #  define TARANTOOL_G(v) TSRMG(tarantool_globals_id, zend_tarantool_globals *, v)
