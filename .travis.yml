@@ -20,8 +20,8 @@ env:
   matrix:
     - OS=el DIST=6 PACK=rpm
     - OS=el DIST=7 PACK=rpm
-    - OS=fedora DIST=22 PACK=rpm
     - OS=fedora DIST=23 PACK=rpm
+    - OS=fedora DIST=24 PACK=rpm
     - OS=fedora DIST=rawhide PACK=rpm
     - OS=ubuntu DIST=trusty PACK=deb
     - OS=ubuntu DIST=precise PACK=deb
@@ -40,8 +40,8 @@ matrix:
   allow_failures:
     - env: OS=el DIST=6 PACK=rpm
     - env: OS=el DIST=7 PACK=rpm
-    - env: OS=fedora DIST=22 PACK=rpm
     - env: OS=fedora DIST=23 PACK=rpm
+    - env: OS=fedora DIST=24 PACK=rpm
     - env: OS=fedora DIST=rawhide PACK=rpm
     - env: OS=ubuntu DIST=precise PACK=deb
     - env: OS=ubuntu DIST=trusty PACK=deb
@@ -56,9 +56,9 @@ matrix:
       php: 5.4
     - env: OS=el DIST=7 PACK=rpm
       php: 5.4
-    - env: OS=fedora DIST=22 PACK=rpm
-      php: 5.4
     - env: OS=fedora DIST=23 PACK=rpm
+      php: 5.4
+    - env: OS=fedora DIST=24 PACK=rpm
       php: 5.4
     - env: OS=fedora DIST=rawhide PACK=rpm
       php: 5.4
@@ -82,9 +82,9 @@ matrix:
       php: 5.5
     - env: OS=el DIST=7 PACK=rpm
       php: 5.5
-    - env: OS=fedora DIST=22 PACK=rpm
-      php: 5.5
     - env: OS=fedora DIST=23 PACK=rpm
+      php: 5.5
+    - env: OS=fedora DIST=24 PACK=rpm
       php: 5.5
     - env: OS=fedora DIST=rawhide PACK=rpm
       php: 5.5
