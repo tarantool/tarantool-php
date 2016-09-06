@@ -51,6 +51,10 @@ box.once('init', function()
     space:insert{6, 'array with string key as key', {
         ['megusta'] = {1, 2, 3}
     }}
+    local space = box.schema.space.create('pstring')
+    space:create_index('primary', {
+        parts = {1, 'STR'}
+    })
 end)
 
 function test_1()
