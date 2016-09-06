@@ -584,6 +584,7 @@ void pack_key(zval *args, char select, zval *arr) {
 		array_init(arr);
 		return;
 	}
+	Z_TRY_ADDREF_P(args);
 	array_init(arr);
 	add_next_index_zval(arr, args);
 }
@@ -659,7 +660,7 @@ int get_spaceno_by_name(tarantool_connection *obj, zval *name) {
 	}
 
 	if (tarantool_schema_add_spaces(obj->schema, resp.data, resp.data_len)) {
-		fprintf(stderr, "%s", php_base64_encode(resp.data, resp.data_len)->val);
+		// fprintf(stderr, "%s", php_base64_encode(resp.data, resp.data_len)->val);
 		tarantool_throw_parsingexception("schema (space)");
 		return FAILURE;
 	}
@@ -719,7 +720,7 @@ int get_indexno_by_name(tarantool_connection *obj, int space_no,
 	}
 
 	if (tarantool_schema_add_indexes(obj->schema, resp.data, resp.data_len)) {
-		fprintf(stderr, "%s", php_base64_encode(resp.data, resp.data_len)->val);
+		// fprintf(stderr, "%s", php_base64_encode(resp.data, resp.data_len)->val);
 		tarantool_throw_parsingexception("schema (index)");
 		return FAILURE;
 	}
@@ -774,7 +775,7 @@ int get_fieldno_by_name(tarantool_connection *obj, uint32_t space_no,
 	}
 
 	if (tarantool_schema_add_spaces(obj->schema, resp.data, resp.data_len)) {
-		fprintf(stderr, "%s", php_base64_encode(resp.data, resp.data_len)->val);
+		// fprintf(stderr, "%s", php_base64_encode(resp.data, resp.data_len)->val);
 		tarantool_throw_parsingexception("schema (space)");
 		return FAILURE;
 	}
@@ -1220,7 +1221,7 @@ int __tarantool_authenticate(tarantool_connection *obj) {
 			if (tarantool_schema_add_spaces(obj->schema, resp.data,
 						        resp.data_len) &&
 					status != FAILURE) {
-				fprintf(stderr, "%s", php_base64_encode(resp.data, resp.data_len)->val);
+				// fprintf(stderr, "%s", php_base64_encode(resp.data, resp.data_len)->val);
 				tarantool_throw_parsingexception("schema (space)");
 				status = FAILURE;
 			}
@@ -1228,7 +1229,7 @@ int __tarantool_authenticate(tarantool_connection *obj) {
 			if (tarantool_schema_add_indexes(obj->schema, resp.data,
 							 resp.data_len) &&
 					status != FAILURE) {
-				fprintf(stderr, "%s", php_base64_encode(resp.data, resp.data_len)->val);
+				// fprintf(stderr, "%s", php_base64_encode(resp.data, resp.data_len)->val);
 				tarantool_throw_parsingexception("schema (index)");
 				status = FAILURE;
 			}
@@ -1499,13 +1500,13 @@ PHP_METHOD(Tarantool, update) {
 	size_t before_len = SSTR_LEN(obj->value);
 	char *sz = php_tp_encode_update(obj->value, sync, space_no,
 					index_no, &key_new);
+	zval_ptr_dtor(&key_new);
 	if (tarantool_uwrite_ops(obj, args, space_no) == -1) {
 		/* rollback all written changes */
 		SSTR_LEN(obj->value) = before_len;
 		RETURN_FALSE;
 	}
 	php_tp_reencode_length(obj->value, sz);
-	zval_ptr_dtor(&key_new);
 	if (tarantool_stream_send(obj) == FAILURE)
 		RETURN_FALSE;
 

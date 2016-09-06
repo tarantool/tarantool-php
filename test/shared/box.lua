@@ -66,7 +66,12 @@ box.once('initialization', function()
     })
     test_hash:insert{1, 'hash-loc'}
     test_hash:insert{2, 'hash-col'}
-test_hash:insert{3, 'hash-olc'}
+    test_hash:insert{3, 'hash-olc'}
+
+    local space = box.schema.space.create('pstring')
+    space:create_index('primary', {
+        parts = {1, 'STR'}
+    })
 end)
 
 function test_1()

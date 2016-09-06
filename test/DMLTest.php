@@ -438,4 +438,28 @@ class DMLTest extends PHPUnit_Framework_TestCase
 				['test_hash', 'gt' ],
 			];
 		}
+
+	public function test_18_01_delete_loop() {
+		for ($i = 0; $i <= 1000; $i++) {
+			self::$tarantool->replace("pstring", array("test2" . $i, $i));
+			self::$tarantool->select ("pstring", array("test2" . $i));
+			self::$tarantool->delete ("pstring", array("test2" . $i));
+		}
+		gc_collect_cycles();
+		gc_collect_cycles();
+		gc_collect_cycles();
+		gc_collect_cycles();
+	}
+
+	public function test_18_02_delete_loop() {
+		for ($i = 0; $i <= 1000; $i++) {
+			self::$tarantool->replace("pstring", array("test2" . $i, $i));
+			self::$tarantool->select ("pstring", "test2" . $i);
+			self::$tarantool->delete ("pstring", "test2" . $i);
+		}
+		gc_collect_cycles();
+		gc_collect_cycles();
+		gc_collect_cycles();
+		gc_collect_cycles();
+	}
 }
