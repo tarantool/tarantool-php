@@ -78,7 +78,7 @@ schema_index_free(struct mh_schema_index_t *schema) {
 		do {
 			struct schema_key key_number = {
 				(void *)&(ivalue->index_number),
-				sizeof(uint32_t)
+				sizeof(uint32_t), 0
 			};
 			index_slot = mh_schema_index_find(schema, &key_number,
 							  NULL);
@@ -90,7 +90,7 @@ schema_index_free(struct mh_schema_index_t *schema) {
 		do {
 			struct schema_key key_string = {
 				ivalue->index_name,
-				ivalue->index_name_len
+				ivalue->index_name_len, 0
 			};
 			index_slot = mh_schema_index_find(schema, &key_string,
 							  NULL);
@@ -170,7 +170,7 @@ schema_space_free(struct mh_schema_space_t *schema) {
 		do {
 			struct schema_key key_number = {
 				(void *)&(svalue->space_number),
-				sizeof(uint32_t)
+				sizeof(uint32_t), 0
 			};
 			space_slot = mh_schema_space_find(schema, &key_number,
 							  NULL);
@@ -182,7 +182,7 @@ schema_space_free(struct mh_schema_space_t *schema) {
 		do {
 			struct schema_key key_string = {
 				svalue->space_name,
-				svalue->space_name_len
+				svalue->space_name_len, 0
 			};
 			space_slot = mh_schema_space_find(schema, &key_string,
 							  NULL);
@@ -404,16 +404,18 @@ tarantool_schema_add_spaces(
 	struct mh_schema_space_t *schema = schema_obj->space_hash;
 	const char *tuple = data;
 	if (mp_check(&tuple, tuple + size))
-		return -1;
+		goto error;
 	tuple = data;
 	if (mp_typeof(*tuple) != MP_ARRAY)
-		return -1;
+		goto error;
 	uint32_t space_count = mp_decode_array(&tuple);
 	while (space_count-- > 0) {
 		if (schema_add_space(schema, &tuple))
-			return -1;
+			goto error;
 	}
 	return 0;
+error:
+	return -1;
 }
 
 static inline int schema_add_index(
@@ -449,8 +451,8 @@ static inline int schema_add_index(
 		case 0:
 			if (mp_typeof(*tuple) != MP_UINT)
 				goto error;
-			uint32_t space_number = mp_decode_uint(&tuple);
-			space_key.id = (void *)&(space_number);
+			space_key.number = mp_decode_uint(&tuple);
+			space_key.id = (void *)&(space_key.number);
 			space_key.id_len = sizeof(uint32_t);
 			break;
 		/* index ID */
@@ -520,16 +522,18 @@ tarantool_schema_add_indexes(
 	struct mh_schema_space_t *schema = schema_obj->space_hash;
 	const char *tuple = data;
 	if (mp_check(&tuple, tuple + size))
-		return -1;
+		goto error;
 	tuple = data;
 	if (mp_typeof(*tuple) != MP_ARRAY)
-		return -1;
+		goto error;
 	uint32_t space_count = mp_decode_array(&tuple);
 	while (space_count-- > 0) {
 		if (schema_add_index(schema, &tuple))
-			return -1;
+			goto error;
 	}
 	return 0;
+error:
+	return -1;
 }
 
 int32_t
@@ -540,7 +544,7 @@ tarantool_schema_get_sid_by_string(
 	struct mh_schema_space_t *schema = schema_obj->space_hash;
 	struct schema_key space_key = {
 		space_name,
-		space_name_len
+		space_name_len, 0
 	};
 	mh_int_t space_slot = mh_schema_space_find(schema, &space_key, NULL);
 	if (space_slot == mh_end(schema))
@@ -558,7 +562,7 @@ tarantool_schema_get_iid_by_string(
 	struct mh_schema_space_t *schema = schema_obj->space_hash;
 	struct schema_key space_key = {
 		(void *)&sid,
-		sizeof(uint32_t)
+		sizeof(uint32_t), 0
 	};
 	mh_int_t space_slot = mh_schema_space_find(schema, &space_key, NULL);
 	if (space_slot == mh_end(schema))
@@ -567,7 +571,7 @@ tarantool_schema_get_iid_by_string(
 			space_slot);
 	struct schema_key index_key = {
 		index_name,
-		index_name_len
+		index_name_len, 0
 	};
 	mh_int_t index_slot = mh_schema_index_find(space->index_hash,
 			&index_key, NULL);
@@ -586,7 +590,7 @@ tarantool_schema_get_fid_by_string(
 	struct mh_schema_space_t *schema = schema_obj->space_hash;
 	struct schema_key space_key = {
 		(void *)&sid,
-		sizeof(uint32_t)
+		sizeof(uint32_t), 0
 	};
 	mh_int_t space_slot = mh_schema_space_find(schema, &space_key, NULL);
 	if (space_slot == mh_end(schema))

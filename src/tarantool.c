@@ -663,7 +663,6 @@ int get_spaceno_by_name(tarantool_connection *obj, zval *name) {
 	}
 
 	if (tarantool_schema_add_spaces(obj->schema, resp.data, resp.data_len)) {
-		tutils_hexdump_base(stderr, "\n", resp.data, resp.data_len);
 		tarantool_throw_parsingexception("schema (space)");
 		return FAILURE;
 	}
@@ -722,8 +721,8 @@ int get_indexno_by_name(tarantool_connection *obj, int space_no,
 		return FAILURE;
 	}
 
-	if (tarantool_schema_add_indexes(obj->schema, resp.data, resp.data_len)) {
-		tutils_hexdump_base(stderr, "\n", resp.data, resp.data_len);
+	if (tarantool_schema_add_indexes(obj->schema, resp.data,
+					 resp.data_len) == -1) {
 		tarantool_throw_parsingexception("schema (index)");
 		return FAILURE;
 	}
@@ -778,7 +777,6 @@ int get_fieldno_by_name(tarantool_connection *obj, uint32_t space_no,
 	}
 
 	if (tarantool_schema_add_spaces(obj->schema, resp.data, resp.data_len)) {
-		tutils_hexdump_base(stderr, "\n", resp.data, resp.data_len);
 		tarantool_throw_parsingexception("schema (space)");
 		return FAILURE;
 	}
@@ -1207,7 +1205,8 @@ int __tarantool_authenticate(tarantool_connection *obj) {
 		if (tarantool_stream_read(obj, obj->value->c,
 					  body_size) == FAILURE)
 			return FAILURE;
-		if (status == FAILURE) continue;
+		if (status == FAILURE)
+			continue;
 		struct tnt_response resp;
 		memset(&resp, 0, sizeof(struct tnt_response));
 		if (php_tp_response(&resp, obj->value->c, body_size) == -1) {
@@ -1220,29 +1219,22 @@ int __tarantool_authenticate(tarantool_connection *obj) {
 						    resp.error_len);
 			status = FAILURE;
 		}
-		if (resp.sync == space_sync) {
-			if (tarantool_schema_add_spaces(obj->schema, resp.data,
-						        resp.data_len) &&
-					status != FAILURE) {
-				tutils_hexdump_base(stderr, "\n", resp.data, resp.data_len);
+		if (status != FAILURE) {
+			if (resp.sync == space_sync && tarantool_schema_add_spaces(
+					obj->schema,
+					resp.data,
+					resp.data_len) == -1) {
 				tarantool_throw_parsingexception("schema (space)");
 				status = FAILURE;
-			}
-		} else if (resp.sync == index_sync) {
-			if (tarantool_schema_add_indexes(obj->schema, resp.data,
-							 resp.data_len) &&
-					status != FAILURE) {
-				tutils_hexdump_base(stderr, "\n", resp.data, resp.data_len);
+			} else if (resp.sync == index_sync && tarantool_schema_add_indexes(
+						obj->schema,
+						resp.data,
+						resp.data_len) == -1) {
 				tarantool_throw_parsingexception("schema (index)");
 				status = FAILURE;
 			}
-		} else if (resp.sync == auth_sync && resp.error) {
-			tarantool_throw_clienterror(resp.code, resp.error,
-						    resp.error_len);
-			status = FAILURE;
 		}
 	}
-
 	return status;
 }
 

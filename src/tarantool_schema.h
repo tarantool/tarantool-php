@@ -4,6 +4,7 @@
 struct schema_key {
 	const char *id;
 	uint32_t id_len;
+	uint32_t number;
 };
 
 enum field_type {
