@@ -3,13 +3,14 @@
 
 #include "php_tarantool.h"
 
-#define PHP_MP_SERIALIZABLE_P(v) (Z_TYPE_P(v) == IS_NULL  || \
+#define PHP_MP_SERIALIZABLE_P(v) (Z_TYPE_P(v) == IS_NULL   || \
 				  Z_TYPE_P(v) == IS_LONG   || \
 				  Z_TYPE_P(v) == IS_DOUBLE || \
 				  Z_TYPE_P(v) == IS_FALSE  || \
 				  Z_TYPE_P(v) == IS_TRUE   || \
 				  Z_TYPE_P(v) == IS_ARRAY  || \
-				  Z_TYPE_P(v) == IS_STRING)
+				  Z_TYPE_P(v) == IS_STRING || \
+				  Z_TYPE_P(v) == IS_REFERENCE)
 
 size_t  php_mp_check  (const char   *str,  size_t str_size);
 void    php_mp_pack   (smart_string *buf,  zval   *val    );
@@ -21,7 +22,6 @@ void   php_mp_pack_package_size_basic (char *pos, size_t val);
 size_t php_mp_unpack_package_size     (char *buf);
 
 int php_mp_is_hash(zval *val);
-const char *op_to_string(zval *obj);
 
 void php_mp_pack_nil(smart_string *str);
 void php_mp_pack_long_pos(smart_string *str, long val);

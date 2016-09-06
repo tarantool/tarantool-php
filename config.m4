@@ -11,6 +11,7 @@ if test "$PHP_TARANTOOL" != "no"; then
         src/tarantool_proto.c       \
         src/tarantool_tp.c          \
         src/tarantool_exception.c   \
+        src/utils.c                 \
         src/third_party/msgpuck.c   \
         src/third_party/sha1.c      \
         src/third_party/base64_tp.c \

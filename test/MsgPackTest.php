@@ -69,4 +69,12 @@ class MsgPackTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($resp[0][2]['megusta'], array(1, 2, 3));
         $this->assertTrue(True);
     }
+
+		public function test_06_msgpack_array_reference() {
+			$data = [
+					'key1' => 'value1',
+			];
+			$link = &$data['key1'];
+			self::$tarantool->call('test_4', [$data]);
+		}
 }

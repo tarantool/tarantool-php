@@ -12,6 +12,8 @@
 #include "tarantool_network.h"
 #include "tarantool_exception.h"
 
+#include "utils.h"
+
 int __tarantool_authenticate(tarantool_connection *obj);
 
 double
@@ -466,8 +468,8 @@ static int64_t tarantool_step_recv(
 			} else {
 				tarantool_throw_exception(
 						"Bad error field type. Expected"
-						" STRING, got %s", op_to_string(
-							z_error_str));
+						" STRING, got %s",
+						tutils_op_to_string(z_error_str));
 				goto error;
 			}
 		} else {
@@ -601,7 +603,8 @@ int convert_iterator(zval *iter, int all) {
 		return Z_LVAL_P(iter);
 	} else if (Z_TYPE_P(iter) != IS_STRING) {
 		tarantool_throw_exception("Bad iterator type, expected NULL/STR"
-					  "ING/LONG, got %s", op_to_string(iter));
+					  "ING/LONG, got %s",
+					  tutils_op_to_string(iter));
 	}
 	const char *iter_str = Z_STRVAL_P(iter);
 	size_t iter_str_len = Z_STRLEN_P(iter);
@@ -660,7 +663,7 @@ int get_spaceno_by_name(tarantool_connection *obj, zval *name) {
 	}
 
 	if (tarantool_schema_add_spaces(obj->schema, resp.data, resp.data_len)) {
-		// fprintf(stderr, "%s", php_base64_encode(resp.data, resp.data_len)->val);
+		tutils_hexdump_base(stderr, "\n", resp.data, resp.data_len);
 		tarantool_throw_parsingexception("schema (space)");
 		return FAILURE;
 	}
@@ -720,7 +723,7 @@ int get_indexno_by_name(tarantool_connection *obj, int space_no,
 	}
 
 	if (tarantool_schema_add_indexes(obj->schema, resp.data, resp.data_len)) {
-		// fprintf(stderr, "%s", php_base64_encode(resp.data, resp.data_len)->val);
+		tutils_hexdump_base(stderr, "\n", resp.data, resp.data_len);
 		tarantool_throw_parsingexception("schema (index)");
 		return FAILURE;
 	}
@@ -775,7 +778,7 @@ int get_fieldno_by_name(tarantool_connection *obj, uint32_t space_no,
 	}
 
 	if (tarantool_schema_add_spaces(obj->schema, resp.data, resp.data_len)) {
-		// fprintf(stderr, "%s", php_base64_encode(resp.data, resp.data_len)->val);
+		tutils_hexdump_base(stderr, "\n", resp.data, resp.data_len);
 		tarantool_throw_parsingexception("schema (space)");
 		return FAILURE;
 	}
@@ -859,7 +862,7 @@ int tarantool_uwrite_op(tarantool_connection *obj, zval *op, uint32_t pos,
 			THROW_EXC("Field ARG must be provided and must be LONG "
 				  "or DOUBLE for '%s' at position %d (got '%s')",
 				  Z_STRVAL_P(opstr), pos,
-				  op_to_string(oparg));
+				  tutils_op_to_string(oparg));
 			goto cleanup;
 		}
 		php_tp_encode_uother(obj->value, Z_STRVAL_P(opstr)[0],
@@ -876,7 +879,7 @@ int tarantool_uwrite_op(tarantool_connection *obj, zval *op, uint32_t pos,
 			THROW_EXC("Field ARG must be provided and must be LONG "
 				  "for '%s' at position %d (got '%s')",
 				  Z_STRVAL_P(opstr), pos,
-				  op_to_string(oparg));
+				  tutils_op_to_string(oparg));
 			goto cleanup;
 		}
 		php_tp_encode_uother(obj->value, Z_STRVAL_P(opstr)[0],
@@ -1221,7 +1224,7 @@ int __tarantool_authenticate(tarantool_connection *obj) {
 			if (tarantool_schema_add_spaces(obj->schema, resp.data,
 						        resp.data_len) &&
 					status != FAILURE) {
-				// fprintf(stderr, "%s", php_base64_encode(resp.data, resp.data_len)->val);
+				tutils_hexdump_base(stderr, "\n", resp.data, resp.data_len);
 				tarantool_throw_parsingexception("schema (space)");
 				status = FAILURE;
 			}
@@ -1229,7 +1232,7 @@ int __tarantool_authenticate(tarantool_connection *obj) {
 			if (tarantool_schema_add_indexes(obj->schema, resp.data,
 							 resp.data_len) &&
 					status != FAILURE) {
-				// fprintf(stderr, "%s", php_base64_encode(resp.data, resp.data_len)->val);
+				tutils_hexdump_base(stderr, "\n", resp.data, resp.data_len);
 				tarantool_throw_parsingexception("schema (index)");
 				status = FAILURE;
 			}
