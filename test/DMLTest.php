@@ -462,4 +462,27 @@ class DMLTest extends PHPUnit_Framework_TestCase
 		gc_collect_cycles();
 		gc_collect_cycles();
 	}
+
+	public function test_19_upsert_bad_package() {
+		$key = "key_1";
+		$data = array(
+			"id"=> 10224539,
+			"category_id" => 176,
+			"ccategory_id" => 176,
+			"testmode" => 2,
+			"fulldays" => 30,
+			"lifetime" => 12324,
+			"uid" => 2397,
+			"userid" => 21176,
+			"tags_cl_id" => 3499,
+			"pricecost" => "10",
+		);
+		self::$tarantool->upsert("pstring", array($key, $data), array(
+			array(
+				"field" => 1,
+				"op"    => "=",
+				"arg"   => $data
+			)
+		));
+	}
 }
