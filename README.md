@@ -84,7 +84,7 @@ Place it into project library path in your IDE.
   * [Tarantool::flushSchema](#tarantoolflushschema)
   * [Tarantool::ping](#tarantoolping)
 4. [Database queries](#database-queries)
-  * [Tarantool::select](tarantool#select)
+  * [Tarantool::select](#tarantoolselect)
   * [Tarantool::insert, replace](#tarantoolinsert-tarantoolreplace)
   * [Tarantool::call](#tarantoolcall)
   * [Tarantool::evaluate](#tarantoolevaluate)
