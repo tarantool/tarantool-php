@@ -148,7 +148,7 @@ Inside this section:
 
 ## Predefined constants
 
-_**Description**_: Available Tarantool constants
+_**Description**_: Available Tarantool constants.
 
 * `Tarantool::ITERATOR_EQ` - "equality" iterator (ALL);
 * `Tarantool::ITERATOR_REQ` - "reverse equality" iterator;
@@ -202,7 +202,7 @@ $port = 3301 [, string $user = "guest" [, string $password = NULL [,
 string $persistent_id = NULL ] ] ] ] ] )
 ```
 
-_**Description**_: Creates a Tarantool client
+_**Description**_: Creates a Tarantool client.
 
 _**Parameters**_:
 
@@ -308,10 +308,10 @@ $tnt->select("test", array(1));
 $tnt->select("test", array(1, "hello"), "isec");
 // Selects 100 tuples from space 'test' after skipping 100 tuples
 $tnt->select("test", null, null, 100, 100);
-// Selects 100 tuples from space 'test' after skipping 100 tuples, in
-reverse equality order
-// Reverse searching goes backward from index end, so this means: select 
-penultimate hundred tuples
+// Selects 100 tuples from space 'test' after skipping 100 tuples,
+// in reverse equality order.
+// Reverse searching goes backward from index end, so this means:
+// select penultimate hundred tuples.
 $tnt->select("test", null, null, 100, 100, Tarantool::ITERATOR_REQ);
 ```
 
@@ -338,14 +338,12 @@ _**Return value**_:
 #### Example
 
 ``` php
-// This will succeed, because no tuples with primary key == 1 are in 
-space 'test'
+// This will succeed, because no tuples with primary key == 1 are in space 'test'.
 $tnt->insert("test", array(1, 2, "something"));
-// This will fail, because we have just inserted a tuple with primary 
-key == 1
-// error will be ER_TUPLE_FOUND
+// This will fail, because we have just inserted a tuple with primary key == 1.
+// The error will be ER_TUPLE_FOUND.
 $tnt->insert("test", array(1, 3, "something completely different"));
-// This will succeed, because Replace has no problem with duplicate keys
+// This will succeed, because Replace has no problem with duplicate keys.
 $tnt->replace("test", array(1, 3, "something completely different"));
 ```
 
@@ -355,7 +353,7 @@ $tnt->replace("test", array(1, 3, "something completely different"));
 public array Tarantool::call(string $procedure [, mixed args])
 ```
 
-_**Description**_: Call a stored procedure
+_**Description**_: Call a stored procedure.
 
 _**Parameters**_:
 
