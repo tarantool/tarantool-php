@@ -230,6 +230,8 @@ Notice that `Tarantool::connect`, `Tarantool::open` (an alias for `connect`) and
 `Tarantool::reconnect` are deprecated as any other connection-related
 instructions now cause an automatic connect.
 
+To initiate and/or test connection, please use [Tarantool::ping](#tarantoolping).
+
 ### Tarantool::disconnect
 
 ``` php
@@ -260,7 +262,8 @@ _**Return value**_: **BOOL**: True
 public bool Tarantool::ping ( void )
 ```
 
-_**Description**_: Ping the Tarantool server.
+_**Description**_: Ping the Tarantool server. Using `ping` is also the
+recommended way to initiate and/or test a connection.
 
 _**Return value**_: **BOOL**: True and raises `Exception` on error.
 
