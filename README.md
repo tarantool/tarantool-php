@@ -226,6 +226,10 @@ $tnt = new Tarantool('localhost', 16847);
 
 ## Connection manipulations
 
+Notice that `Tarantool::connect`, `Tarantool::open` (an alias for `connect`) and
+`Tarantool::reconnect` are deprecated as any other connection-related
+instructions now cause an automatic connect.
+
 ### Tarantool::disconnect
 
 ``` php
@@ -235,6 +239,7 @@ public bool Tarantool::disconnect ( void )
 _**Description**_: Explicitly close a connection to the Tarantool server.
 If persistent connections are in use, then the connection will be saved in 
 the connection pool.
+You can also use an alias for this method, `Tarantool::close`.
 
 _**Return value**_: **BOOL**: True
 
@@ -623,7 +628,8 @@ $tnt->upsert("test", array(124, 10, "new tuple"), array(
 * Global constants, e.g. `TARANTOOL_ITER_<name>`;
 * `Tarantool::authenticate` method, please provide credentials in the
   constructor instead;
-* `Tarantool::connect` method, since any other connection-related instructions
+* `Tarantool::connect`, `Tarantool::open` (an alias for `connect`) and
+  `Tarantool::reconnect` methods as any other connection-related instructions 
   now cause an automatic connect;
 * `Tarantool::eval` method, please use the `evaluate` method instead;
 * `Tarantool::flush_schema` method, deprecated in favor of `flushSchema`;
