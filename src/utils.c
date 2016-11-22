@@ -43,7 +43,7 @@ const char *tutils_op_to_string(zval *obj) {
 void tutils_hexdump_base (FILE *ostream, char *desc, const char *addr, size_t len) {
 	size_t i;
 	unsigned char buff[17];
-	const unsigned char *pc = addr;
+	const unsigned char *pc = (const unsigned char *)addr;
 
 	if (desc != NULL) {
 		fprintf(ostream, "%s:\n", desc);
@@ -52,7 +52,7 @@ void tutils_hexdump_base (FILE *ostream, char *desc, const char *addr, size_t le
 	for (i = 0; i < len; i++) {
 		if (i % 16 == 0) {
 			if (i != 0) fprintf(ostream, "  %s\n", buff);
-			fprintf(ostream, "  %04x ", i);
+			fprintf(ostream, "  %04zx ", i);
 		}
 
 		fprintf(ostream, " %02x", *pc);

@@ -96,6 +96,9 @@ def main():
             elif '--strace' in sys.argv:
                 cmd = cmd + 'strace ' + find_php_bin()
                 cmd = cmd + ' -c tarantool.ini {0}'.format(test_lib_path)
+            elif '--dtruss' in sys.argv:
+                cmd = cmd + 'sudo dtruss ' + find_php_bin()
+                cmd = cmd + ' -c tarantool.ini {0}'.format(test_lib_path)
             else:
                 print find_php_bin()
                 cmd = '{0} -c tarantool.ini {1}'.format(find_php_bin(), test_lib_path)

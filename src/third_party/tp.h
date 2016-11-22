@@ -4,10 +4,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <stdarg.h>
+
 #include "msgpuck.h"
 #include "sha1.h"
-#include "base64_tp.h"
-#include <stdarg.h>
+
+#include <ext/standard/base64.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -1310,11 +1312,13 @@ tp_auth(struct tp *p, const char *salt_base64, const char *user, int ulen, const
 		h = mp_encode_array(h, 2);
 		h = mp_encode_str(h, 0, 0);
 
-		char salt[64];
-		base64_tp_decode(salt_base64, 44, salt, 64);
+		// char salt[64];
+		zend_string *salt = NULL;
+		salt = php_base64_decode((unsigned char *)salt_base64, 44);
 		char scramble[SCRAMBLE_SIZE];
-		tp_scramble_prepare(scramble, salt, pass, plen);
+		tp_scramble_prepare(scramble, salt->val, pass, plen);
 		h = mp_encode_str(h, scramble, SCRAMBLE_SIZE);
+		zend_string_release(salt);
 	} else {
 		h = mp_encode_array(h, 0);
 	}

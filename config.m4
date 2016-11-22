@@ -14,7 +14,6 @@ if test "$PHP_TARANTOOL" != "no"; then
         src/utils.c                 \
         src/third_party/msgpuck.c   \
         src/third_party/sha1.c      \
-        src/third_party/base64_tp.c \
         src/third_party/PMurHash.c  \
         , $ext_shared)
     PHP_ADD_BUILD_DIR([$ext_builddir/src/])
