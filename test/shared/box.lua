@@ -1,9 +1,13 @@
 #!/usr/bin/env tarantool
 
 local os   = require('os')
+local fio  = require('fio')
 local fun  = require('fun')
 local log  = require('log')
 local json = require('json')
+local yaml = require('yaml')
+
+log.info(fio.cwd())
 
 require('console').listen(os.getenv('ADMIN_PORT'))
 box.cfg{
@@ -72,6 +76,10 @@ box.once('initialization', function()
     space:create_index('primary', {
         parts = {1, 'STR'}
     })
+    local yml = io.open(fio.pathjoin(fio.cwd(), "../test/shared/queue.yml")):read("*a")
+    local tuple = yaml.decode(yml)[1]
+    tuple[1] = "12345"
+    box.space._schema:insert(tuple)
 end)
 
 function test_1()

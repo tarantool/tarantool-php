@@ -39,4 +39,7 @@ class RandomTest extends PHPUnit_Framework_TestCase
 				$this->assertEquals($i, count($result));
 			}
 		}
+		public function test_04_get_strange_response() {
+			print_r(self::$tarantool->select("_schema", "12345"));
+		}
 }
