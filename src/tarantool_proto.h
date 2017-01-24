@@ -7,6 +7,8 @@
 #define GREETING_SIZE    128
 #define SALT_PREFIX_SIZE 64
 
+#define GREETING_PROTOCOL_LEN_MAX 32
+
 #define SPACE_SPACE 281
 #define SPACE_INDEX 289
 
@@ -16,6 +18,36 @@
 #include <stdint.h>
 
 #include <php_tarantool.h>
+
+/**
+ * Pack version into uint32_t.
+ * The highest byte or result means major version, next - minor,
+ * middle - patch, last - revision.
+ */
+static inline uint32_t
+version_id(unsigned major, unsigned minor, unsigned patch)
+{
+	return (((major << 8) | minor) << 8) | patch;
+}
+
+static inline unsigned
+version_id_major(uint32_t version_id)
+{
+	return (version_id >> 16) & 0xff;
+}
+
+static inline unsigned
+version_id_minor(uint32_t version_id)
+{
+	return (version_id >> 8) & 0xff;
+}
+
+static inline unsigned
+version_id_patch(uint32_t version_id)
+{
+	return version_id & 0xff;
+}
+
 
 /* header */
 enum tnt_header_key_t {
@@ -121,5 +153,7 @@ void php_tp_encode_usplice(smart_string *str, uint32_t fieldno,
 void php_tp_reencode_length(smart_string *str, char *sz);
 
 int convert_iter_str(const char *i, size_t i_len);
+
+uint32_t php_tp_verify_greetings(char *greetingbuf);
 
 #endif /* PHP_TNT_PROTO_H */

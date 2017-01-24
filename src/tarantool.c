@@ -287,10 +287,15 @@ retry:
 				       GREETING_SIZE) == -1) {
 			continue;
 		}
+		if (php_tp_verify_greetings(obj->greeting) == 0) {
+			spprintf(&err, 0, "Bad greetings");
+			goto ioexception;
+		}
 		++count;
 		break;
 	}
 	if (count == 0) {
+ioexception:
 		tarantool_throw_ioexception("%s", err);
 		efree(err);
 		return FAILURE;

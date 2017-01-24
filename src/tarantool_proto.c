@@ -15,7 +15,7 @@ static size_t php_tp_sizeof_header(uint32_t request, uint32_t sync) {
 }
 
 static char *php_tp_pack_header(smart_string *str, size_t size,
-				      uint32_t request, uint32_t sync) {
+				uint32_t request, uint32_t sync) {
 	char *sz = SSTR_POS(str);
 	php_mp_pack_package_size(str, size);
 	php_mp_pack_hash(str, 2);
@@ -432,4 +432,32 @@ int convert_iter_str(const char *i, size_t i_len) {
 		break;
 	};
 	return -1;
+}
+
+uint32_t php_tp_verify_greetings(char *greetingbuf) {
+	/* Check basic structure - magic string and \n delimiters */
+	if (memcmp(greetingbuf, "Tarantool ", strlen("Tarantool ")) != 0 ||
+		   greetingbuf[GREETING_SIZE / 2 - 1] != '\n' ||
+		   greetingbuf[GREETING_SIZE     - 1] != '\n')
+		return 0;
+
+	int h = GREETING_SIZE / 2;
+	const char *pos = greetingbuf + strlen("Tarantool ");
+	const char *end = greetingbuf + h;
+
+	/* Extract a version string - a string until ' ' */
+	char version[20];
+	const char *vend = (const char *) memchr(pos, ' ', end - pos);
+	if (vend == NULL || (size_t)(vend - pos) >= sizeof(version))
+		return 0;
+	memcpy(version, pos, vend - pos);
+	version[vend - pos] = '\0';
+	pos = vend + 1;
+	for (; pos < end && *pos == ' '; ++pos); /* skip spaces */
+
+	/* Parse a version string - 1.6.6-83-gc6b2129 or 1.6.7 */
+	unsigned major, minor, patch;
+	if (sscanf(version, "%u.%u.%u", &major, &minor, &patch) != 3)
+		return 0;
+	return version_id(major, minor, patch);
 }
