@@ -27,7 +27,7 @@ int  tntll_stream_read (php_stream *stream, char *buf, size_t size);
 /*
  * Read size bytes exactly (if not error)
  */
-int  tntll_stream_read2(php_stream *stream, char *buf, size_t size);
+size_t tntll_stream_read2(php_stream *stream, char *buf, size_t size);
 int  tntll_stream_send (php_stream *stream, char *buf, size_t size);
 
 #endif /* PHP_TNT_NETWORK_H */

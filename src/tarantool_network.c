@@ -119,7 +119,7 @@ error:
  * Legacy rtsisyk code, php_stream_read made right
  * See https://bugs.launchpad.net/tarantool/+bug/1182474
  */
-int tntll_stream_read2(php_stream *stream, char *buf, size_t size) {
+size_t tntll_stream_read2(php_stream *stream, char *buf, size_t size) {
 	TSRMLS_FETCH();
 	size_t total_size = 0;
 	size_t read_size = 0;

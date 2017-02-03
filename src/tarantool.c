@@ -14,7 +14,8 @@
 
 #include "utils.h"
 
-int __tarantool_authenticate(tarantool_connection *obj);
+static int __tarantool_authenticate(tarantool_connection *obj);
+static void tarantool_stream_close(tarantool_connection *obj);
 
 double
 now_gettimeofday(void)
@@ -128,11 +129,12 @@ PHP_INI_END()
 ZEND_GET_MODULE(tarantool)
 #endif
 
-static int
+inline static int
 tarantool_stream_send(tarantool_connection *obj TSRMLS_DC) {
 	int rv = tntll_stream_send(obj->stream, SSTR_BEG(obj->value),
 				   SSTR_LEN(obj->value));
 	if (rv < 0) {
+		tarantool_stream_close(obj);
 		tarantool_throw_ioexception("Failed to send message");
 		return FAILURE;
 	}
@@ -218,10 +220,11 @@ static zend_string *pid_pzsgen(const char *host, int port, const char *login,
  * Legacy rtsisyk code, php_stream_read made right
  * See https://bugs.launchpad.net/tarantool/+bug/1182474
  */
-static size_t
+inline static int
 tarantool_stream_read(tarantool_connection *obj, char *buf, size_t size) {
 	size_t got = tntll_stream_read2(obj->stream, buf, size);
 	if (got != size) {
+		tarantool_stream_close(obj);
 		tarantool_throw_ioexception("Failed to read %ld bytes", size);
 		return FAILURE;
 	}
@@ -240,7 +243,7 @@ tarantool_stream_close(tarantool_connection *obj) {
 	}
 }
 
-int __tarantool_connect(tarantool_object *t_obj) {
+static int __tarantool_connect(tarantool_object *t_obj) {
 	TSRMLS_FETCH();
 	tarantool_connection *obj = t_obj->obj;
 	int status = SUCCESS;
@@ -284,7 +287,7 @@ retry:
 			continue;
 		}
 		if (tntll_stream_read2(obj->stream, obj->greeting,
-				       GREETING_SIZE) == -1) {
+				       GREETING_SIZE) != GREETING_SIZE) {
 			continue;
 		}
 		if (php_tp_verify_greetings(obj->greeting) == 0) {
@@ -306,7 +309,7 @@ ioexception:
 	return status;
 }
 
-int __tarantool_reconnect(tarantool_object *t_obj) {
+inline static int __tarantool_reconnect(tarantool_object *t_obj) {
 	tarantool_stream_close(t_obj->obj);
 	return __tarantool_connect(t_obj);
 }
@@ -391,20 +394,16 @@ static zend_object *tarantool_create(zend_class_entry *entry) {
 	return &obj->zo;
 }
 
-static int64_t tarantool_step_recv(
+static int tarantool_step_recv(
 		tarantool_connection *obj,
 		unsigned long sync,
 		zval *header,
 		zval *body) {
 	char pack_len[5] = {0, 0, 0, 0, 0};
 	if (tarantool_stream_read(obj, pack_len, 5) == FAILURE) {
-		header = NULL;
-		body = NULL;
-		goto error_con;
+		goto error;
 	}
 	if (php_mp_check(pack_len, 5)) {
-		header = NULL;
-		body = NULL;
 		tarantool_throw_parsingexception("package length");
 		goto error_con;
 	}
@@ -412,33 +411,25 @@ static int64_t tarantool_step_recv(
 	smart_string_ensure(obj->value, body_size);
 	if (tarantool_stream_read(obj, SSTR_POS(obj->value),
 				  body_size) == FAILURE) {
-		header = NULL;
-		body = NULL;
 		goto error;
 	}
 	SSTR_LEN(obj->value) += body_size;
 
 	char *pos = SSTR_BEG(obj->value);
 	if (php_mp_check(pos, body_size)) {
-		header = NULL;
-		body = NULL;
 		tarantool_throw_parsingexception("package header");
-		goto error;
+		goto error_con;
 	}
 	if (php_mp_unpack(header, &pos) == FAILURE ||
 	    Z_TYPE_P(header) != IS_ARRAY) {
-		header = NULL;
-		body = NULL;
-		goto error;
+		goto error_con;
 	}
 	if (php_mp_check(pos, body_size)) {
-		body = NULL;
 		tarantool_throw_parsingexception("package body");
 		goto error_con;
 	}
 	if (php_mp_unpack(body, &pos) == FAILURE) {
-		body = NULL;
-		goto error;
+		goto error_con;
 	}
 
 	HashTable *hash = HASH_OF(header);
@@ -488,7 +479,6 @@ static int64_t tarantool_step_recv(
 	tarantool_throw_exception("Failed to retrieve answer code");
 error_con:
 	tarantool_stream_close(obj);
-	obj->stream = NULL;
 error:
 	if (header) zval_ptr_dtor(header);
 	if (body) zval_ptr_dtor(body);
@@ -1174,7 +1164,7 @@ PHP_METHOD(Tarantool, reconnect) {
 	RETURN_TRUE;
 }
 
-int __tarantool_authenticate(tarantool_connection *obj) {
+static int __tarantool_authenticate(tarantool_connection *obj) {
 	TSRMLS_FETCH();
 
 	tarantool_schema_flush(obj->schema);
