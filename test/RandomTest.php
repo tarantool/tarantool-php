@@ -28,7 +28,7 @@ class RandomTest extends PHPUnit_Framework_TestCase
 		}
 
 		public function test_02_very_big_response() {
-			$request = "do return '" . str_repeat('x', 1024 * 1024 * 10) . "' end";
+			$request = "do return '" . str_repeat('x', 1024 * 1024 * 1) . "' end";
 			self::$tarantool->evaluate($request);
 			$this->assertTrue(True);
 		}
@@ -40,6 +40,6 @@ class RandomTest extends PHPUnit_Framework_TestCase
 			}
 		}
 		public function test_04_get_strange_response() {
-			print_r(self::$tarantool->select("_schema", "12345"));
+			self::$tarantool->select("_schema", "12345");
 		}
 }

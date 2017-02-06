@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -23,21 +24,23 @@ void double_to_ts(double tm, struct timespec *ts) {
 /* `pid` means persistent_id */
 // void tntll_stream_close(php_stream *stream, const char *pid) {
 void tntll_stream_close(php_stream *stream, zend_string *pid) {
-	TSRMLS_FETCH();
 	int rv = PHP_STREAM_PERSISTENT_SUCCESS;
-	if (stream == NULL)
+	if (stream == NULL) {
 		rv = tntll_stream_fpid2(pid, &stream);
-	int flags = PHP_STREAM_FREE_CLOSE;
-	if (pid)
-		flags = PHP_STREAM_FREE_CLOSE_PERSISTENT;
-	if (rv == PHP_STREAM_PERSISTENT_SUCCESS && stream) {
-		php_stream_free(stream, flags);
+	}
+	if (rv == PHP_STREAM_PERSISTENT_SUCCESS && stream != NULL) {
+		if (pid) {
+			php_stream_free(stream, PHP_STREAM_FREE_CLOSE_PERSISTENT);
+		} else {
+			php_stream_close(stream);
+		}
 	}
 }
 
 int tntll_stream_fpid2(zend_string *pid, php_stream **ostream) {
 	TSRMLS_FETCH();
 	return php_stream_from_persistent_id(pid->val, ostream TSRMLS_CC);
+	return rv;
 }
 
 int tntll_stream_fpid(const char *host, int port, zend_string *pid,
@@ -93,7 +96,7 @@ int tntll_stream_open(const char *host, int port, zend_string *pid,
 	// printf("request_timeout:  'sec(%d), usec(%d)'\n",
 	//        (int )tv.tv_sec, (int )tv.tv_usec);
 
-	if (tv.tv_sec != 0 && tv.tv_usec != 0) {
+	if (tv.tv_sec != 0 || tv.tv_usec != 0) {
 		php_stream_set_option(stream, PHP_STREAM_OPTION_READ_TIMEOUT,
 				      0, &tv);
 	}
@@ -111,9 +114,11 @@ int tntll_stream_open(const char *host, int port, zend_string *pid,
 	return 0;
 error:
 	if (errstr) zend_string_release(errstr);
-	if (stream) tntll_stream_close(stream, pid);
+	if (stream) tntll_stream_close(NULL, pid);
 	return -1;
 }
+
+#include <sys/time.h>
 
 /*
  * Legacy rtsisyk code, php_stream_read made right
@@ -122,7 +127,7 @@ error:
 size_t tntll_stream_read2(php_stream *stream, char *buf, size_t size) {
 	TSRMLS_FETCH();
 	size_t total_size = 0;
-	size_t read_size = 0;
+	ssize_t read_size = 0;
 
 	while (total_size < size) {
 		read_size = php_stream_read(stream, buf + total_size,
@@ -132,7 +137,15 @@ size_t tntll_stream_read2(php_stream *stream, char *buf, size_t size) {
 			break;
 		total_size += read_size;
 	}
+
 	return total_size;
+}
+
+bool tntll_stream_is_timedout() {
+	int err = php_socket_errno();
+	if (err == EAGAIN || err == EWOULDBLOCK || err == EINPROGRESS)
+		return 1;
+	return 0;
 }
 
 int tntll_stream_read(php_stream *stream, char *buf, size_t size) {

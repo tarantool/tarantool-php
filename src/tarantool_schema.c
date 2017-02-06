@@ -4,6 +4,7 @@
 #include <inttypes.h>
 #include <assert.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "php_tarantool.h"
 #include "tarantool_schema.h"

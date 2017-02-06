@@ -111,16 +111,16 @@ PHP_INI_BEGIN()
 	STD_PHP_INI_BOOLEAN("tarantool.connection_alias", "0", PHP_INI_SYSTEM,
 			    OnUpdateBool, connection_alias,
 			    zend_tarantool_globals, tarantool_globals)
-	STD_PHP_INI_ENTRY("tarantool.timeout", "10.0", PHP_INI_ALL,
+	STD_PHP_INI_ENTRY("tarantool.timeout", "3600.0", PHP_INI_ALL,
 			  OnUpdateReal, timeout, zend_tarantool_globals,
 			  tarantool_globals)
-	STD_PHP_INI_ENTRY("tarantool.request_timeout", "10.0", PHP_INI_ALL,
+	STD_PHP_INI_ENTRY("tarantool.request_timeout", "3600.0", PHP_INI_ALL,
 			  OnUpdateReal, request_timeout, zend_tarantool_globals,
 			  tarantool_globals)
 	STD_PHP_INI_ENTRY("tarantool.retry_count", "1", PHP_INI_ALL,
 			  OnUpdateLong, retry_count, zend_tarantool_globals,
 			  tarantool_globals)
-	STD_PHP_INI_ENTRY("tarantool.retry_sleep", "0.1", PHP_INI_ALL,
+	STD_PHP_INI_ENTRY("tarantool.retry_sleep", "10", PHP_INI_ALL,
 			  OnUpdateReal, retry_sleep, zend_tarantool_globals,
 			  tarantool_globals)
 PHP_INI_END()
@@ -223,9 +223,14 @@ static zend_string *pid_pzsgen(const char *host, int port, const char *login,
 inline static int
 tarantool_stream_read(tarantool_connection *obj, char *buf, size_t size) {
 	size_t got = tntll_stream_read2(obj->stream, buf, size);
+	const char *suffix = "";
+	if (got == 0 && tntll_stream_is_timedout())
+		suffix = " (request timeout reached)";
+	char errno_suffix[256] = {0};
 	if (got != size) {
+		tarantool_throw_ioexception("Failed to read %ld bytes %s",
+					    size, suffix);
 		tarantool_stream_close(obj);
-		tarantool_throw_ioexception("Failed to read %ld bytes", size);
 		return FAILURE;
 	}
 	return SUCCESS;
@@ -233,9 +238,8 @@ tarantool_stream_read(tarantool_connection *obj, char *buf, size_t size) {
 
 static void
 tarantool_stream_close(tarantool_connection *obj) {
-	if (obj->stream || obj->persistent_id) {
+	if (obj->stream || obj->persistent_id)
 		tntll_stream_close(obj->stream, obj->persistent_id);
-	}
 	obj->stream = NULL;
 	if (obj->persistent_id != NULL) {
 		zend_string_release(obj->persistent_id);
@@ -281,11 +285,9 @@ retry:
 							obj->suffix_len);
 
 		}
-		if (tntll_stream_open(obj->host, obj->port,
-				      obj->persistent_id,
-				      &obj->stream, &err) == -1) {
+		if (tntll_stream_open(obj->host, obj->port, obj->persistent_id,
+				      &obj->stream, &err) == -1)
 			continue;
-		}
 		if (tntll_stream_read2(obj->stream, obj->greeting,
 				       GREETING_SIZE) != GREETING_SIZE) {
 			continue;
@@ -299,6 +301,7 @@ retry:
 	}
 	if (count == 0) {
 ioexception:
+		// raise (SIGABRT);
 		tarantool_throw_ioexception("%s", err);
 		efree(err);
 		return FAILURE;
@@ -401,9 +404,13 @@ static int tarantool_step_recv(
 		zval *body) {
 	char pack_len[5] = {0, 0, 0, 0, 0};
 	if (tarantool_stream_read(obj, pack_len, 5) == FAILURE) {
-		goto error;
+		header = NULL;
+		body   = NULL;
+		goto error_con;
 	}
 	if (php_mp_check(pack_len, 5)) {
+		header = NULL;
+		body   = NULL;
 		tarantool_throw_parsingexception("package length");
 		goto error_con;
 	}
@@ -411,24 +418,34 @@ static int tarantool_step_recv(
 	smart_string_ensure(obj->value, body_size);
 	if (tarantool_stream_read(obj, SSTR_POS(obj->value),
 				  body_size) == FAILURE) {
-		goto error;
+		header = NULL;
+		body   = NULL;
+		goto error_con;
 	}
 	SSTR_LEN(obj->value) += body_size;
 
 	char *pos = SSTR_BEG(obj->value);
 	if (php_mp_check(pos, body_size)) {
+		header = NULL;
+		body   = NULL;
 		tarantool_throw_parsingexception("package header");
 		goto error_con;
 	}
 	if (php_mp_unpack(header, &pos) == FAILURE ||
 	    Z_TYPE_P(header) != IS_ARRAY) {
+		header = NULL;
+		body   = NULL;
 		goto error_con;
 	}
 	if (php_mp_check(pos, body_size)) {
+		header = NULL;
+		body   = NULL;
 		tarantool_throw_parsingexception("package body");
 		goto error_con;
 	}
 	if (php_mp_unpack(body, &pos) == FAILURE) {
+		header = NULL;
+		body   = NULL;
 		goto error_con;
 	}
 
@@ -466,7 +483,7 @@ static int tarantool_step_recv(
 						"Bad error field type. Expected"
 						" STRING, got %s",
 						tutils_op_to_string(z_error_str));
-				goto error;
+				goto error_con;
 			}
 		} else {
 			error_str = "empty";
@@ -941,9 +958,9 @@ PHP_RINIT_FUNCTION(tarantool) {
 static void php_tarantool_init_globals(zend_tarantool_globals *tarantool_globals) {
 	tarantool_globals->sync_counter    = 0;
 	tarantool_globals->retry_count     = 1;
-	tarantool_globals->retry_sleep     = 0.1;
-	tarantool_globals->timeout         = 1.0;
-	tarantool_globals->request_timeout = 10.0;
+	tarantool_globals->retry_sleep     = 10;
+	tarantool_globals->timeout         = 3600.0;
+	tarantool_globals->request_timeout = 3600.0;
 }
 
 static void tarantool_destructor_connection(zend_resource *rsrc TSRMLS_DC) {

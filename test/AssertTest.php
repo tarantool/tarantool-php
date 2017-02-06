@@ -22,18 +22,20 @@ class AssertTest extends PHPUnit_Framework_TestCase
 
 	public function test_00_timedout() {
 		self::$tarantool->eval("
-			function assertf()
-				require('fiber').sleep(1)
+			function assert_f()
+				os.execute('sleep 1')
 				return 0
 			end");
 		try {
-			self::$tarantool->call("assertf");
+			$result = self::$tarantool->call("assert_f");
 			$this->assertFalse(True);
 		} catch (TarantoolException $e) {
+			// print($e->getMessage());
 			$this->assertContains("Failed to read", $e->getMessage());
 		}
 
 		/* We can reconnect and everything will be ok */
+		self::$tarantool->close();
 		self::$tarantool->select("test");
 	}
 
