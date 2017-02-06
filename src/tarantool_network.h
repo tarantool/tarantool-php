@@ -30,4 +30,6 @@ int  tntll_stream_read (php_stream *stream, char *buf, size_t size);
 size_t tntll_stream_read2(php_stream *stream, char *buf, size_t size);
 int  tntll_stream_send (php_stream *stream, char *buf, size_t size);
 
+bool tntll_stream_is_timedout();
+
 #endif /* PHP_TNT_NETWORK_H */

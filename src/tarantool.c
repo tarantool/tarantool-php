@@ -223,9 +223,24 @@ static zend_string *pid_pzsgen(const char *host, int port, const char *login,
 inline static int
 tarantool_stream_read(tarantool_connection *obj, char *buf, size_t size) {
 	size_t got = tntll_stream_read2(obj->stream, buf, size);
+	const char *suffix = "";
+	if (got == 0 && tntll_stream_is_timedout()) {
+		suffix = " (request timeout reached)";
+	}
+	char errno_suffix[256] = {0};
 	if (got != size) {
+		if (strlen(suffix) == 0) {
+			int errn = php_socket_errno();
+			if (errn != 0) {
+				snprintf(errno_suffix, 256, " ([errno %d] %s)",
+					 errn, strerror(errn));
+				suffix = errno_suffix;
+			}
+		}
+		printf("suffix: %s\n", suffix);
+		tarantool_throw_ioexception("Failed to read %ld bytes %s",
+					    size, suffix);
 		tarantool_stream_close(obj);
-		tarantool_throw_ioexception("Failed to read %ld bytes", size);
 		return FAILURE;
 	}
 	return SUCCESS;
@@ -401,9 +416,13 @@ static int tarantool_step_recv(
 		zval *body) {
 	char pack_len[5] = {0, 0, 0, 0, 0};
 	if (tarantool_stream_read(obj, pack_len, 5) == FAILURE) {
-		goto error;
+		header = NULL;
+		body   = NULL;
+		goto error_con;
 	}
 	if (php_mp_check(pack_len, 5)) {
+		header = NULL;
+		body   = NULL;
 		tarantool_throw_parsingexception("package length");
 		goto error_con;
 	}
@@ -411,24 +430,34 @@ static int tarantool_step_recv(
 	smart_string_ensure(obj->value, body_size);
 	if (tarantool_stream_read(obj, SSTR_POS(obj->value),
 				  body_size) == FAILURE) {
+		header = NULL;
+		body   = NULL;
 		goto error;
 	}
 	SSTR_LEN(obj->value) += body_size;
 
 	char *pos = SSTR_BEG(obj->value);
 	if (php_mp_check(pos, body_size)) {
+		header = NULL;
+		body   = NULL;
 		tarantool_throw_parsingexception("package header");
 		goto error_con;
 	}
 	if (php_mp_unpack(header, &pos) == FAILURE ||
 	    Z_TYPE_P(header) != IS_ARRAY) {
+		header = NULL;
+		body   = NULL;
 		goto error_con;
 	}
 	if (php_mp_check(pos, body_size)) {
+		header = NULL;
+		body   = NULL;
 		tarantool_throw_parsingexception("package body");
 		goto error_con;
 	}
 	if (php_mp_unpack(body, &pos) == FAILURE) {
+		header = NULL;
+		body   = NULL;
 		goto error_con;
 	}
 

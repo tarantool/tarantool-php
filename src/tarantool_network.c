@@ -90,8 +90,8 @@ int tntll_stream_open(const char *host, int port, zend_string *pid,
 
 	/* Set READ_TIMEOUT */
 	double_to_tv(TARANTOOL_G(request_timeout), &tv);
-	// printf("request_timeout:  'sec(%d), usec(%d)'\n",
-	//        (int )tv.tv_sec, (int )tv.tv_usec);
+	printf("request_timeout:  'sec(%d), usec(%d)'\n",
+	       (int )tv.tv_sec, (int )tv.tv_usec);
 
 	if (tv.tv_sec != 0 && tv.tv_usec != 0) {
 		php_stream_set_option(stream, PHP_STREAM_OPTION_READ_TIMEOUT,
@@ -115,6 +115,8 @@ error:
 	return -1;
 }
 
+#include <sys/time.h>
+
 /*
  * Legacy rtsisyk code, php_stream_read made right
  * See https://bugs.launchpad.net/tarantool/+bug/1182474
@@ -122,18 +124,50 @@ error:
 size_t tntll_stream_read2(php_stream *stream, char *buf, size_t size) {
 	TSRMLS_FETCH();
 	size_t total_size = 0;
-	size_t read_size = 0;
+	ssize_t read_size = 0;
+
+	struct timespec tsb, tsa;
+	clock_gettime(CLOCK_REALTIME, &tsb);
+	tsb.tv_nsec /= 1000;
+	printf("-----------------------------------------------------------\n");
+	printf("inside  tntll_stream_read2 (sec(%ld), nsec(%ld))\n",
+	       tsb.tv_sec, tsb.tv_nsec);
 
 	while (total_size < size) {
 		read_size = php_stream_read(stream, buf + total_size,
 					    size - total_size);
 		assert(read_size + total_size <= size);
-		if (read_size <= 0)
+		printf("read_size %zu\n", read_size);
+		if (read_size <= 0) {
+			printf("read <= 0, exiting\n");
 			break;
+		}
 		total_size += read_size;
 	}
+
+	clock_gettime(CLOCK_REALTIME, &tsa);
+	printf("outside tntll_stream_read2 (sec(%ld), nsec(%ld))\n",
+	       tsa.tv_sec, tsa.tv_nsec);
+	tsa.tv_nsec /= 1000;
+	tsa.tv_sec -= tsb.tv_sec;
+	if (tsa.tv_nsec < tsb.tv_nsec) {
+		tsa.tv_sec  -= 1;
+		tsa.tv_nsec += pow(10, 6);
+	}
+	tsa.tv_nsec -= tsb.tv_nsec;
+	printf("Overall:                    sec(%ld) nsec(%ld)\n",
+	       tsa.tv_sec, tsa.tv_nsec);
+
 	return total_size;
 }
+
+bool tntll_stream_is_timedout() {
+	int err = php_socket_errno();
+	if (err == EAGAIN || err == EWOULDBLOCK)
+		return 1;
+	return 0;
+}
+
 
 int tntll_stream_read(php_stream *stream, char *buf, size_t size) {
 	TSRMLS_FETCH();

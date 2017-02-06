@@ -7,7 +7,9 @@ class CreateTest extends PHPUnit_Framework_TestCase
 		public static function setUpBeforeClass() {
 			self::$port = getenv('PRIMARY_PORT');
 			self::$tm = ini_get("tarantool.timeout");
+			// error_log("before setting tarantool timeout");
 			ini_set("tarantool.timeout", "0.1");
+			// error_log("after setting tarantool timeout");
 		}
 
 		public static function tearDownAfterClass() {
