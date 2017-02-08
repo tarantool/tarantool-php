@@ -40,7 +40,6 @@ void tntll_stream_close(php_stream *stream, zend_string *pid) {
 int tntll_stream_fpid2(zend_string *pid, php_stream **ostream) {
 	TSRMLS_FETCH();
 	return php_stream_from_persistent_id(pid->val, ostream TSRMLS_CC);
-	return rv;
 }
 
 int tntll_stream_fpid(const char *host, int port, zend_string *pid,
