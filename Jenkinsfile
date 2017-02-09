@@ -2,13 +2,10 @@ matrix = [
     [OS: 'el', DIST: '6', PACK: 'rpm'],
     //[OS: 'el', DIST: '7', PACK: 'rpm'],
     [OS: 'fedora', DIST: '24', PACK: 'rpm'],
-    [OS: 'fedora', DIST: 'rawhide', PACK: 'rpm'],
     [OS: 'ubuntu', DIST: 'precise', PACK: 'deb'],
     [OS: 'ubuntu', DIST: 'trusty', PACK: 'deb'],
-    [OS: 'ubuntu', DIST: 'xenial', PACK: 'deb'],
     [OS: 'ubuntu', DIST: 'yakkety', PACK: 'deb'],
     [OS: 'debian', DIST: 'jessie', PACK: 'deb'],
-    [OS: 'debian', DIST: 'stretch', PACK: 'deb'],
 ]
 
 stage('Build'){
