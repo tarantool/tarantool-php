@@ -19,7 +19,7 @@
 
 #if PHP_VERSION_ID >= 70200
 #  include <Zend/zend_smart_string.h>
-#  define smart_string_alloc4(d, n, what, newlen) smart_string_alloc(d, n, what)
+#  define smart_string_alloc4(d, n, what, newlen) newlen = smart_string_alloc(d, n, what)
 #elif PHP_VERSION_ID >= 70000
 #  include <ext/standard/php_smart_string.h>
 #else
