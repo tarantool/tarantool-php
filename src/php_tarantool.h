@@ -79,6 +79,7 @@ PHP_METHOD(Tarantool, delete);
 PHP_METHOD(Tarantool, update);
 PHP_METHOD(Tarantool, upsert);
 PHP_METHOD(Tarantool, flush_schema);
+PHP_METHOD(Tarantool, close_all);
 
 ZEND_BEGIN_MODULE_GLOBALS(tarantool)
 	zend_bool persistent;

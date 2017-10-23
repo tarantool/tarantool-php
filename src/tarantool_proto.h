@@ -17,7 +17,7 @@
 
 #include <stdint.h>
 
-#include <php_tarantool.h>
+#include "php_tarantool.h"
 
 /**
  * Pack version into uint32_t.
