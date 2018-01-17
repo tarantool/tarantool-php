@@ -178,9 +178,9 @@ Tarantool {
      public bool Tarantool::disconnect ( void )
      public bool Tarantool::flushSchema ( void )
      public bool Tarantool::ping ( void )
-     public array Tarantool::select (mixed $space [, mixed $key = 
-array() [, mixed $index = 0 [, int $limit = PHP_INT_MAX [, int $offset = 
-0 [, $iterator = Tarantool::ITERATOR_EQ ] ] ] ] ] )
+     public array Tarantool::select (mixed $space [, mixed $key = []
+[, mixed $index = 0 [, int $limit = PHP_INT_MAX [, int $offset = 0
+[, $iterator = Tarantool::ITERATOR_EQ ] ] ] ] ] )
      public array Tarantool::insert (mixed $space, array $tuple)
      public array Tarantool::replace (mixed $space, array $tuple)
      public array Tarantool::call (string $procedure [, mixed args] )
@@ -272,9 +272,9 @@ _**Return value**_: **BOOL**: True and raises `Exception` on error.
 ### Tarantool::select
 
 ``` php
-public array Tarantool::select(mixed $space [, mixed $key = array() [, 
-mixed $index = 0 [, int $limit = PHP_INT_MAX [, int $offset = 0 [, 
-$iterator = Tarantool::ITERATOR_EQ ] ] ] ] ] )
+public array Tarantool::select(mixed $space [, mixed $key = [] 
+[, mixed $index = 0 [, int $limit = PHP_INT_MAX [, int $offset = 0 
+[, $iterator = Tarantool::ITERATOR_EQ ] ] ] ] ] )
 ```
 
 _**Description**_: Execute a select query on the Tarantool server.
@@ -282,7 +282,7 @@ _**Description**_: Execute a select query on the Tarantool server.
 _**Parameters**_:
 
 * `space`: String/Number, Space ID to select from (mandatory);
-* `key`: String/Number or Array, key to select (default: `Array()` i.e.
+* `key`: String/Number or Array, key to select (default: `[]` i.e.
    an empty array which selects everything in the space);
 * `index`: String/Number, Index ID to select from (default: 0);
 * `limit`: Number, the maximum number of tuples to return (default: INT_MAX,
@@ -310,10 +310,10 @@ $tnt->select("test");
 // Selects from space 'test' by primary key with id == 1
 $tnt->select("test", 1);
 // Same effect as the previous statement
-$tnt->select("test", array(1));
+$tnt->select("test", [1]);
 // Selects from space 'test' by secondary key from index 'isec' and == 
 {1, 'hello'}
-$tnt->select("test", array(1, "hello"), "isec");
+$tnt->select("test", [1, "hello"], "isec");
 // Selects 100 tuples from space 'test' after skipping 100 tuples
 $tnt->select("test", null, null, 100, 100);
 // Selects 100 tuples from space 'test' after skipping 100 tuples,
@@ -347,12 +347,12 @@ _**Return value**_:
 
 ``` php
 // This will succeed, because no tuples with primary key == 1 are in space 'test'.
-$tnt->insert("test", array(1, 2, "something"));
+$tnt->insert("test", [1, 2, "something"]);
 // This will fail, because we have just inserted a tuple with primary key == 1.
 // The error will be ER_TUPLE_FOUND.
-$tnt->insert("test", array(1, 3, "something completely different"));
+$tnt->insert("test", [1, 3, "something completely different"]);
 // This will succeed, because Replace has no problem with duplicate keys.
-$tnt->replace("test", array(1, 3, "something completely different"));
+$tnt->replace("test", [1, 3, "something completely different"]);
 ```
 
 ### Tarantool::call
@@ -378,7 +378,7 @@ _**Return value**_:
 
 ``` php
 $tnt->call("test_2");
-$tnt->call("test_3", array(3, 4));
+$tnt->call("test_3", [3, 4]);
 ```
 
 ### Tarantool::evaluate
@@ -404,7 +404,7 @@ _**Return value**_:
 
 ``` php
 $tnt->evaluate("return test_2()");
-$tnt->evaluate("return test_3(...)", array(3, 4));
+$tnt->evaluate("return test_3(...)", [3, 4]);
 ```
 
 ### Tarantool::delete
@@ -432,7 +432,7 @@ _**Return value**_:
 // The following code will delete all tuples from space `test`
 $tuples = $tnt->select("test");
 foreach($tuples as $value) {
-     $tnt->delete("test", array($value[0]));
+     $tnt->delete("test", [$value[0]]);
 }
 ```
 
@@ -459,21 +459,21 @@ _**Operations**_:
 * Splice operation - take `field`'th field, replace `length` bytes from 
 `offset` byte with 'list':
    ```
-   array(
+   [
      "field" => <number>,
      "op" => ":",
      "offset"=> <number>,
      "length"=> <number>,
-     "list" => <string>
-   ),
+     "list" => <string>,
+   ],
    ```
 * Numeric operations:
    ```
-   array(
+   [
      "field" => <number>,
      "op" => ("+"|"-"|"&"|"^"|"|"),
-     "arg" => <number>
-   ),
+     "arg" => <number>,
+   ],
    ```
    - "+" for addition
    - "-" for subtraction
@@ -482,48 +482,48 @@ _**Operations**_:
    - "|" for bitwise OR
 * Delete `arg` fields from 'field':
    ```
-   array(
+   [
      "field" => <number>,
      "op" => "#",
-     "arg" => <number>
-   )
+     "arg" => <number>,
+   ]
    ```
 * Replace/Insert before operations:
    ```
-   array(
+   [
      "field" => <number>,
      "op" => ("="|"!"),
-     "arg" => <serializable>
-   )
+     "arg" => <serializable>,
+   ]
    ```
    - "=" replace `field`'th field with 'arg'
    - "=" insert 'arg' before `field`'th field
 
 ```
-array(
-   array(
+[
+   [
      "field" => <number>,
      "op" => ":",
      "offset"=> <number>,
      "length"=> <number>,
-     "list" => <string>
-   ),
-   array(
+     "list" => <string>,
+   ],
+   [
      "field" => <number>,
      "op" => ("+"|"-"|"&"|"^"|"|"),
-     "arg" => <number>
-   ),
-   array(
+     "arg" => <number>,
+   ],
+   [
      "field" => <number>,
      "op" => "#",
-     "arg" => <number>
-   ),
-   array(
+     "arg" => <number>,
+   ],
+   [
      "field" => <number>,
      "op" => ("="|"!"),
-     "arg" => <serializable>
-   )
-)
+     "arg" => <serializable>,
+   ]
+]
 ```
 
 _**Return value**_:
@@ -534,65 +534,65 @@ _**Return value**_:
 #### Example
 
 ``` php
-$tnt->update("test", 1, array(
-   array(
+$tnt->update("test", 1, [
+   [
      "field" => 1,
      "op" => "+",
-     "arg" => 16
-   ),
-   array(
+     "arg" => 16,
+   ],
+   [
      "field" => 3,
      "op" => "=",
-     "arg" => 98
-   ),
-   array(
+     "arg" => 98,
+   ],
+   [
      "field" => 4,
      "op" => "=",
      "arg" => 0x11111,
-   ),
-));
-$tnt->update("test", 1, array(
-   array(
+   ],
+]);
+$tnt->update("test", 1, [
+   [
      "field" => 3,
      "op" => "-",
-     "arg" => 10
-   ),
-   array(
+     "arg" => 10,
+   ],
+   [
      "field" => 4,
      "op" => "&",
      "arg" => 0x10101,
-   )
-));
-$tnt->update("test", 1, array(
-   array(
+   ],
+]);
+$tnt->update("test", 1, [
+   [
      "field" => 4,
      "op" => "^",
      "arg" => 0x11100,
-   )
-));
-$tnt->update("test", 1, array(
-   array(
+   ],
+]);
+$tnt->update("test", 1, [
+   [
      "field" => 4,
      "op" => "|",
      "arg" => 0x00010,
-   )
-));
-$tnt->update("test", 1, array(
-   array(
+   ],
+]);
+$tnt->update("test", 1, [
+   [
      "field" => 2,
      "op" => ":",
      "offset" => 2,
      "length" => 2,
-     "list" => "rrance and phillipe show"
-   )
-));
+     "list" => "rrance and phillipe show",
+   ],
+]);
 ```
 
 ### Tarantool::upsert
 
 ``` php
-public array Tarantool::upsert(mixed $space, array $tuple, array $ops [, 
-number $index] )
+public array Tarantool::upsert(mixed $space, array $tuple, array $ops 
+[, number $index] )
 ```
 
 _**Description**_: Update or Insert command (if a tuple with primary key 
@@ -616,14 +616,14 @@ _**Return value**_:
 
 #### Example
 
-``` php
-$tnt->upsert("test", array(124, 10, "new tuple"), array(
-   array(
+```php
+$tnt->upsert("test", [124, 10, "new tuple"], [
+   [
      "field" => 1,
      "op" => "+",
-     "arg" => 10
-   )
-));
+     "arg" => 10,
+   ],
+]);
 ```
 
 ## Deprecated
