@@ -17,10 +17,10 @@ http://pear.php.net/dtd/package-2.0.xsd">
     <email>bigbes@gmail.com</email>
     <active>yes</active>
   </lead>
-  <date>2015-11-22</date>
+  <date>2018-04-18</date>
   <version>
-    <release>0.2.0</release>
-    <api>0.2.0</api>
+    <release>0.3.1</release>
+    <api>0.3.1</api>
   </version>
   <stability>
     <release>beta</release>
@@ -34,8 +34,6 @@ http://pear.php.net/dtd/package-2.0.xsd">
       <dir name='src'>
         <file role='src' name='php_tarantool.h'/>
         <file role='src' name='tarantool.c'/>
-        <file role='src' name='tarantool_manager.c'/>
-        <file role='src' name='tarantool_manager.h'/>
         <file role='src' name='tarantool_msgpack.c'/>
         <file role='src' name='tarantool_msgpack.h'/>
         <file role='src' name='tarantool_proto.c'/>
@@ -45,8 +43,6 @@ http://pear.php.net/dtd/package-2.0.xsd">
         <file role='src' name='tarantool_tp.c'/>
         <file role='src' name='tarantool_tp.h'/>
         <dir name='third_party'>
-          <file role='src' name='base64.c'/>
-          <file role='src' name='base64.h'/>
           <file role='src' name='mhash.h'/>
           <file role='src' name='msgpuck.c'/>
           <file role='src' name='msgpuck.h'/>
@@ -72,7 +68,9 @@ http://pear.php.net/dtd/package-2.0.xsd">
         <dir name='shared'>
           <file role='test' name='box.lua'/>
           <file role='test' name='phpunit.xml'/>
-          <file role='test' name='tarantool.ini'/>
+          <file role='test' name='tarantool-1.ini'/>
+	  <file role='test' name='tarantool-2.ini'/>
+	  <file role='test' name='tarantool-3.ini'/>
           <file role='test' name='valgrind.sup'/>
         </dir> <!-- shared -->
       </dir> <!-- tests -->
@@ -93,6 +91,16 @@ http://pear.php.net/dtd/package-2.0.xsd">
   <providesextension>tarantool</providesextension>
   <extsrcrelease/>
   <changelog>
+    <release>
+      <stability><release>beta</release><api>beta</api></stability>
+      <version><release>0.3.1</release><api>0.3.1</api></version>
+      <date>2018-04-18</date>
+      <notes>
+        tarantool-php 0.3.1
+
+        Upsert bug fixed
+      </notes>
+    </release>
     <release>
       <stability><release>beta</release><api>beta</api></stability>
       <version><release>0.2.0</release><api>0.2.0</api></version>
