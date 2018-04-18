@@ -1513,7 +1513,7 @@ PHP_METHOD(Tarantool, update) {
 		SSTR_LEN(obj->value) = before_len;
 		RETURN_FALSE;
 	}
-	php_tp_reencode_length(obj->value, sz);
+	php_tp_reencode_length(obj->value, before_len);
 	if (tarantool_stream_send(obj) == FAILURE)
 		RETURN_FALSE;
 
@@ -1543,7 +1543,7 @@ PHP_METHOD(Tarantool, upsert) {
 		SSTR_LEN(obj->value) = before_len;
 		RETURN_FALSE;
 	}
-	php_tp_reencode_length(obj->value, sz);
+	php_tp_reencode_length(obj->value, before_len);
 	if (tarantool_stream_send(obj) == FAILURE)
 		RETURN_FALSE;
 

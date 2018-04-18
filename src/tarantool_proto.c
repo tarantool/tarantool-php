@@ -268,9 +268,10 @@ void php_tp_encode_usplice(smart_string *str, uint32_t fieldno,
 	php_mp_pack_string(str, buffer, buffer_len);
 }
 
-void php_tp_reencode_length(smart_string *str, char *sz) {
-	ssize_t package_size = (SSTR_POS(str) - sz) - 5;
+void php_tp_reencode_length(smart_string *str, size_t orig_len) {
+	ssize_t package_size = (SSTR_LEN(str) - orig_len) - 5;
 	assert(package_size > 0);
+	char *sz = SSTR_BEG(str) + orig_len;
 	php_mp_pack_package_size_basic(sz, package_size);
 }
 

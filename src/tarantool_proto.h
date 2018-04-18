@@ -150,7 +150,7 @@ void php_tp_encode_uother(smart_string *str, char type, uint32_t fieldno,
 void php_tp_encode_usplice(smart_string *str, uint32_t fieldno,
 			   uint32_t position, uint32_t offset,
 			   const char *buffer, size_t buffer_len);
-void php_tp_reencode_length(smart_string *str, char *sz);
+void php_tp_reencode_length(smart_string *str, size_t orig_len);
 
 int convert_iter_str(const char *i, size_t i_len);
 
