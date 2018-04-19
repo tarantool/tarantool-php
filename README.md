@@ -157,19 +157,15 @@ _**Description**_: Available Tarantool constants.
 * `Tarantool::ITERATOR_LE` - "less than or equal" iterator;
 * `Tarantool::ITERATOR_GE` - "greater than or equal" iterator;
 * `Tarantool::ITERATOR_GT` - "greater than" iterator;
-* `Tarantool::ITERATOR_BITS_ALL_SET` - check if all given bits are set 
-  (BITSET only);
-* `Tarantool::ITERATOR_BITS_ANY_SET` - check if any given bits are set 
-  (BITSET only);
-* `Tarantool::ITERATOR_BITS_ALL_NOT_SET` - check if all given bits are 
-  not set (BITSET only);
-* `Tarantool::ITERATOR_OVERLAPS` - find points in an n-dimension cube 
-  (RTREE only);
+* `Tarantool::ITERATOR_BITS_ALL_SET` - check if all given bits are set (BITSET only);
+* `Tarantool::ITERATOR_BITS_ANY_SET` - check if any given bits are set (BITSET only);
+* `Tarantool::ITERATOR_BITS_ALL_NOT_SET` - check if all given bits are not set (BITSET only);
+* `Tarantool::ITERATOR_OVERLAPS` - find points in an n-dimension cube (RTREE only);
 * `Tarantool::ITERATOR_NEIGHBOR` - find the nearest points (RTREE only).
 
 ## Class Tarantool
 
-``` php
+```php
 Tarantool {
      public Tarantool::__construct ( [ string $host = 'localhost' 
 [, int $port = 3301 [, string $user = "guest" [, string $password = NULL 
@@ -179,24 +175,21 @@ Tarantool {
      public bool Tarantool::flushSchema ( void )
      public bool Tarantool::ping ( void )
      public array Tarantool::select (mixed $space [, mixed $key = []
-[, mixed $index = 0 [, int $limit = PHP_INT_MAX [, int $offset = 0
-[, $iterator = Tarantool::ITERATOR_EQ ] ] ] ] ] )
+         [, mixed $index = 0 [, int $limit = PHP_INT_MAX [, int $offset = 0
+         [, $iterator = Tarantool::ITERATOR_EQ ] ] ] ] ] )
      public array Tarantool::insert (mixed $space, array $tuple)
      public array Tarantool::replace (mixed $space, array $tuple)
      public array Tarantool::call (string $procedure [, mixed args] )
      public array Tarantool::evaluate (string $expression [, mixed args] )
-     public array Tarantool::delete (mixed $space, mixed $key [, mixed 
-$index] )
-     public array Tarantool::update (mixed $space, mixed $key, array 
-$ops [, number $index] )
-     public array Tarantool::upsert (mixed $space, mixed $key, array 
-$ops [, number $index] )
+     public array Tarantool::delete (mixed $space, mixed $key [, mixed $index] )
+     public array Tarantool::update (mixed $space, mixed $key, array $ops [, number $index] )
+     public array Tarantool::upsert (mixed $space, mixed $key, array $ops [, number $index] )
 }
 ```
 
 ### Tarantool::__construct
 
-```
+```php
 public Tarantool::__construct ( [ string $host = 'localhost' [, int 
 $port = 3301 [, string $user = "guest" [, string $password = NULL [, 
 string $persistent_id = NULL ] ] ] ] ] )
@@ -217,10 +210,9 @@ _**Return value**_: Tarantool class instance
 
 ### Example
 
-``` php
+```php
 $tnt = new Tarantool(); // -> new Tarantool('localhost', 3301);
-$tnt = new Tarantool('tarantool.org'); // -> new 
-Tarantool('tarantool.org', 3301);
+$tnt = new Tarantool('tarantool.org'); // -> new Tarantool('tarantool.org', 3301);
 $tnt = new Tarantool('localhost', 16847);
 ```
 
@@ -234,7 +226,7 @@ To initiate and/or test connection, please use [Tarantool::ping](#tarantoolping)
 
 ### Tarantool::disconnect
 
-``` php
+```php
 public bool Tarantool::disconnect ( void )
 ```
 
@@ -247,7 +239,7 @@ _**Return value**_: **BOOL**: True
 
 ### Tarantool::flushSchema
 
-``` php
+```php
 public bool Tarantool::flushSchema ( void )
 ```
 
@@ -258,7 +250,7 @@ _**Return value**_: **BOOL**: True
 
 ### Tarantool::ping
 
-``` php
+```php
 public bool Tarantool::ping ( void )
 ```
 
@@ -271,7 +263,7 @@ _**Return value**_: **BOOL**: True and raises `Exception` on error.
 
 ### Tarantool::select
 
-``` php
+```php
 public array Tarantool::select(mixed $space [, mixed $key = [] 
 [, mixed $index = 0 [, int $limit = PHP_INT_MAX [, int $offset = 0 
 [, $iterator = Tarantool::ITERATOR_EQ ] ] ] ] ] )
@@ -304,15 +296,14 @@ _**Return value**_:
 
 #### Example
 
-``` php
+```php
 // Selects everything from space 'test'
 $tnt->select("test");
 // Selects from space 'test' by primary key with id == 1
 $tnt->select("test", 1);
 // Same effect as the previous statement
 $tnt->select("test", [1]);
-// Selects from space 'test' by secondary key from index 'isec' and == 
-{1, 'hello'}
+// Selects from space 'test' by secondary key from index 'isec' and == {1, 'hello'}
 $tnt->select("test", [1, "hello"], "isec");
 // Selects 100 tuples from space 'test' after skipping 100 tuples
 $tnt->select("test", null, null, 100, 100);
@@ -325,7 +316,7 @@ $tnt->select("test", null, null, 100, 100, Tarantool::ITERATOR_REQ);
 
 ### Tarantool::insert, Tarantool::replace
 
-``` php
+```php
 public array Tarantool::insert(mixed $space, array $tuple)
 public array Tarantool::replace(mixed $space, array $tuple)
 ```
@@ -345,7 +336,7 @@ _**Return value**_:
 
 #### Example
 
-``` php
+```php
 // This will succeed, because no tuples with primary key == 1 are in space 'test'.
 $tnt->insert("test", [1, 2, "something"]);
 // This will fail, because we have just inserted a tuple with primary key == 1.
@@ -357,7 +348,7 @@ $tnt->replace("test", [1, 3, "something completely different"]);
 
 ### Tarantool::call
 
-``` php
+```php
 public array Tarantool::call(string $procedure [, mixed args])
 ```
 
@@ -376,14 +367,14 @@ _**Return value**_:
 
 #### Example
 
-``` php
+```php
 $tnt->call("test_2");
 $tnt->call("test_3", [3, 4]);
 ```
 
 ### Tarantool::evaluate
 
-``` php
+```php
 public array Tarantool::evaluate(string $expression [, mixed args])
 ```
 
@@ -402,14 +393,14 @@ _**Return value**_:
 
 #### Example
 
-``` php
+```php
 $tnt->evaluate("return test_2()");
 $tnt->evaluate("return test_3(...)", [3, 4]);
 ```
 
 ### Tarantool::delete
 
-``` php
+```php
 public array Tarantool::delete(mixed $space, mixed $key [, mixed $index])
 ```
 
@@ -428,7 +419,7 @@ _**Return value**_:
 
 #### Example
 
-``` php
+```php
 // The following code will delete all tuples from space `test`
 $tuples = $tnt->select("test");
 foreach($tuples as $value) {
@@ -438,9 +429,8 @@ foreach($tuples as $value) {
 
 ### Tarantool::update
 
-``` php
-public array Tarantool::update(mixed $space, mixed $key, array $ops [, 
-number $index] )
+```php
+public array Tarantool::update(mixed $space, mixed $key, array $ops [, number $index] )
 ```
 
 _**Description**_: Update a tuple with a given key (in Tarantool, an update
@@ -458,7 +448,7 @@ _**Operations**_:
 
 * Splice operation - take `field`'th field, replace `length` bytes from 
 `offset` byte with 'list':
-   ```
+   ```php
    [
      "field" => <number>,
      "op" => ":",
@@ -468,7 +458,7 @@ _**Operations**_:
    ],
    ```
 * Numeric operations:
-   ```
+   ```php
    [
      "field" => <number>,
      "op" => ("+"|"-"|"&"|"^"|"|"),
@@ -481,7 +471,7 @@ _**Operations**_:
    - "^" for bitwise XOR
    - "|" for bitwise OR
 * Delete `arg` fields from 'field':
-   ```
+   ```php
    [
      "field" => <number>,
      "op" => "#",
@@ -489,7 +479,7 @@ _**Operations**_:
    ]
    ```
 * Replace/Insert before operations:
-   ```
+   ```php
    [
      "field" => <number>,
      "op" => ("="|"!"),
@@ -499,7 +489,7 @@ _**Operations**_:
    - "=" replace `field`'th field with 'arg'
    - "=" insert 'arg' before `field`'th field
 
-```
+```php
 [
    [
      "field" => <number>,
@@ -522,7 +512,7 @@ _**Operations**_:
      "field" => <number>,
      "op" => ("="|"!"),
      "arg" => <serializable>,
-   ]
+   ],
 ]
 ```
 
@@ -533,7 +523,7 @@ _**Return value**_:
 
 #### Example
 
-``` php
+```php
 $tnt->update("test", 1, [
    [
      "field" => 1,
@@ -590,9 +580,8 @@ $tnt->update("test", 1, [
 
 ### Tarantool::upsert
 
-``` php
-public array Tarantool::upsert(mixed $space, array $tuple, array $ops 
-[, number $index] )
+```php
+public array Tarantool::upsert(mixed $space, array $tuple, array $ops [, number $index] )
 ```
 
 _**Description**_: Update or Insert command (if a tuple with primary key 
