@@ -342,7 +342,7 @@ class DMLTest extends PHPUnit_Framework_TestCase
 				self::$tarantool->select("test_hash", null, null, null, null, TARANTOOL::ITERATOR_EQ);
 				$this->assertFalse(True);
 			} catch (TarantoolClientError $e) {
-				$this->assertContains('Invalid key part', $e->getMessage());
+				$this->assertRegExp('(Invalid key part|via a partial key)', $e->getMessage());
 			}
 		}
 
@@ -354,7 +354,7 @@ class DMLTest extends PHPUnit_Framework_TestCase
 				self::$tarantool->select($spc, null, null, null, null, $itype);
 				$this->assertFalse(True);
 			} catch (TarantoolClientError $e) {
-				$this->assertContains($xcmsg, $e->getMessage());
+				$this->assertRegExp($xcmsg, $e->getMessage());
 			}
 		}
 
@@ -384,40 +384,40 @@ class DMLTest extends PHPUnit_Framework_TestCase
 
 		public static function provideIteratorClientError() {
 			return [
-				['test_hash', 'EQ'                ,'Invalid key part'],
-				['test_hash', 'REQ'               ,'Invalid key part'],
-				['test_hash', 'LT'                ,'Invalid key part'],
-				['test_hash', 'LE'                ,'Invalid key part'],
-				['test_hash', 'GE'                ,'Invalid key part'],
-				['test_hash', 'BITSET_ALL_SET'    ,'Invalid key part'],
-				['test_hash', 'BITSET_ANY_SET'    ,'Invalid key part'],
-				['test_hash', 'BITSET_ALL_NOT_SET','Invalid key part'],
-				['test_hash', 'BITS_ALL_SET'      ,'Invalid key part'],
-				['test_hash', 'BITS_ANY_SET'      ,'Invalid key part'],
-				['test_hash', 'BITS_ALL_NOT_SET'  ,'Invalid key part'],
-				['test_hash', 'OVERLAPS'          ,'Invalid key part'],
-				['test_hash', 'NEIGHBOR'          ,'Invalid key part'],
-				['test_hash', 'eq'                ,'Invalid key part'],
-				['test_hash', 'req'               ,'Invalid key part'],
-				['test_hash', 'lt'                ,'Invalid key part'],
-				['test_hash', 'le'                ,'Invalid key part'],
-				['test_hash', 'ge'                ,'Invalid key part'],
-				['test_hash', 'bitset_all_set'    ,'Invalid key part'],
-				['test_hash', 'bitset_any_set'    ,'Invalid key part'],
-				['test_hash', 'bitset_all_not_set','Invalid key part'],
-				['test_hash', 'bits_all_set'      ,'Invalid key part'],
-				['test_hash', 'bits_any_set'      ,'Invalid key part'],
-				['test_hash', 'bits_all_not_set'  ,'Invalid key part'],
-				['test_hash', 'overlaps'          ,'Invalid key part'],
-				['test_hash', 'neighbor'          ,'Invalid key part'],
-				['test'     , 'bitset_all_set'    ,'does not support requested iterator type'],
-				['test'     , 'bitset_any_set'    ,'does not support requested iterator type'],
-				['test'     , 'bitset_all_not_set','does not support requested iterator type'],
-				['test'     , 'bits_all_set'      ,'does not support requested iterator type'],
-				['test'     , 'bits_any_set'      ,'does not support requested iterator type'],
-				['test'     , 'bits_all_not_set'  ,'does not support requested iterator type'],
-				['test'     , 'overlaps'          ,'does not support requested iterator type'],
-				['test'     , 'neighbor'          ,'does not support requested iterator type'],
+				['test_hash', 'EQ'                ,'(Invalid key part|via a partial key)'],
+				['test_hash', 'REQ'               ,'(Invalid key part|via a partial key)'],
+				['test_hash', 'LT'                ,'(Invalid key part|via a partial key)'],
+				['test_hash', 'LE'                ,'(Invalid key part|via a partial key)'],
+				['test_hash', 'GE'                ,'(Invalid key part|via a partial key)'],
+				['test_hash', 'BITSET_ALL_SET'    ,'(Invalid key part|via a partial key)'],
+				['test_hash', 'BITSET_ANY_SET'    ,'(Invalid key part|via a partial key)'],
+				['test_hash', 'BITSET_ALL_NOT_SET','(Invalid key part|via a partial key)'],
+				['test_hash', 'BITS_ALL_SET'      ,'(Invalid key part|via a partial key)'],
+				['test_hash', 'BITS_ANY_SET'      ,'(Invalid key part|via a partial key)'],
+				['test_hash', 'BITS_ALL_NOT_SET'  ,'(Invalid key part|via a partial key)'],
+				['test_hash', 'OVERLAPS'          ,'(Invalid key part|via a partial key)'],
+				['test_hash', 'NEIGHBOR'          ,'(Invalid key part|via a partial key)'],
+				['test_hash', 'eq'                ,'(Invalid key part|via a partial key)'],
+				['test_hash', 'req'               ,'(Invalid key part|via a partial key)'],
+				['test_hash', 'lt'                ,'(Invalid key part|via a partial key)'],
+				['test_hash', 'le'                ,'(Invalid key part|via a partial key)'],
+				['test_hash', 'ge'                ,'(Invalid key part|via a partial key)'],
+				['test_hash', 'bitset_all_set'    ,'(Invalid key part|via a partial key)'],
+				['test_hash', 'bitset_any_set'    ,'(Invalid key part|via a partial key)'],
+				['test_hash', 'bitset_all_not_set','(Invalid key part|via a partial key)'],
+				['test_hash', 'bits_all_set'      ,'(Invalid key part|via a partial key)'],
+				['test_hash', 'bits_any_set'      ,'(Invalid key part|via a partial key)'],
+				['test_hash', 'bits_all_not_set'  ,'(Invalid key part|via a partial key)'],
+				['test_hash', 'overlaps'          ,'(Invalid key part|via a partial key)'],
+				['test_hash', 'neighbor'          ,'(Invalid key part|via a partial key)'],
+				['test'     , 'bitset_all_set'    ,'(does not support requested iterator type)'],
+				['test'     , 'bitset_any_set'    ,'(does not support requested iterator type)'],
+				['test'     , 'bitset_all_not_set','(does not support requested iterator type)'],
+				['test'     , 'bits_all_set'      ,'(does not support requested iterator type)'],
+				['test'     , 'bits_any_set'      ,'(does not support requested iterator type)'],
+				['test'     , 'bits_all_not_set'  ,'(does not support requested iterator type)'],
+				['test'     , 'overlaps'          ,'(does not support requested iterator type)'],
+				['test'     , 'neighbor'          ,'(does not support requested iterator type)'],
 			];
 		}
 
