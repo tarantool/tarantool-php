@@ -271,7 +271,7 @@ retry:
 	while (count > 0) {
 		--count;
 		if (err) {
-			/* If we're here, then there war error */
+			/* If we're here, then there was error */
 			nanosleep(&sleep_time, NULL);
 			efree(err);
 			err = NULL;
@@ -301,7 +301,6 @@ retry:
 	}
 	if (count == 0) {
 ioexception:
-		// raise (SIGABRT);
 		tarantool_throw_ioexception("%s", err);
 		efree(err);
 		return FAILURE;

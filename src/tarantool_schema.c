@@ -232,6 +232,8 @@ parse_schema_space_value_value(struct schema_field_value *fld,
 			goto error;
 		sfield = mp_decode_str(tuple, &sfield_len);
 		fld->field_type = parse_field_type(sfield, sfield_len);
+	} else {
+		mp_next(tuple);
 	}
 	return 0;
 error:

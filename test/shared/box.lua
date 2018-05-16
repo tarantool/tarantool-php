@@ -8,13 +8,27 @@ local json = require('json')
 local yaml = require('yaml')
 
 log.info(fio.cwd())
+log.info("admin: %s, primary: %s", os.getenv('ADMIN_PORT'), os.getenv('PRIMARY_PORT'))
 
-require('console').listen(os.getenv('ADMIN_PORT'))
+local compat = {
+    log          = 'log',
+    memtx_memory = 'memtx_memory',
+    unsigned     = 'unsigned',
+    string       = 'string',
+}
+
+if (tonumber(_TARANTOOL:split('-')[1]:split('.')[2]) < 7) then
+    compat.log          = 'logger'
+    compat.memtx_memory = 'slab_alloc_arena'
+    compat.unsigned     = 'NUM'
+    compat.string       = 'STR'
+end
+
 box.cfg{
-   listen           = os.getenv('PRIMARY_PORT'),
-   log_level        = 5,
-   logger           = 'tarantool.log',
-   slab_alloc_arena = 0.2
+    listen                = os.getenv('PRIMARY_PORT'),
+    log_level             = 5,
+    [compat.log]          = 'tarantool.log',
+    [compat.memtx_memory] = 400 * 1024 * 1024
 }
 
 box.once('initialization', function()
@@ -27,25 +41,25 @@ box.once('initialization', function()
 
     local space = box.schema.space.create('test', {
         format = {
-            {type = 'STR', name = 'name'},
-            {type = 'NUM', name = 's1'},
-            {type = 'STR', name = 's2'},
+            { type = compat.unsigned, name = 'field1', add_field = 1 },
+            { type = compat.unsigned, name = 's1'                    },
+            { type = compat.string,   name = 's2'                    },
         }
     })
     space:create_index('primary', {
         type   = 'TREE',
         unique = true,
-        parts  = {1, 'NUM'}
+        parts  = {1, compat.unsigned}
     })
     space:create_index('secondary', {
         type   = 'TREE',
         unique = false,
-        parts  = {2, 'NUM', 3, 'STR'}
+        parts  = {2, compat.unsigned, 3, compat.string}
     })
 
     local space = box.schema.space.create('msgpack')
     space:create_index('primary', {
-        parts = {1, 'NUM'}
+        parts = {1, compat.unsigned}
     })
     space:insert{1, 'float as key', {
         [2.7] = {1, 2, 3}
@@ -74,7 +88,7 @@ box.once('initialization', function()
 
     local space = box.schema.space.create('pstring')
     space:create_index('primary', {
-        parts = {1, 'STR'}
+        parts = {1, compat.string}
     })
     local yml = io.open(fio.pathjoin(fio.cwd(), "../test/shared/queue.yml")):read("*a")
     local tuple = yaml.decode(yml)[1]
@@ -125,3 +139,6 @@ end
 function test_6(...)
     return ...
 end
+
+require('console').listen(os.getenv('ADMIN_PORT'))
+
