@@ -14,17 +14,18 @@ enum field_type {
 };
 
 struct schema_field_value {
-	uint32_t        field_number;
-	char           *field_name;
-	uint32_t        field_name_len;
-	enum field_type field_type;
+	struct schema_key  key;
+	uint32_t           field_number;
+	char              *field_name;
+	uint32_t           field_name_len;
+	enum field_type    field_type;
 };
 
 struct schema_index_value {
 	struct schema_key          key;
+	uint32_t                   index_number;
 	char                      *index_name;
 	uint32_t                   index_name_len;
-	uint32_t                   index_number;
 	struct schema_field_value *index_parts;
 	uint32_t                   index_parts_len;
 };
@@ -33,10 +34,11 @@ struct mh_schema_index_t;
 
 struct schema_space_value {
 	struct schema_key          key;
+	uint32_t                   space_number;
 	char                      *space_name;
 	uint32_t                   space_name_len;
-	uint32_t                   space_number;
 	struct mh_schema_index_t  *index_hash;
+	struct mh_schema_field_t  *schema_hash;
 	struct schema_field_value *schema_list;
 	uint32_t                   schema_list_len;
 };
