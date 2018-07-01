@@ -2,7 +2,7 @@
 
 use PHPUnit\Framework\TestCase;
 
-class CreateTest extends TestCase
+final class CreateTest extends TestCase
 {
     use TestCaseCompat;
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 
-class MockTest extends TestCase
+final class MockTest extends TestCase
 {
     public function testFoo()
     {

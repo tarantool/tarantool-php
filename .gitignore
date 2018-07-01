@@ -23,6 +23,7 @@ Makefile.in
 /config.nice
 /config.status
 /config.sub
+/configure.ac
 /configure.in
 /libtool
 /ltmain.sh
