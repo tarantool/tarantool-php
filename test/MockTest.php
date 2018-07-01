@@ -1,9 +1,13 @@
 <?php
-class MockTest extends \PHPUnit_Framework_TestCase
+
+use PHPUnit\Framework\TestCase;
+
+final class MockTest extends TestCase
 {
     public function testFoo()
     {
-        $tnt = $this->getMock('Tarantool');
+        // $tnt = $this->createMock(['Tarantool']);
+        $tnt = $this->createMock(\Tarantool::class);
         $tnt->expects($this->once())->method('ping');
         $tnt->ping();
     }

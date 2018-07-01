@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 
 import os
 import sys
@@ -12,6 +12,8 @@ from lib.tarantool_server import TarantoolServer
 
 from pprint import pprint
 
+PHPUNIT_PHAR = 'phpunit.phar'
+
 def read_popen(cmd):
     path = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     path.wait()
@@ -22,7 +24,7 @@ def read_popen_config(cmd):
     return read_popen(cmd)
 
 def find_php_bin():
-    path = read_popen('which php').strip()
+    path = read_popen('which php').strip().decode()
     if (path.find('phpenv') != -1):
         version = read_popen('phpenv global')
         if (version.find('system') != -1):
@@ -37,7 +39,7 @@ def prepare_env(php_ini):
         os.mkdir('var')
     shutil.copy('test/shared/phpunit.xml', 'var')
     test_dir_path = os.path.abspath(os.path.join(os.getcwd(), 'test'))
-    test_lib_path = os.path.join(test_dir_path, 'phpunit.phar')
+    test_lib_path = os.path.join(test_dir_path, PHPUNIT_PHAR)
 #    shutil.copy('test/shared/tarantool.ini', 'var')
     shutil.copy(php_ini, 'var')
     shutil.copy('modules/tarantool.so', 'var')
@@ -60,10 +62,10 @@ def main():
     try:
         shutil.copy('test/shared/phpunit.xml', os.path.join(test_cwd, 'phpunit.xml'))
         shutil.copy('modules/tarantool.so', test_cwd)
-        test_lib_path = os.path.join(test_dir_path, 'phpunit.phar')
+        test_lib_path = os.path.join(test_dir_path, PHPUNIT_PHAR)
 
-        version = read_popen_config('--version').strip(' \n\t') + '.'
-        version1 = read_popen_config('--extension-dir').strip(' \n\t')
+        version = read_popen_config('--version').decode().strip(' \n\t') + '.'
+        version1 = read_popen_config('--extension-dir').decode().strip(' \n\t')
         version += '\n' + ('With' if version1.find('non-zts') == -1 else 'Without') + ' ZTS'
         version += '\n' + ('With' if version1.find('no-debug') == -1 else 'Without') + ' Debug'
         print('Running against ' + version)
@@ -100,9 +102,9 @@ def main():
                 cmd = cmd + 'sudo dtruss ' + find_php_bin()
                 cmd = cmd + ' -c tarantool.ini {0}'.format(test_lib_path)
             else:
-                print find_php_bin()
+                print(find_php_bin())
                 cmd = '{0} -c tarantool.ini {1}'.format(find_php_bin(), test_lib_path)
-                print cmd
+                print(cmd)
 
             print('Running "%s" with "%s"' % (cmd, php_ini))
             proc = subprocess.Popen(cmd, shell=True, cwd=test_cwd)
