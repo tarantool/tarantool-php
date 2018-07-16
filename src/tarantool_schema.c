@@ -400,6 +400,21 @@ error:
 }
 
 int
+tarantool_schema_has_space_no(
+		struct tarantool_schema *schema_obj,
+		uint32_t space_no) {
+	/* Prepare key for space search */
+	struct schema_key space_key;
+	space_key.number = space_no;
+	space_key.id = (void *)&(space_key.number);
+	space_key.id_len = sizeof(uint32_t);
+
+	struct mh_schema_space_t *schema = schema_obj->space_hash;
+	mh_int_t space_slot = mh_schema_space_find(schema, &space_key, NULL);
+	return (space_slot != mh_end(schema));
+}
+
+int
 tarantool_schema_add_spaces(
 		struct tarantool_schema *schema_obj,
 		const char *data,

@@ -50,6 +50,9 @@ struct tarantool_schema {
 };
 
 int
+tarantool_schema_has_space_no(struct tarantool_schema *, uint32_t);
+
+int
 tarantool_schema_add_spaces(struct tarantool_schema *, const char *, uint32_t);
 int
 tarantool_schema_add_indexes(struct tarantool_schema *, const char *, uint32_t);
