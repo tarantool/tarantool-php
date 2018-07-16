@@ -468,4 +468,12 @@ final class DMLTest extends TestCase
         gc_collect_cycles();
         gc_collect_cycles();
     }
+
+	/**
+	 * @doesNotPerformAssertions
+	 */
+	public function test_19_schema_obtain_failed() {
+		$empty_tarantool = new Tarantool('localhost', getenv('PRIMARY_PORT'), 'test');
+		$empty_tarantool->select(289, [], 'name');
+	}
 }
