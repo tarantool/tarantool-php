@@ -399,6 +399,21 @@ error:
 }
 
 int
+tarantool_schema_has_space_no(
+		struct tarantool_schema *schema_obj,
+		uint32_t space_no) {
+	/* Prepare key for space search */
+	struct schema_key space_key;
+	space_key.number = space_no;
+	space_key.id = (void *)&(space_key.number);
+	space_key.id_len = sizeof(uint32_t);
+
+	struct mh_schema_space_t *schema = schema_obj->space_hash;
+	mh_int_t space_slot = mh_schema_space_find(schema, &space_key, NULL);
+	return (space_slot != mh_end(schema));
+}
+
+int
 tarantool_schema_add_spaces(
 		struct tarantool_schema *schema_obj,
 		const char *data,
@@ -548,6 +563,25 @@ tarantool_schema_get_sid_by_string(
 	struct schema_key space_key = {
 		space_name,
 		space_name_len, 0
+	};
+	mh_int_t space_slot = mh_schema_space_find(schema, &space_key, NULL);
+	if (space_slot == mh_end(schema))
+		return -1;
+	const struct schema_space_value *space = *mh_schema_space_node(schema,
+			space_slot);
+	return space->space_number;
+}
+
+/* ALIAS for verify existens */
+int32_t
+tarantool_schema_get_sid_by_number(
+		struct tarantool_schema *schema_obj,
+		uint32_t sid
+) {
+	struct mh_schema_space_t *schema = schema_obj->space_hash;
+	struct schema_key space_key = {
+		(void *)&sid,
+		sizeof(uint32_t), 0
 	};
 	mh_int_t space_slot = mh_schema_space_find(schema, &space_key, NULL);
 	if (space_slot == mh_end(schema))
