@@ -17,15 +17,22 @@ local compat = {
     string       = 'string',
 }
 
-if (tonumber(_TARANTOOL:split('-')[1]:split('.')[2]) < 7) then
+local version = fun.iter(_TARANTOOL:split('-')[1]:split('.')):map(tonumber):totable()
+
+if (version[1] == 1 and version[2] < 8) then
     compat.log          = 'logger'
     compat.memtx_memory = 'slab_alloc_arena'
     compat.unsigned     = 'NUM'
     compat.string       = 'STR'
 end
 
+local primary_port = os.getenv('PRIMARY_PORT')
+if primary_port:startswith('/') then
+    primary_port = 'unix/:' .. primary_port
+end
+
 box.cfg{
-    listen                = os.getenv('PRIMARY_PORT'),
+    listen                = primary_port,
     log_level             = 5,
     [compat.log]          = 'tarantool.log',
     [compat.memtx_memory] = 400 * 1024 * 1024
@@ -38,6 +45,8 @@ box.once('initialization', function()
         password = '123456789012345678901234567890123456789012345678901234567890'
     })
     box.schema.user.grant('test', 'read,write,execute', 'universe')
+	box.schema.func.create('box.session.user')
+	box.schema.user.grant('guest', 'execute', 'function', 'box.session.user')
 
     local space = box.schema.space.create('test', {
         format = {

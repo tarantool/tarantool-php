@@ -12,6 +12,8 @@
 #include "tarantool_network.h"
 #include "tarantool_exception.h"
 
+#include "tarantool_url.h"
+
 #include "utils.h"
 
 static int __tarantool_authenticate(tarantool_connection *obj);
@@ -147,17 +149,22 @@ tarantool_stream_send(tarantool_connection *obj TSRMLS_DC) {
  * Generate persistent_id for connection.
  * Must be freed by efree()/pefree(ptr, 0)
  */
-static char *pid_gen(const char *host, int port, const char *login,
-		     const char *prefix, size_t *olen,
-		     const char *suffix, size_t suffix_len) {
+static const char *
+pid_gen(struct tarantool_url *url, const char *user, const char *prefix,
+	const char *suffix, size_t suffix_len, size_t *olen) {
+
 	char *plist_id = NULL, *tmp = NULL;
-	/* if login is not defined, then login is 'guest' */
-	login = (login ? login : "guest");
+	/* if user is not defined, then user is 'guest' */
 	int len = 0;
-	len = spprintf(&plist_id, 0, "tarantool-%s:id=%s:%d-%s", prefix, host,
-		       port, login) + 1;
+	if (url->type == TARANTOOL_URL_TCP) {
+		len = spprintf(&plist_id, 0, "tarantool-%s:id=%s:%d-%s",
+			       prefix, url->host, url->port, user) + 1;
+	} else {
+		len = spprintf(&plist_id, 0, "tarantool-%s:id=%s-%s",
+			       prefix, url->path, user) + 1;
+	}
 	if (suffix) {
-		len = spprintf(&tmp,0,"%s[%.*s]",plist_id,suffix_len,suffix);
+		len = spprintf(&tmp, 0, "%s[%.*s]", plist_id, suffix_len, suffix);
 		efree(plist_id);
 		plist_id = tmp;
 	}
@@ -166,48 +173,15 @@ static char *pid_gen(const char *host, int port, const char *login,
 }
 
 /*
- * Generate persistent string with persistent_id for connection.
- * Must be freed by pefree(ptr, 1)
- */
-static char *pid_pgen(const char *host, int port, const char *login,
-		      const char *prefix, size_t *olen,
-		      const char *suffix, size_t suffix_len) {
-	char *plist_id = NULL, *tmp = NULL;
-	size_t len = 0;
-	plist_id = pid_gen(host, port, login, prefix, &len, suffix, suffix_len);
-	tmp = pestrdup(plist_id, 1);
-	efree(plist_id);
-	if (olen) *olen = len;
-	return tmp;
-}
-
-/*
- * Generate zend_string with persistent_id for connection.
- * Must be freed using zend_string_release(<ptr>);
- */
-static zend_string *pid_zsgen(const char *host, int port, const char *login,
-			      const char *prefix, const char *suffix,
-			      size_t suffix_len) {
-	size_t len = 0;
-	const char *plist_id = NULL;
-	plist_id = pid_gen(host, port, login, prefix, &len, suffix, suffix_len);
-	if (plist_id == NULL || len == 0)
-		return NULL;
-	zend_string *out = zend_string_init(plist_id, len - 1, 0);
-	efree((void *)plist_id);
-	return out;
-}
-
-/*
  * Generate persistent zend_string with persistent_id for connection.
  * Must be freed using zend_string_release(<ptr>);
  */
-static zend_string *pid_pzsgen(const char *host, int port, const char *login,
-			       const char *prefix, const char *suffix,
-			       size_t suffix_len) {
+static zend_string *
+pid_pzsgen(struct tarantool_url *url, const char *user, const char *prefix,
+	   const char *suffix, size_t suffix_len) {
 	size_t len = 0;
 	const char *plist_id = NULL;
-	plist_id = pid_gen(host, port, login, prefix, &len, suffix, suffix_len);
+	plist_id = pid_gen(url, user, prefix, suffix, suffix_len, &len);
 	if (plist_id == NULL || len == 0)
 		return NULL;
 	zend_string *out = zend_string_init(plist_id, len - 1, 1);
@@ -257,11 +231,12 @@ static int __tarantool_connect(tarantool_object *t_obj) {
 	char *err = NULL;
 
 	if (t_obj->is_persistent) {
-		if (!obj->persistent_id)
-			obj->persistent_id = pid_pzsgen(obj->host, obj->port,
-							obj->orig_login,
+		if (!obj->persistent_id) {
+			obj->persistent_id = pid_pzsgen(obj->url_parsed,
+							obj->orig_user,
 							"stream", obj->suffix,
 							obj->suffix_len);
+		}
 		int rv = tntll_stream_fpid2(obj->persistent_id, &obj->stream);
 		if (obj->stream == NULL || rv != PHP_STREAM_PERSISTENT_SUCCESS)
 			goto retry;
@@ -279,17 +254,19 @@ retry:
 		if (t_obj->is_persistent) {
 			if (obj->persistent_id)
 				zend_string_release(obj->persistent_id);
-			obj->persistent_id = pid_pzsgen(obj->host, obj->port,
-							obj->orig_login,
+			obj->persistent_id = pid_pzsgen(obj->url_parsed,
+							obj->orig_user,
 							"stream", obj->suffix,
 							obj->suffix_len);
 
 		}
-		if (tntll_stream_open(obj->host, obj->port, obj->persistent_id,
-				      &obj->stream, &err) == -1)
+		obj->stream = tntll_stream_open(obj->url, obj->persistent_id, &err);
+		if (obj->stream == NULL)
 			continue;
 		if (tntll_stream_read2(obj->stream, obj->greeting,
 				       GREETING_SIZE) != GREETING_SIZE) {
+			// int errno = php_stream_errno();
+			spprintf(&err, 0, "Fails to read greeting [%d]: %s", errno, strerror(errno));
 			continue;
 		}
 		if (php_tp_verify_greetings(obj->greeting) == 0) {
@@ -301,11 +278,12 @@ retry:
 	}
 	if (count == 0) {
 ioexception:
-		tarantool_throw_ioexception("%s", err);
+		tarantool_throw_ioexception("%s ", err);
 		efree(err);
 		return FAILURE;
 	}
-	if (obj->login != NULL && obj->passwd != NULL) {
+
+	if (obj->url_parsed->user != NULL && obj->url_parsed->pass != NULL) {
 		status = __tarantool_authenticate(obj);
 	}
 	return status;
@@ -316,7 +294,7 @@ inline static int __tarantool_reconnect(tarantool_object *t_obj) {
 	return __tarantool_connect(t_obj);
 }
 
-static void
+static void 
 tarantool_connection_free(tarantool_connection *obj, int is_persistent
 			  TSRMLS_DC) {
 	if (obj == NULL)
@@ -325,34 +303,30 @@ tarantool_connection_free(tarantool_connection *obj, int is_persistent
 		pefree(obj->greeting, is_persistent);
 		obj->greeting = NULL;
 	}
-	tarantool_stream_close(obj);
+	// tarantool_stream_close(obj);
 	if (obj->persistent_id) {
 		zend_string_release(obj->persistent_id);
 		obj->persistent_id = NULL;
+	}
+	if (obj->url) {
+		pefree(obj->url, is_persistent);
+		obj->url = NULL;
+	}
+	if (obj->url_parsed) {
+		tarantool_url_free(obj->url_parsed, is_persistent);
+		obj->url_parsed = NULL;
 	}
 	if (obj->schema) {
 		tarantool_schema_delete(obj->schema, is_persistent);
 		obj->schema = NULL;
 	}
-	if (obj->host) {
-		pefree(obj->host, is_persistent);
-		obj->host = NULL;
-	}
-	if (obj->login) {
-		pefree(obj->login, is_persistent);
-		obj->login = NULL;
-	}
-	if (obj->orig_login) {
-		pefree(obj->orig_login, is_persistent);
-		obj->orig_login = NULL;
+	if (obj->orig_user) {
+		pefree(obj->orig_user, is_persistent);
+		obj->orig_user = NULL;
 	}
 	if (obj->suffix) {
 		pefree(obj->suffix, is_persistent);
 		obj->suffix = NULL;
-	}
-	if (obj->passwd) {
-		pefree(obj->passwd, is_persistent);
-		obj->passwd = NULL;
 	}
 	if (obj->value) {
 		smart_string_free_ex(obj->value, 1);
@@ -511,13 +485,13 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(arginfo_tarantool_construct, 0, 0, 0)
 	ZEND_ARG_INFO(0, host)
 	ZEND_ARG_INFO(0, port)
-	ZEND_ARG_INFO(0, login)
+	ZEND_ARG_INFO(0, user)
 	ZEND_ARG_INFO(0, password)
 	ZEND_ARG_INFO(0, persistent_id)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_tarantool_authenticate, 0, 0, 1)
-	ZEND_ARG_INFO(0, login)
+	ZEND_ARG_INFO(0, user)
 	ZEND_ARG_INFO(0, password)
 ZEND_END_ARG_INFO()
 
@@ -1121,41 +1095,124 @@ static int php_tarantool_list_entry() {
 }
 
 PHP_METHOD(Tarantool, __construct) {
-	/* Input arguments */
-	char  *host = NULL, *login = NULL, *passwd = NULL;
-	size_t host_len = 0, login_len = 0, passwd_len = 0;
-	long   port = 0;
-
 	zend_bool is_persistent = false, plist_new_entry = true;
-	const char *suffix = NULL;
-	size_t suffix_len = 0;
 	zend_string *plist_id = NULL;
 
-	TARANTOOL_FUNCTION_BEGIN(obj, id, "|slss!s", &host, &host_len, &port,
-				 &login, &login_len, &passwd, &passwd_len,
-				 &suffix, &suffix_len)
+	/* Input arguments */
+	char  *host = NULL, *user = NULL, *pass = NULL;
+	size_t host_len = 0, user_len = 0, pass_len = 0;
+	long   port = 0;
 
-	if (host  == NULL)                     host   = "localhost";
-	if (port  == 0)                        port   = 3301;
-	if (login == NULL)                     login  = "guest";
-	if (passwd != NULL && passwd_len == 0) passwd = NULL;
+	zval *suffix_or_port = NULL, suffix_or_port_default;
+	ZVAL_NULL(&suffix_or_port_default);
 
-	if (port < 0 || port >= 65536) {
-		THROW_EXC("Invalid primary port value: %li", port);
-		RETURN_FALSE;
+	char *url = NULL;    size_t url_len = 0;
+	char *suffix = NULL; size_t suffix_len = 0;
+
+	TARANTOOL_FUNCTION_BEGIN(obj, id, "|szss!s",
+				 &host, &host_len, &suffix_or_port,
+				 &user, &user_len,
+				 &pass, &pass_len,
+				 &suffix, &suffix_len);
+
+	if (suffix_or_port == NULL) {
+		suffix_or_port = &suffix_or_port_default;
+	}
+
+	if (strstr(host, "tcp://" ) != 0 ||
+	    strstr(host, "unix://") != 0 ||
+	    strstr(host, "unix/:" ) != 0 ||
+	    Z_TYPE_P(suffix_or_port) == IS_STRING) {
+		url = estrdup(host);
+		url_len = host_len;
+
+		if (Z_TYPE_P(suffix_or_port) == IS_STRING) {
+			suffix     = Z_STRVAL_P(suffix_or_port);
+			suffix_len = Z_STRLEN_P(suffix_or_port);
+		} else if (Z_TYPE_P(suffix_or_port) != IS_NULL) {
+			THROW_EXC("wrong type of 'suffix' - expected str/null, got '%s'",
+				  zend_zval_type_name(suffix_or_port));
+		}
+	} else {
+		if (Z_TYPE_P(suffix_or_port) == IS_LONG) {
+			port = Z_LVAL_P(suffix_or_port);
+		} else if (Z_TYPE_P(suffix_or_port) != IS_NULL) {
+			THROW_EXC("wrong type of 'port' - expected long/null, got '%s'",
+				  zend_zval_type_name(suffix_or_port));
+		} else if (ZEND_NUM_ARGS() > 2) {
+			THROW_EXC("expected at most 2 parameters, got %d",
+				  ZEND_NUM_ARGS());
+		} else {
+			port = 3301;
+		}
+
+		/* convert to new type - url */
+		if (host == NULL) host = "localhost";
+		if (user == 0)    user = "guest";
+
+		if (pass == NULL || pass_len == 0) {
+			pass = "";
+			pass_len = 0;
+		}
+
+		if (port < 0 || port >= 65536) {
+			THROW_EXC("Invalid primary port value: %li", port);
+			RETURN_FALSE;
+		}
+
+		url_len = spprintf(&url, 0, "tcp://%*s%*s%*s@%*s:%d",
+				   user_len, user,
+				   (pass_len ? 1 : 0), (pass_len ? ":" : ""),
+				   pass_len, pass,
+				   host_len, host, port);
 	}
 
 	is_persistent = (TARANTOOL_G(persistent) || suffix ? true : false);
 
+	struct tarantool_url *url_parsed = tarantool_url_parse(url, is_persistent);
+	if (url_parsed == NULL) {
+		THROW_EXC("failed to parse url: '%s'", url);
+		RETURN_FALSE;
+	} else {
+		/* set default user
+		if (url_parsed->user == NULL) {
+			url_parsed->user = estrdup("guest");
+		} */
+		/* set default password
+		if (url_parsed->pass && strlen(url_parsed->pass) == 0) {
+			efree(url_parsed->pass);
+			url_parsed->pass = NULL;
+		} */
+		/* try to deduct scheme (based on host/path presence)
+		if (url_parsed->scheme == NULL) {
+			if (url_parsed->host != NULL) {
+				url_parsed->scheme = estrdup("tcp");
+			} else if (url_parsed->path != NULL) {
+				url_parsed->scheme = estrdup("unix");
+			} else {
+				THROW_EXC("Unknown url: %s", url);
+				RETURN_FALSE;
+			}
+		} */
+		/* check that protocik is supported
+		if (strcmp(url_parsed->scheme, "tcp") != 0 &&
+		    strcmp(url_parsed->scheme, "unix") != 0) { 
+			THROW_EXC("Unsupported protocol: %s",
+				  url_parsed->scheme);
+			RETURN_FALSE;
+		} */
+	}
+	efree(url);
+
 	if (is_persistent) {
 		zend_resource *le = NULL;
 
-		plist_id = pid_pzsgen(host, port, login, "plist",
-				      suffix, suffix_len);
+		plist_id = pid_pzsgen(url_parsed, url_parsed->user,
+				      "plist", suffix, suffix_len);
 
 		le = zend_hash_find_ptr(&EG(persistent_list), plist_id);
 		if (le != NULL) {
-			/* It's likely */
+			/* It's likely §*/
 			if (le->type == php_tarantool_list_entry()) {
 				obj = (tarantool_connection *) le->ptr;
 				plist_new_entry = false;
@@ -1174,8 +1231,6 @@ PHP_METHOD(Tarantool, __construct) {
 		}
 
 		/* initialzie object structure */
-		obj->host = pestrdup(host, is_persistent);
-		obj->port = port;
 		obj->value = (smart_string *)pecalloc(1, sizeof(smart_string), 1);
 		/* CHECK obj->value */
 		memset(obj->value, 0, sizeof(smart_string));
@@ -1184,15 +1239,18 @@ PHP_METHOD(Tarantool, __construct) {
 						 is_persistent);
 		/* CHECK obj->greeting */
 		obj->salt = obj->greeting + SALT_PREFIX_SIZE;
-		obj->login = pestrdup(login, is_persistent);
-		obj->orig_login = pestrdup(login, is_persistent);
-		/* If passwd == NULL, then authenticate without password */
-		if (passwd != NULL) {
-			obj->passwd = pestrdup(passwd, is_persistent);
-		}
+		obj->orig_user = pestrdup(url_parsed->user, is_persistent);
+		obj->url_parsed = url_parsed;
+		obj->url = tarantool_url_write_php_format(obj->url_parsed, is_persistent);
+		char *url_s = pestrdup(obj->url, is_persistent);
+		efree(obj->url);
+		obj->url = url_s;
+		/* If pass == NULL, then authenticate without password */
 		if (is_persistent) {
-			obj->persistent_id = pid_pzsgen(host, port, login,
-					"stream", suffix, suffix_len);
+			obj->persistent_id = pid_pzsgen(obj->url_parsed,
+							obj->url_parsed->user,
+							"plist",
+							suffix, suffix_len);
 		}
 		obj->schema = tarantool_schema_new(is_persistent);
 		/* CHECK obj->schema */
@@ -1241,9 +1299,9 @@ static int __tarantool_authenticate(tarantool_connection *obj) {
 	tarantool_schema_flush(obj->schema);
 	tarantool_tp_update(obj->tps);
 	int batch_count = 3;
-	size_t passwd_len = (obj->passwd ? strlen(obj->passwd) : 0);
-	tp_auth(obj->tps, obj->salt, obj->login, strlen(obj->login),
-		obj->passwd, passwd_len);
+	size_t pass_len = (obj->url_parsed->pass ? strlen(obj->url_parsed->pass) : 0);
+	tp_auth(obj->tps, obj->salt, obj->url_parsed->user, strlen(obj->url_parsed->user),
+		obj->url_parsed->pass, pass_len);
 	uint32_t auth_sync = TARANTOOL_G(sync_counter)++;
 	tp_reqid(obj->tps, auth_sync);
 	tp_select(obj->tps, SPACE_SPACE, 0, 0, 4096);
@@ -1305,16 +1363,18 @@ static int __tarantool_authenticate(tarantool_connection *obj) {
 }
 
 PHP_METHOD(Tarantool, authenticate) {
-	const char *login  = NULL; size_t login_len  = 0;
-	const char *passwd = NULL; size_t passwd_len = 0;
+	const char *user = NULL; size_t user_len = 0;
+	const char *pass = NULL; size_t pass_len = 0;
 
-	TARANTOOL_FUNCTION_BEGIN(obj, id, "s|s", &login, &login_len,
-				 &passwd, &passwd_len);
-	if (obj->login != NULL)  pefree(obj->login,  t_obj->is_persistent);
-	if (obj->passwd != NULL) pefree(obj->passwd, t_obj->is_persistent);
-	obj->login = pestrdup(login, t_obj->is_persistent);
-	if (passwd != NULL) {
-		obj->passwd = pestrdup(passwd, t_obj->is_persistent);
+	TARANTOOL_FUNCTION_BEGIN(obj, id, "s|s", &user, &user_len,
+				 &pass, &pass_len);
+	if (obj->url_parsed->user != NULL)
+		pefree(obj->url_parsed->user, t_obj->is_persistent);
+	if (obj->url_parsed->pass != NULL)
+		pefree(obj->url_parsed->pass, t_obj->is_persistent);
+	obj->url_parsed->user = pestrdup(user, t_obj->is_persistent);
+	if (pass != NULL) {
+		obj->url_parsed->pass = pestrdup(pass, t_obj->is_persistent);
 	}
 	TARANTOOL_CONNECT_ON_DEMAND(obj);
 
@@ -1360,7 +1420,6 @@ PHP_METHOD(Tarantool, select) {
 	zval *zlimit = NULL, *ziterator = NULL;
 	long limit = LONG_MAX - 1, offset = 0, iterator = 0;
 	zval key_new = {0};
-
 	TARANTOOL_FUNCTION_BEGIN(obj, id, "z|zzzlz", &space, &key, &index,
 				 &zlimit, &offset, &ziterator);
 	TARANTOOL_CONNECT_ON_DEMAND(obj);

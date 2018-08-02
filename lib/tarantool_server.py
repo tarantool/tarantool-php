@@ -112,15 +112,18 @@ class TarantoolAdmin(object):
 
 class TarantoolServer(object):
     default_tarantool = {
-            "bin":           "tarantool",
-            "logfile":   "tarantool.log",
-            "init":           "init.lua"}
+        "bin":           "tarantool",
+        "logfile":   "tarantool.log",
+        "init":           "init.lua",
+        "unix":     "tarantool.sock"
+    }
 
     default_cfg = {
-            "custom_proc_title": "\"tarantool-python testing\"",
-            "slab_alloc_arena":                             0.5,
-            "pid_file":                           "\"box.pid\"",
-            "rows_per_wal":                                 200}
+        "custom_proc_title": "\"tarantool-python testing\"",
+        "slab_alloc_arena":                             0.5,
+        "pid_file":                           "\"box.pid\"",
+        "rows_per_wal":                                 200
+    }
 
     @property
     def logfile_path(self):
@@ -133,6 +136,10 @@ class TarantoolServer(object):
     @property
     def script_path(self):
         return os.path.join(self.vardir, self.default_tarantool['init'])
+
+    @property
+    def unix_path(self):
+        return os.path.join(self.vardir, self.default_tarantool['unix'])
 
     @property
     def script_dst(self):
@@ -187,9 +194,9 @@ class TarantoolServer(object):
     def __init__(self):
         os.popen('ulimit -c unlimited')
         self.args = {}
-        self.args['primary'] = find_port()
-        self.args['admin'] = find_port(self.args['primary'] + 1)
-        self._admin = self.args['admin']
+
+        self.use_unix = False
+
         self.vardir = tempfile.mkdtemp(prefix='var_', dir=os.getcwd())
         self.find_exe()
 
@@ -204,6 +211,7 @@ class TarantoolServer(object):
         raise RuntimeError("Can't find server executable in " + os.environ["PATH"])
 
     def generate_configuration(self):
+        # print(self.args)
         os.putenv("PRIMARY_PORT", str(self.args['primary']))
         os.putenv("ADMIN_PORT", str(self.args['admin']))
 
@@ -242,6 +250,14 @@ class TarantoolServer(object):
         #   start Tarantool\Box       --DONE(prepare_args)
         # * Wait unitl Tarantool\Box
         #   started                   --DONE(wait_until_started)
+        if self.use_unix:
+            self.args['primary'] = self.unix_path
+            self.args['admin']   = find_port()
+        else:
+            self.args['primary'] = find_port()
+            self.args['admin']   = find_port(self.args['primary'] + 1)
+        self._admin = self.args['admin']
+
         self.generate_configuration()
         if self.script:
             shutil.copy(self.script, self.script_dst)
@@ -268,5 +284,4 @@ class TarantoolServer(object):
 
     def __del__(self):
         self.stop()
-        self.clean()
-
+        # self.clean()

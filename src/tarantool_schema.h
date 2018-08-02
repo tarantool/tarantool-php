@@ -3,14 +3,14 @@
 
 struct schema_key {
 	const char *id;
-	uint32_t id_len;
-	uint32_t number;
+	uint32_t    id_len;
+	uint32_t    number;
 };
 
 enum field_type {
 	FT_STR   = 0,
 	FT_NUM   = 1,
-	FT_OTHER = 2
+	FT_OTHER = 2,
 };
 
 struct schema_field_value {

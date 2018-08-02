@@ -44,20 +44,9 @@ def prepare_env(php_ini):
     shutil.copy(php_ini, 'var')
     shutil.copy('modules/tarantool.so', 'var')
 
-def main():
-    path = os.path.dirname(sys.argv[0])
-    if not path:
-        path = '.'
-    os.chdir(path)
-    if '--prepare' in sys.argv:
-        prepare_env('test/shared/tarantool-1.ini')
-        exit(0)
-    srv = None
-    srv = TarantoolServer()
-    srv.script = 'test/shared/box.lua'
-    srv.start()
+def run_tests(vardir):
     test_dir_path = os.path.abspath(os.path.join(os.getcwd(), 'test'))
-    test_cwd = os.path.dirname(srv.vardir)
+    test_cwd = os.path.dirname(vardir)
     test_lib_path = ""
     try:
         shutil.copy('test/shared/phpunit.xml', os.path.join(test_cwd, 'phpunit.xml'))
@@ -71,9 +60,9 @@ def main():
         print('Running against ' + version)
 
         for php_ini in [
-            'test/shared/tarantool-1.ini',
-            'test/shared/tarantool-2.ini',
-            'test/shared/tarantool-3.ini'
+            'test/shared/tarantool-1.ini'
+            # 'test/shared/tarantool-2.ini',
+            # 'test/shared/tarantool-3.ini'
         ]:
             cmd = ''
             shutil.copy(php_ini, os.path.join(test_cwd, 'tarantool.ini'))
@@ -83,12 +72,13 @@ def main():
                 os.environ['MALLOC_CHECK_'] = '3'
             if '--valgrind' in sys.argv:
                 cmd = cmd + 'valgrind --leak-check=full --show-leak-kinds=all --log-file='
-                cmd = cmd + os.path.basename(php_ini).split('.')[0] + '.out '
-                cmd = cmd + '--suppressions=test/shared/valgrind.sup '
-                cmd = cmd + '--keep-stacktraces=alloc-and-free'
-                cmd = cmd + ' --freelist-vol=2000000000 '
-                cmd = cmd + '--malloc-fill=0 --free-fill=0 '
-                cmd = cmd + '--num-callers=50 ' + find_php_bin()
+                cmd = cmd + os.path.basename(php_ini).split('.')[0] + '.out'
+                cmd = cmd + ' --suppressions=test/shared/valgrind.sup'
+                # cmd = cmd + ' --track-origins=yes'
+                cmd = cmd + ' --keep-stacktraces=alloc-and-free'
+                cmd = cmd + ' --freelist-vol=2000000000'
+                cmd = cmd + ' --malloc-fill=0 --free-fill=0'
+                cmd = cmd + ' --num-callers=50 ' + find_php_bin()
                 cmd = cmd + ' -c tarantool.ini {0}'.format(test_lib_path)
             elif '--gdb' in sys.argv:
                 cmd = cmd + 'gdb {0} --ex '.format(find_php_bin())
@@ -124,6 +114,40 @@ def main():
         for elem in a:
             if os.path.exists(elem):
                 os.remove(elem)
+
+def test_tcp():
+    # prepare, start Tarantool on TCP socket
+    srv = TarantoolServer()
+    srv.script = 'test/shared/box.lua'
+    srv.start()
+
+    run_tests(srv.vardir)
+
+def test_unix():
+    # prepare, start Tarantool on Unix socket
+    srv = TarantoolServer()
+    srv.script = 'test/shared/box.lua'
+    srv.use_unix = True
+    srv.start()
+
+    run_tests(srv.vardir)
+
+def main():
+    # change dir
+    path = os.path.dirname(sys.argv[0])
+    if not path:
+        path = '.'
+    os.chdir(path)
+    # if preparation mode is enabled - prepare directory and exit
+    if '--prepare' in sys.argv:
+        prepare_env('test/shared/tarantool-1.ini')
+        exit(0)
+
+    if '--tcp' in sys.argv or '--unix' not in sys.argv:
+        test_tcp()
+
+    if '--unix' in sys.argv:
+        test_unix()
 
     return 0
 

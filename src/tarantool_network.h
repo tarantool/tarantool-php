@@ -12,14 +12,9 @@ void tntll_stream_close(php_stream *stream, zend_string *pid);
  * Simple php_stream_from_persistent_id
  */
 int  tntll_stream_fpid2(zend_string *pid, php_stream **ostream);
-/*
- * php_stream_from_persistent_id if persistent.
- * If exists or if not persistent, then open new connection.
- */
-int  tntll_stream_fpid (const char *host, int port, zend_string *pid,
-			php_stream **ostream, char **err);
-int  tntll_stream_open (const char *host, int port, zend_string *pid,
-			php_stream **ostream, char **err);
+
+php_stream *
+tntll_stream_open(const char *url, zend_string *pid, char **err);
 /*
  * Read size bytes once
  */

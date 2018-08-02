@@ -282,10 +282,11 @@ ptrdiff_t php_mp_unpack_map(zval *oval, char **str) {
 		ZVAL_UNDEF(&key);
 		ZVAL_UNDEF(&value);
 		if (php_mp_unpack(&key, str) == FAILURE) {
-			goto error_key;
+			goto error;
 		}
 		if (php_mp_unpack(&value, str) == FAILURE) {
-			goto error_value;
+			ZVAL_UNDEF(&value);
+			goto error;
 		}
 		switch (Z_TYPE(key)) {
 		case IS_LONG:
@@ -305,11 +306,11 @@ ptrdiff_t php_mp_unpack_map(zval *oval, char **str) {
 		zval_ptr_dtor(&key);
 		continue;
 error:
-		zval_ptr_dtor(&value);
-error_value:
-		zval_ptr_dtor(&key);
-error_key:
+
+		if (Z_TYPE(value) != IS_UNDEF) zval_ptr_dtor(&value);
+		if (Z_TYPE(key)   != IS_UNDEF) zval_ptr_dtor(&key);
 		zval_ptr_dtor(oval);
+		ZVAL_UNDEF(oval);
 		return FAILURE;
 	}
 	return SUCCESS;

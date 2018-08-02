@@ -95,10 +95,8 @@ ZEND_EXTERN_MODULE_GLOBALS(tarantool);
 
 typedef struct tarantool_object {
 	struct tarantool_connection  {
-		char                    *host;
-		int                      port;
-		char                    *login;
-		char                    *passwd;
+		char                    *url;
+		struct tarantool_url    *url_parsed;
 		php_stream              *stream;
 		struct tarantool_schema *schema;
 		smart_string            *value;
@@ -106,7 +104,7 @@ typedef struct tarantool_object {
 		char                    *greeting;
 		char                    *salt;
 		/* Only for persistent connections */
-		char                    *orig_login;
+		char                    *orig_user;
 		char                    *suffix;
 		int                     suffix_len;
 		zend_string             *persistent_id;

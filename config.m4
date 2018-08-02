@@ -10,10 +10,12 @@ if test "$PHP_TARANTOOL" != "no"; then
         src/tarantool_schema.c      \
         src/tarantool_proto.c       \
         src/tarantool_tp.c          \
+        src/tarantool_url.c         \
         src/tarantool_exception.c   \
         src/utils.c                 \
         src/third_party/msgpuck.c   \
         src/third_party/sha1.c      \
+        src/third_party/uri.c       \
         src/third_party/PMurHash.c  \
         , $ext_shared)
     PHP_ADD_BUILD_DIR([$ext_builddir/src/])

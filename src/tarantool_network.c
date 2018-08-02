@@ -42,47 +42,25 @@ int tntll_stream_fpid2(zend_string *pid, php_stream **ostream) {
 	return php_stream_from_persistent_id(pid->val, ostream TSRMLS_CC);
 }
 
-int tntll_stream_fpid(const char *host, int port, zend_string *pid,
-		      php_stream **ostream, char **err) {
-	TSRMLS_FETCH();
-	*ostream = NULL;
-	int rv = 0;
-	if (pid) {
-		rv = php_stream_from_persistent_id(pid->val, ostream TSRMLS_CC);
-		if (rv == PHP_STREAM_PERSISTENT_FAILURE) {
-			spprintf(err, 0, "Failed to load persistent stream.");
-			return -1;
-		}
-	}
-	if (rv == PHP_STREAM_PERSISTENT_NOT_EXIST) {
-		return tntll_stream_open(host, port, pid, ostream, err);
-	}
-	return 0;
-}
-
-int tntll_stream_open(const char *host, int port, zend_string *pid,
-		      php_stream **ostream, char **err) {
+php_stream *tntll_stream_open(const char *url, zend_string *pid, char **err) {
 	TSRMLS_FETCH();
 	php_stream *stream = NULL;
-	struct timeval tv = {0};
-	int errcode = 0, options = 0, flags = 0;
-	char  *addr = NULL;
 	zend_string *errstr = NULL;
-	size_t addr_len = 0;
 
-	addr_len = spprintf(&addr, 0, "tcp://%s:%d", host, port);
-	options = REPORT_ERRORS;
-	if (pid) options |= STREAM_OPEN_PERSISTENT;
-	flags = STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT;
-	double_to_tv(TARANTOOL_G(timeout), &tv);
-	// printf("timeout: 'sec(%d), usec(%d)'\n",
-	//        (int )tv.tv_sec, (int )tv.tv_usec);
+	int options = REPORT_ERRORS;
+	if (pid) {
+		options |= STREAM_OPEN_PERSISTENT;
+	}
+	int flags = STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT;
 
-	const char *pid_str = pid == NULL ? NULL : pid->val;
-	stream = php_stream_xport_create(addr, addr_len, options, flags,
-					 pid_str, &tv, NULL, &errstr,
+	struct timeval connect_tv = {0};
+	double_to_tv(TARANTOOL_G(timeout), &connect_tv);
+
+	int errcode = 0;
+	const char *pid_str = (pid == NULL ? NULL : pid->val);
+	stream = php_stream_xport_create(url, strlen(url), options, flags,
+					 pid_str, &connect_tv, NULL, &errstr,
 					 &errcode);
-	efree(addr);
 
 	if (errcode || !stream) {
 		spprintf(err, 0, "Failed to connect [%d]: %s", errcode,
@@ -91,33 +69,54 @@ int tntll_stream_open(const char *host, int port, zend_string *pid,
 	}
 
 	/* Set READ_TIMEOUT */
-	double_to_tv(TARANTOOL_G(request_timeout), &tv);
-	// printf("request_timeout:  'sec(%d), usec(%d)'\n",
-	//        (int )tv.tv_sec, (int )tv.tv_usec);
+	struct timeval read_tv = {0};
+	double_to_tv(TARANTOOL_G(request_timeout), &read_tv);
 
-	if (tv.tv_sec != 0 || tv.tv_usec != 0) {
+	if (read_tv.tv_sec != 0 || read_tv.tv_usec != 0) {
 		php_stream_set_option(stream, PHP_STREAM_OPTION_READ_TIMEOUT,
-				      0, &tv);
+				      0, &read_tv);
 	}
 
-	/* Set TCP_NODELAY */
-	int socketd = ((php_netstream_data_t* )stream->abstract)->socket;
-	flags = 1;
-	if (setsockopt(socketd, IPPROTO_TCP, TCP_NODELAY, (char *) &flags,
-		       sizeof(int))) {
-		spprintf(err, 0, "Failed setsockopt [%d]: %s", errno,
-			 strerror(errno));
-		goto error;
+	/* Set TCP_NODELAY in case of TCP socket */
+	if (memcmp(url, "tcp://", sizeof("tcp://") - 1) == 0) {
+		int socketd = ((php_netstream_data_t* )stream->abstract)->socket;
+		int flags = 1;
+		if (setsockopt(socketd, IPPROTO_TCP, TCP_NODELAY, (char *) &flags,
+			       sizeof(int))) {
+			spprintf(err, 0, "Failed setsockopt [%d]: %s", errno,
+				 strerror(errno));
+			goto error;
+		}
 	}
-	*ostream = stream;
-	return 0;
+
+	return stream;
 error:
 	if (errstr) zend_string_release(errstr);
 	if (stream) tntll_stream_close(NULL, pid);
-	return -1;
+	return NULL;
 }
 
-#include <sys/time.h>
+php_stream *tntll_stream_open_unix(const char *path, zend_string *pid,
+				   char **err) {
+	char *url = NULL;
+	size_t url_len = spprintf(&url, 0, "unix://%s", path);
+	if (url == NULL)
+		return NULL;
+	php_stream *out = tntll_stream_open(url, pid, err);
+	efree(url);
+	return out;
+}
+
+php_stream *tntll_stream_open_tcp(const char *host, int port, zend_string *pid,
+				  char **err) {
+	char *url = NULL;
+	size_t url_len = spprintf(&url, 0, "tcp://%s:%d", host, port);
+	if (url == NULL)
+		return NULL;
+	php_stream *out = tntll_stream_open(url, pid, err);
+	efree(url);
+	return out;
+}
 
 /*
  * Legacy rtsisyk code, php_stream_read made right

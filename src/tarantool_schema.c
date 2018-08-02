@@ -22,7 +22,7 @@
 		return !memcmp((*lval)->key.id, (*rval)->key.id, (*rval)->key.id_len);		\
 	}											\
 												\
-	int mh_##NAME##cmp_key_eq(const struct schema_key *key, const TYPE **val, void *arg) {  \
+	int mh_##NAME##cmp_key_eq(const struct schema_key *key, const TYPE **val, void *arg) {	\
 		(void *) arg;									\
 		if (key->id_len != (*val)->key.id_len)						\
 			return 0;								\

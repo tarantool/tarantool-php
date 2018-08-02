@@ -6,10 +6,19 @@ final class AssertTest extends TestCase
 {
 	protected static $tarantool, $tm;
 
+	static function connectTarantool() {
+		$port = getenv('PRIMARY_PORT');
+		if ($port[0] == '/') {
+			return new Tarantool('unix/:' . $port, 'prefix');
+		} else {
+			return new Tarantool('tcp://localhost:' . $port);
+		}
+	}
+
 	public static function setUpBeforeClass() {
 		self::$tm = ini_get("tarantool.request_timeout");
 		ini_set("tarantool.request_timeout", "0.1");
-		self::$tarantool = new Tarantool('localhost', getenv('PRIMARY_PORT'));
+		self::$tarantool = static::connectTarantool();
 		self::$tarantool->authenticate('test', 'test');
 	}
 
@@ -33,7 +42,6 @@ final class AssertTest extends TestCase
 			$result = self::$tarantool->call("assert_f");
 			$this->assertFalse(True);
 		} catch (TarantoolException $e) {
-			// print($e->getMessage());
 			$this->assertContains("Failed to read", $e->getMessage());
 		}
 
