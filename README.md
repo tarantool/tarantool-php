@@ -114,7 +114,7 @@ _**Description**_: Available Tarantool Constants
 
 ``` php
 Tarantool {
-    public       Tarantool::__construct ( [ string $host = 'localhost' [, int $port = 3301 [, string $user = "guest" [, string $password = NULL [, string $persistent_id = NULL ] ] ] ] ] )
+    public       Tarantool::__construct ( [ string $uri = 'tcp://guest@localhost:3301' [, string $persistent_id = NULL ] ] )
     public bool  Tarantool::connect ( void )
     public bool  Tarantool::disconnect ( void )
     public bool  Tarantool::flushSchema ( void )
@@ -133,17 +133,16 @@ Tarantool {
 #### Tarantool::__construct
 
 ```
+public Tarantool::__construct ( [ string $uri = 'tcp://guest@localhost:3301' [, string $persistent_id = NULL ] ] )
+/* Old API, eventually it'll be deleted */
 public Tarantool::__construct ( [ string $host = 'localhost' [, int $port = 3301 [, string $user = "guest" [, string $password = NULL [, string $persistent_id = NULL ] ] ] ] ] )
 ```
 
-_**Description**_: Creates a Tarantool client
+_**Description**_: Creates a Tarantool client (TCP/UNIX sockets are supported)
 
 _**Parameters**_
 
-* `host`: string, default is `'localhost'`
-* `port`: number, default is `3301`
-* `user`: string, default is `'guest'`
-* `password`: string
+* `uri`: string, default is `'tcp://guest@localhost:3301'`
 * `persistent_id`: string (set it, and connection will be persistent, if
   `persistent` in config isn't set)
 
@@ -155,8 +154,10 @@ Tarantool class instance
 
 ``` php
 $tnt = new Tarantool(); // -> new Tarantool('localhost', 3301);
-$tnt = new Tarantool('tarantool.org'); // -> new Tarantool('tarantool.org', 3301);
-$tnt = new Tarantool('localhost', 16847);
+$tnt = new Tarantool('tcp://test:test@localhost');
+$tnt = new Tarantool('tcp://test:test@localhost:3301');
+$tnt = new Tarantool('test:test@unix/:/var/tmp/tarantool.sock);
+$tnt = new Tarantool('unix:///var/tmp/tarantool.sock); /* if no login is needed */
 ```
 
 ## Manipulation connection
