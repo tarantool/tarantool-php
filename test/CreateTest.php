@@ -211,4 +211,13 @@ final class CreateTest extends TestCase
 			$c->close();
 		}
 	}
+
+	public function test_10_zero_retry_exception() {
+		$t = static::connectTarantool();
+		$rc = ini_get('tarantool.retry_count');
+
+		ini_set('tarantool.retry_count', 0);
+		$this->assertEquals($t->ping(), true);
+		ini_set('tarantool.retry_count', $rc);
+	}
 }

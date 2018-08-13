@@ -225,7 +225,7 @@ static int __tarantool_connect(tarantool_object *t_obj) {
 	TSRMLS_FETCH();
 	tarantool_connection *obj = t_obj->obj;
 	int status = SUCCESS;
-	long count = TARANTOOL_G(retry_count);
+	long count = TARANTOOL_G(retry_count) + 1;
 	struct timespec sleep_time = {0};
 	double_to_ts(INI_FLT("retry_sleep"), &sleep_time);
 	char *err = NULL;
