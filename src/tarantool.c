@@ -1296,7 +1296,6 @@ PHP_METHOD(Tarantool, reconnect) {
 static int __tarantool_authenticate(tarantool_connection *obj) {
 	TSRMLS_FETCH();
 
-	tarantool_schema_flush(obj->schema);
 	tarantool_tp_update(obj->tps);
 	int batch_count = 3;
 	size_t pass_len = (obj->url_parsed->pass ? strlen(obj->url_parsed->pass) : 0);
@@ -1344,7 +1343,9 @@ static int __tarantool_authenticate(tarantool_connection *obj) {
 			status = FAILURE;
 		}
 		if (status != FAILURE) {
-			if (resp.sync == space_sync && tarantool_schema_add_spaces(
+			if (resp.sync == auth_sync) {
+				tarantool_schema_flush(obj->schema);
+			} else if (resp.sync == space_sync && tarantool_schema_add_spaces(
 					obj->schema,
 					resp.data,
 					resp.data_len) == -1) {
