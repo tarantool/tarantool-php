@@ -52,8 +52,8 @@ matrix:
     - env: OS=debian DIST=sid PACK=deb
 
 script:
-  - git clone https://github.com/tarantool/build.git
-  - bash build/pack/travis.sh
+  - git clone https://github.com/packpack/packpack.git packpack
+  - packpack/packpack;
 
 notifications:
   email: true
