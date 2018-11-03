@@ -1,16 +1,13 @@
 #!/usr/bin/env python
+# pylint: disable=missing-docstring
+from __future__ import print_function
 
 import os
 import sys
-import shlex
 import shutil
 import subprocess
 
-import time
-
 from lib.tarantool_server import TarantoolServer
-
-from pprint import pprint
 
 PHPUNIT_PHAR = 'phpunit.phar'
 
@@ -25,9 +22,9 @@ def read_popen_config(cmd):
 
 def find_php_bin():
     path = read_popen('which php').strip().decode()
-    if (path.find('phpenv') != -1):
+    if path.find('phpenv') != -1:
         version = read_popen('phpenv global')
-        if (version.find('system') != -1):
+        if version.find('system') != -1:
             return '/usr/bin/php'
         return '~/.phpenv/versions/{0}/bin/php'.format(version.strip())
     return path
@@ -38,9 +35,9 @@ def prepare_env(php_ini):
     if not os.path.isdir('var') and not os.path.exists('var'):
         os.mkdir('var')
     shutil.copy('test/shared/phpunit.xml', 'var')
-    test_dir_path = os.path.abspath(os.path.join(os.getcwd(), 'test'))
-    test_lib_path = os.path.join(test_dir_path, PHPUNIT_PHAR)
-#    shutil.copy('test/shared/tarantool.ini', 'var')
+    # test_dir_path = os.path.abspath(os.path.join(os.getcwd(), 'test'))
+    # test_lib_path = os.path.join(test_dir_path, PHPUNIT_PHAR)
+    # shutil.copy('test/shared/tarantool.ini', 'var')
     shutil.copy(php_ini, 'var')
     shutil.copy('modules/tarantool.so', 'var')
 
@@ -60,9 +57,9 @@ def run_tests(vardir):
         print('Running against ' + version)
 
         for php_ini in [
-            'test/shared/tarantool-1.ini'
-            # 'test/shared/tarantool-2.ini',
-            # 'test/shared/tarantool-3.ini'
+                'test/shared/tarantool-1.ini',
+                'test/shared/tarantool-2.ini',
+                'test/shared/tarantool-3.ini'
         ]:
             cmd = ''
             shutil.copy(php_ini, os.path.join(test_cwd, 'tarantool.ini'))
@@ -98,20 +95,18 @@ def run_tests(vardir):
 
             print('Running "%s" with "%s"' % (cmd, php_ini))
             proc = subprocess.Popen(cmd, shell=True, cwd=test_cwd)
-            rv = proc.wait()
-            if rv != 0:
+            if proc.wait() != 0:
                 print('Error')
-                return -1
+                return
             if '--gdb' in sys.argv or '--lldb' in sys.argv:
-                return -1
+                return
 
     finally:
-        a = [
+        for elem in [
                 os.path.join(test_cwd, 'tarantool.ini'),
                 os.path.join(test_cwd, 'phpunit.xml'),
                 os.path.join(test_cwd, 'tarantool.so'),
-        ]
-        for elem in a:
+        ]:
             if os.path.exists(elem):
                 os.remove(elem)
 

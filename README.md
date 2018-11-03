@@ -156,8 +156,8 @@ Tarantool class instance
 $tnt = new Tarantool(); // -> new Tarantool('localhost', 3301);
 $tnt = new Tarantool('tcp://test:test@localhost');
 $tnt = new Tarantool('tcp://test:test@localhost:3301');
-$tnt = new Tarantool('test:test@unix/:/var/tmp/tarantool.sock);
-$tnt = new Tarantool('unix:///var/tmp/tarantool.sock); /* if no login is needed */
+$tnt = new Tarantool('test:test@unix/:/var/tmp/tarantool.sock');
+$tnt = new Tarantool('unix:///var/tmp/tarantool.sock'); /* if no login is needed */
 ```
 
 ## Manipulation connection

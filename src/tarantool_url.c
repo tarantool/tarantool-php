@@ -16,7 +16,8 @@ url_part_copy(const char *part, size_t part_len, int persistent) {
 
 struct tarantool_url *
 tarantool_url_parse(const char *url, int persistent) {
-	struct uri parsed; memset(&parsed, 0, sizeof(struct uri));
+	struct uri parsed;
+	memset(&parsed, 0, sizeof(struct uri));
 
 	if (uri_parse(&parsed, url) == -1)
 		return NULL;
@@ -67,8 +68,8 @@ tarantool_url_parse(const char *url, int persistent) {
 			host_len = parsed.host_len;
 		}
 		if (parsed.service == NULL) {
-			port     = "3303";
-			port_len = sizeof("3303") - 1;
+			port     = "3301";
+			port_len = sizeof("3301") - 1;
 		} else {
 			port     = parsed.service;
 			port_len = parsed.service_len;

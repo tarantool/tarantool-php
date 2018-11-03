@@ -95,7 +95,11 @@ ZEND_EXTERN_MODULE_GLOBALS(tarantool);
 
 typedef struct tarantool_object {
 	struct tarantool_connection  {
+		/* physical url, that's used for connection in raw PHP obtained
+		 * from parsed url by `tarantool_url_write_php_format` */
 		char                    *url;
+		/* parsed url, after have user/password/...
+		 * obtained from user string by `tarantool_url_parse` */
 		struct tarantool_url    *url_parsed;
 		php_stream              *stream;
 		struct tarantool_schema *schema;

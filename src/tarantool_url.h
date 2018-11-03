@@ -25,6 +25,9 @@ tarantool_url_parse(const char *url, int persistent);
 void
 tarantool_url_free(struct tarantool_url *url, int persistent);
 
+/*
+ * Construct url in PHP format (without user/password)
+ */
 const char *
 tarantool_url_write_php_format(struct tarantool_url *url, int persistent);
 

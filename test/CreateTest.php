@@ -18,7 +18,7 @@ final class CreateTest extends TestCase
 						  $port);
 			self::$con_type = 'UNIX';
 		} else {
-			$uri = sprintf('tcp://%s%s%s%slocalhost:%d',
+			$uri = sprintf('tcp://%s%s%s%slocalhost:%s',
 						  $user ? $user : '',
 						  ($user and $pass) ? ':' : '',
 						  ($user and $pass) ? $pass : '',
@@ -158,13 +158,6 @@ final class CreateTest extends TestCase
 	 */
 	public function test_08_good_credentials_construct($username, $password = null) {
 		$c = static::connectTarantool($username, $password);
-		/*
-		if (func_num_args() === 1) {
-			$c = new Tarantool('localhost', intval(self::$port), $username);
-		} else {
-			$c = new Tarantool('localhost', intval(self::$port), $username, $password);
-		}
-		 */
 		$this->assertTrue($c->ping());
 	}
 
@@ -202,11 +195,11 @@ final class CreateTest extends TestCase
 			$c->close();
 
 
-			$c = new Tarantool(sprintf('tcp://localhost:%d', $port));
+			$c = new Tarantool(sprintf('tcp://localhost:%s', $port));
 			$this->assertEquals($c->call('box.session.user')[0][0], 'guest');
 			$c->close();
 
-			$c = new Tarantool(sprintf('tcp://test:test@localhost:%d', $port));
+			$c = new Tarantool(sprintf('tcp://test:test@localhost:%s', $port));
 			$this->assertEquals($c->call('box.session.user')[0][0], 'test');
 			$c->close();
 		}

@@ -14,20 +14,24 @@
 #define MUR_SEED 13
 #include "third_party/msgpuck.h"
 
-#define MH_DEFINE_CMPFUNC(NAME, TYPE)								\
-	int mh_##NAME##cmp_eq(const TYPE **lval, const TYPE **rval, void *arg) {		\
-		(void *) arg;									\
-		if ((*lval)->key.id_len != (*rval)->key.id_len)					\
-			return 0;								\
-		return !memcmp((*lval)->key.id, (*rval)->key.id, (*rval)->key.id_len);		\
-	}											\
-												\
-	int mh_##NAME##cmp_key_eq(const struct schema_key *key, const TYPE **val, void *arg) {	\
-		(void *) arg;									\
-		if (key->id_len != (*val)->key.id_len)						\
-			return 0;								\
-		return !memcmp(key->id, (*val)->key.id, key->id_len);				\
+#define MH_DEFINE_CMPFUNC(NAME, TYPE)					      \
+	int mh_##NAME##cmp_eq(const TYPE **lval, const TYPE **rval, void *arg)\
+	{								      \
+		(void *) arg;						      \
+		if ((*lval)->key.id_len != (*rval)->key.id_len)		      \
+			return 0;					      \
+		return !memcmp((*lval)->key.id, (*rval)->key.id,	      \
+				(*rval)->key.id_len);			      \
+	}								      \
+									      \
+	int mh_##NAME##cmp_key_eq(const struct schema_key *key,		      \
+				  const TYPE **val, void *arg) {	      \
+		(void *) arg;						      \
+		if (key->id_len != (*val)->key.id_len)			      \
+			return 0;					      \
+		return !memcmp(key->id, (*val)->key.id, key->id_len);	      \
 	}
+
 MH_DEFINE_CMPFUNC(field, struct schema_field_value);
 MH_DEFINE_CMPFUNC(index, struct schema_index_value);
 MH_DEFINE_CMPFUNC(space, struct schema_space_value);
@@ -37,7 +41,8 @@ MH_DEFINE_CMPFUNC(space, struct schema_space_value);
 
 #define mh_eq(a, b, arg)     mh_fieldcmp_eq(a, b, arg)
 #define mh_eq_key(a, b, arg) mh_fieldcmp_key_eq(a, b, arg)
-#define mh_hash(x, arg)      PMurHash32(MUR_SEED, (*x)->key.id, (*x)->key.id_len)
+#define mh_hash(x, arg)      PMurHash32(MUR_SEED, (*x)->key.id, \
+					(*x)->key.id_len)
 #define mh_hash_key(x, arg)  PMurHash32(MUR_SEED, (x)->id, (x)->id_len);
 
 #define mh_node_t struct schema_field_value *

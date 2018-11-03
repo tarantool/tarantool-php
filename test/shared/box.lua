@@ -45,8 +45,8 @@ box.once('initialization', function()
         password = '123456789012345678901234567890123456789012345678901234567890'
     })
     box.schema.user.grant('test', 'read,write,execute', 'universe')
-	box.schema.func.create('box.session.user')
-	box.schema.user.grant('guest', 'execute', 'function', 'box.session.user')
+    box.schema.func.create('box.session.user')
+    box.schema.user.grant('guest', 'execute', 'function', 'box.session.user')
 
     local space = box.schema.space.create('test', {
         format = {

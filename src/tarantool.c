@@ -154,7 +154,6 @@ pid_gen(struct tarantool_url *url, const char *user, const char *prefix,
 	const char *suffix, size_t suffix_len, size_t *olen) {
 
 	char *plist_id = NULL, *tmp = NULL;
-	/* if user is not defined, then user is 'guest' */
 	int len = 0;
 	if (url->type == TARANTOOL_URL_TCP) {
 		len = spprintf(&plist_id, 0, "tarantool-%s:id=%s:%d-%s",
@@ -265,8 +264,8 @@ retry:
 			continue;
 		if (tntll_stream_read2(obj->stream, obj->greeting,
 				       GREETING_SIZE) != GREETING_SIZE) {
-			// int errno = php_stream_errno();
-			spprintf(&err, 0, "Fails to read greeting [%d]: %s", errno, strerror(errno));
+			spprintf(&err, 0, "Fails to read greeting [%d]: %s",
+				 errno, strerror(errno));
 			continue;
 		}
 		if (php_tp_verify_greetings(obj->greeting) == 0) {
@@ -278,7 +277,7 @@ retry:
 	}
 	if (count == 0) {
 ioexception:
-		tarantool_throw_ioexception("%s ", err);
+		tarantool_throw_ioexception("%s", err);
 		efree(err);
 		return FAILURE;
 	}
@@ -294,7 +293,7 @@ inline static int __tarantool_reconnect(tarantool_object *t_obj) {
 	return __tarantool_connect(t_obj);
 }
 
-static void 
+static void
 tarantool_connection_free(tarantool_connection *obj, int is_persistent
 			  TSRMLS_DC) {
 	if (obj == NULL)
@@ -303,7 +302,7 @@ tarantool_connection_free(tarantool_connection *obj, int is_persistent
 		pefree(obj->greeting, is_persistent);
 		obj->greeting = NULL;
 	}
-	// tarantool_stream_close(obj);
+	tarantool_stream_close(obj);
 	if (obj->persistent_id) {
 		zend_string_release(obj->persistent_id);
 		obj->persistent_id = NULL;
@@ -626,10 +625,11 @@ int obtain_space_by_spaceno(tarantool_connection *obj, uint32_t space_no) {
 	size_t body_size = php_mp_unpack_package_size(pack_len);
 	smart_string_ensure(obj->value, body_size);
 	if (tarantool_stream_read(obj, obj->value->c,
-				body_size) == FAILURE)
+				  body_size) == FAILURE)
 		return FAILURE;
 
-	struct tnt_response resp; memset(&resp, 0, sizeof(struct tnt_response));
+	struct tnt_response resp;
+	memset(&resp, 0, sizeof(struct tnt_response));
 	if (php_tp_response(&resp, obj->value->c, body_size) == -1) {
 		tarantool_throw_parsingexception("query");
 		return FAILURE;
@@ -682,10 +682,11 @@ int get_spaceno_by_name(tarantool_connection *obj, zval *name) {
 	size_t body_size = php_mp_unpack_package_size(pack_len);
 	smart_string_ensure(obj->value, body_size);
 	if (tarantool_stream_read(obj, obj->value->c,
-				body_size) == FAILURE)
+				  body_size) == FAILURE)
 		return FAILURE;
 
-	struct tnt_response resp; memset(&resp, 0, sizeof(struct tnt_response));
+	struct tnt_response resp;
+	memset(&resp, 0, sizeof(struct tnt_response));
 	if (php_tp_response(&resp, obj->value->c, body_size) == -1) {
 		tarantool_throw_parsingexception("query");
 		return FAILURE;
@@ -749,7 +750,8 @@ int get_indexno_by_name(tarantool_connection *obj, int space_no,
 	if (tarantool_stream_read(obj, obj->value->c, body_size) == FAILURE)
 		return FAILURE;
 
-	struct tnt_response resp; memset(&resp, 0, sizeof(struct tnt_response));
+	struct tnt_response resp;
+	memset(&resp, 0, sizeof(struct tnt_response));
 	if (php_tp_response(&resp, obj->value->c, body_size) == -1) {
 		tarantool_throw_parsingexception("query");
 		return FAILURE;
@@ -804,7 +806,8 @@ int get_fieldno_by_name(tarantool_connection *obj, uint32_t space_no,
 	if (tarantool_stream_read(obj, obj->value->c, body_size) == FAILURE)
 		return FAILURE;
 
-	struct tnt_response resp; memset(&resp, 0, sizeof(struct tnt_response));
+	struct tnt_response resp;
+	memset(&resp, 0, sizeof(struct tnt_response));
 	if (php_tp_response(&resp, obj->value->c, body_size) == -1) {
 		tarantool_throw_parsingexception("query");
 		return FAILURE;
@@ -1119,9 +1122,9 @@ PHP_METHOD(Tarantool, __construct) {
 		suffix_or_port = &suffix_or_port_default;
 	}
 
-	if (strstr(host, "tcp://" ) != 0 ||
-	    strstr(host, "unix://") != 0 ||
-	    strstr(host, "unix/:" ) != 0 ||
+	if (strstr(host, "tcp://" ) != NULL ||
+	    strstr(host, "unix://") != NULL ||
+	    strstr(host, "unix/:" ) != NULL ||
 	    Z_TYPE_P(suffix_or_port) == IS_STRING) {
 		url = estrdup(host);
 		url_len = host_len;
@@ -1173,34 +1176,6 @@ PHP_METHOD(Tarantool, __construct) {
 	if (url_parsed == NULL) {
 		THROW_EXC("failed to parse url: '%s'", url);
 		RETURN_FALSE;
-	} else {
-		/* set default user
-		if (url_parsed->user == NULL) {
-			url_parsed->user = estrdup("guest");
-		} */
-		/* set default password
-		if (url_parsed->pass && strlen(url_parsed->pass) == 0) {
-			efree(url_parsed->pass);
-			url_parsed->pass = NULL;
-		} */
-		/* try to deduct scheme (based on host/path presence)
-		if (url_parsed->scheme == NULL) {
-			if (url_parsed->host != NULL) {
-				url_parsed->scheme = estrdup("tcp");
-			} else if (url_parsed->path != NULL) {
-				url_parsed->scheme = estrdup("unix");
-			} else {
-				THROW_EXC("Unknown url: %s", url);
-				RETURN_FALSE;
-			}
-		} */
-		/* check that protocik is supported
-		if (strcmp(url_parsed->scheme, "tcp") != 0 &&
-		    strcmp(url_parsed->scheme, "unix") != 0) { 
-			THROW_EXC("Unsupported protocol: %s",
-				  url_parsed->scheme);
-			RETURN_FALSE;
-		} */
 	}
 	efree(url);
 
@@ -1212,7 +1187,7 @@ PHP_METHOD(Tarantool, __construct) {
 
 		le = zend_hash_find_ptr(&EG(persistent_list), plist_id);
 		if (le != NULL) {
-			/* It's likely §*/
+			/* It's likely */
 			if (le->type == php_tarantool_list_entry()) {
 				obj = (tarantool_connection *) le->ptr;
 				plist_new_entry = false;
@@ -1245,7 +1220,6 @@ PHP_METHOD(Tarantool, __construct) {
 		char *url_s = pestrdup(obj->url, is_persistent);
 		efree(obj->url);
 		obj->url = url_s;
-		/* If pass == NULL, then authenticate without password */
 		if (is_persistent) {
 			obj->persistent_id = pid_pzsgen(obj->url_parsed,
 							obj->url_parsed->user,
