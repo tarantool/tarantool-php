@@ -245,7 +245,7 @@ class TarantoolServer(object):
         self.generate_configuration()
         if self.script:
             shutil.copy(self.script, self.script_dst)
-            os.chmod(self.script_dst, 511)
+            os.chmod(self.script_dst, 0o777)
         args = self.prepare_args()
         self.process = subprocess.Popen(args,
                 cwd = self.vardir,
