@@ -4,11 +4,6 @@ services:
 
 language: php
 
-php:
-  - 7.0
-  - 7.1
-  - nightly
-
 python:
   - 2.7
 
@@ -17,43 +12,28 @@ cache: false
 env:
   global:
     - PRODUCT=php-tarantool
-  matrix:
-    - OS=el DIST=6 PACK=rpm
-    - OS=el DIST=7 PACK=rpm
-    - OS=fedora DIST=22 PACK=rpm
-    - OS=fedora DIST=23 PACK=rpm
-    - OS=fedora DIST=rawhide PACK=rpm
-    - OS=ubuntu DIST=trusty PACK=deb
-    - OS=ubuntu DIST=precise PACK=deb
-    - OS=ubuntu DIST=wily PACK=deb
-#    phpize is, currently, broken on xenial. can't test, still not stable
-#    - OS=ubuntu DIST=xenial PACK=deb
-    - OS=debian DIST=jessie PACK=deb
-    - OS=debian DIST=wheezy PACK=deb
-    - OS=debian DIST=stretch PACK=deb
-    - OS=debian DIST=sid PACK=deb
-    - PACK=none
 
 # multiple php version exclusion matrix
 matrix:
+  include:
+    - { env: TARGET=test, php: 7.1     }
+    - { env: TARGET=test, php: nightly }
   fast_finish: true
-  allow_failures:
-    - env: OS=el DIST=6 PACK=rpm
-    - env: OS=el DIST=7 PACK=rpm
-    - env: OS=fedora DIST=22 PACK=rpm
-    - env: OS=fedora DIST=23 PACK=rpm
-    - env: OS=fedora DIST=rawhide PACK=rpm
-    - env: OS=ubuntu DIST=precise PACK=deb
-    - env: OS=ubuntu DIST=trusty PACK=deb
-    - env: OS=ubuntu DIST=wily PACK=deb
-    - env: OS=debian DIST=jessie PACK=deb
-    - env: OS=debian DIST=wheezy PACK=deb
-    - env: OS=debian DIST=stretch PACK=deb
-    - env: OS=debian DIST=sid PACK=deb
+  allowed_failures:
+    - OS=el     DIST=6
+    - OS=el     DIST=7
+    - OS=fedora DIST=26
+    - OS=fedora DIST=27
+    - OS=ubuntu DIST=trusty
+    - OS=ubuntu DIST=xenial
+    - OS=ubuntu DIST=artful
+    - OS=ubuntu DIST=bionic
+    - OS=debian DIST=wheezy
+    - OS=debian DIST=jessie
+    - OS=debian DIST=stretch
 
 script:
-  - git clone https://github.com/packpack/packpack.git packpack
-  - packpack/packpack;
+  - make -f .travis.mk ${TARGET}
 
 notifications:
   email: true
