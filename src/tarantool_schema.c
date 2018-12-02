@@ -14,33 +14,53 @@
 #define MUR_SEED 13
 #include "third_party/msgpuck.h"
 
-int mh_indexcmp_eq(
-		const struct schema_index_value **lval,
-		const struct schema_index_value **rval,
-		void *arg
-) {
-	(void )arg;
-	if ((*lval)->key.id_len != (*rval)->key.id_len)
-		return 0;
-	return !memcmp((*lval)->key.id, (*rval)->key.id, (*rval)->key.id_len);
-}
+#define MH_DEFINE_CMPFUNC(NAME, TYPE)					\
+	int mh_##NAME##cmp_eq(const TYPE **lval, const TYPE **rval,	\
+			void  *arg) {					\
+		(void *) arg;						\
+		if ((*lval)->key.id_len != (*rval)->key.id_len)		\
+			return 0;					\
+		return !memcmp((*lval)->key.id, (*rval)->key.id,	\
+			       (*rval)->key.id_len);			\
+	}								\
+									\
+	int mh_##NAME##cmp_key_eq(const struct schema_key *key,		\
+			const TYPE **val, void *arg) {  		\
+		(void *) arg;						\
+		if (key->id_len != (*val)->key.id_len)			\
+			return 0;					\
+		return !memcmp(key->id, (*val)->key.id, key->id_len);	\
+	}
 
-int mh_indexcmp_key_eq(
-		const struct schema_key *key,
-		const struct schema_index_value **val,
-		void *arg
-) {
-	(void )arg;
-	if (key->id_len != (*val)->key.id_len)
-		return 0;
-	return !memcmp(key->id, (*val)->key.id, key->id_len);
-}
+MH_DEFINE_CMPFUNC(field, struct schema_field_value);
+MH_DEFINE_CMPFUNC(index, struct schema_index_value);
+MH_DEFINE_CMPFUNC(space, struct schema_space_value);
+#undef MH_DEFINE_CMPFUNC
+
+#define mh_arg_t void *
+
+#define mh_eq(a, b, arg)     mh_fieldcmp_eq(a, b, arg)
+#define mh_eq_key(a, b, arg) mh_fieldcmp_key_eq(a, b, arg)
+#define mh_hash(x, arg)      PMurHash32(MUR_SEED, (*x)->key.id,	\
+					(*x)->key.id_len)
+#define mh_hash_key(x, arg)  PMurHash32(MUR_SEED, (x)->id, (x)->id_len);
+
+#define mh_node_t struct schema_field_value *
+#define mh_key_t  struct schema_key *
+
+#define MH_CALLOC(x, y) pecalloc((x), (y), 1)
+#define MH_FREE(x)      pefree((x), 1)
+
+#define mh_name               _schema_field
+#define MH_SOURCE             1
+#include                      "third_party/mhash.h"
 
 #define mh_arg_t void *
 
 #define mh_eq(a, b, arg)     mh_indexcmp_eq(a, b, arg)
 #define mh_eq_key(a, b, arg) mh_indexcmp_key_eq(a, b, arg)
-#define mh_hash(x, arg)      PMurHash32(MUR_SEED, (*x)->key.id, (*x)->key.id_len)
+#define mh_hash(x, arg)      PMurHash32(MUR_SEED, (*x)->key.id,	\
+					(*x)->key.id_len)
 #define mh_hash_key(x, arg)  PMurHash32(MUR_SEED, (x)->id, (x)->id_len);
 
 #define mh_node_t struct schema_index_value *
@@ -79,7 +99,7 @@ schema_index_free(struct mh_schema_index_t *schema) {
 		do {
 			struct schema_key key_number = {
 				(void *)&(ivalue->index_number),
-				sizeof(uint32_t), 0
+				sizeof(ivalue->index_number), 0
 			};
 			index_slot = mh_schema_index_find(schema, &key_number,
 							  NULL);
@@ -106,33 +126,12 @@ schema_index_free(struct mh_schema_index_t *schema) {
 	}
 }
 
-int
-mh_spacecmp_eq(
-		const struct schema_space_value **lval,
-		const struct schema_space_value **rval,
-		void *arg) {
-	(void )arg;
-	if ((*lval)->key.id_len != (*rval)->key.id_len)
-		return 0;
-	return !memcmp((*lval)->key.id, (*rval)->key.id, (*rval)->key.id_len);
-}
-
-int
-mh_spacecmp_key_eq(
-		const struct schema_key *key,
-		const struct schema_space_value **val,
-		void *arg) {
-	(void )arg;
-	if (key->id_len != (*val)->key.id_len)
-		return 0;
-	return !memcmp(key->id, (*val)->key.id, key->id_len);
-}
-
 #define mh_arg_t void *
 
 #define mh_eq(a, b, arg)      mh_spacecmp_eq(a, b, arg)
 #define mh_eq_key(a, b, arg)  mh_spacecmp_key_eq(a, b, arg)
-#define mh_hash(x, arg)       PMurHash32(MUR_SEED, (*x)->key.id, (*x)->key.id_len)
+#define mh_hash(x, arg)       PMurHash32(MUR_SEED, (*x)->key.id,	\
+					 (*x)->key.id_len)
 #define mh_hash_key(x, arg)   PMurHash32(MUR_SEED, x->id, x->id_len);
 
 #define mh_node_t struct schema_space_value *
@@ -158,6 +157,9 @@ schema_space_value_free(const struct schema_space_value *val) {
 			schema_index_free(val->index_hash);
 			mh_schema_index_delete(val->index_hash);
 		}
+		if (val->schema_hash) {
+			mh_schema_field_delete(val->schema_hash);
+		}
 	}
 }
 
@@ -166,7 +168,8 @@ schema_space_free(struct mh_schema_space_t *schema) {
 	int pos = 0;
 	mh_int_t space_slot = 0;
 	mh_foreach(schema, pos) {
-		const struct schema_space_value *svalue, *sv1 = NULL, *sv2 = NULL;
+		const struct schema_space_value *svalue;
+		const struct schema_space_value *sv1 = NULL, *sv2 = NULL;
 		svalue = *mh_schema_space_node(schema, pos);
 		do {
 			struct schema_key key_number = {
@@ -254,7 +257,8 @@ parse_schema_space_value(struct schema_space_value *space_string,
 		goto error;
 	int i = 0;
 	for (i = 0; i < fmt_len; ++i) {
-		struct schema_field_value *val = &(space_string->schema_list[i]);
+		struct schema_field_value *val =
+				&(space_string->schema_list[i]);
 		if (mp_typeof(**tuple) != MP_MAP)
 			goto error;
 		uint32_t arrsz = mp_decode_map(tuple);
@@ -263,6 +267,11 @@ parse_schema_space_value(struct schema_space_value *space_string,
 				goto error;
 		}
 		val->field_number = i;
+		val->key.id = val->field_name;
+		val->key.id_len = val->field_name_len;
+		mh_schema_field_put(space_string->schema_hash,
+				    (const struct schema_field_value **)&val,
+				    NULL, NULL);
 	}
 	return 0;
 error:
@@ -289,7 +298,8 @@ parse_schema_index_value(struct schema_index_value *index_string,
 			goto error;
 		if (mp_decode_array(tuple) != 2)
 			goto error;
-		struct schema_field_value *val = &(index_string->index_parts[i]);
+		struct schema_field_value *val =
+				&(index_string->index_parts[i]);
 		if (mp_typeof(**tuple) != MP_UINT)
 			goto error;
 		val->field_number = mp_decode_uint(tuple);
@@ -367,6 +377,7 @@ schema_add_space(
 		 * }
 		 */
 		case 6:
+			space_string->schema_hash = mh_schema_field_new();
 			if (parse_schema_space_value(space_string, &tuple) < 0)
 				goto error;
 			break;
@@ -590,27 +601,26 @@ tarantool_schema_get_fid_by_string(
 		struct tarantool_schema *schema_obj, uint32_t sid,
 		const char *field_name, uint32_t field_name_len
 ) {
-	struct mh_schema_space_t *schema = schema_obj->space_hash;
-	struct schema_key space_key = {
-		(void *)&sid,
-		sizeof(uint32_t), 0
-	};
-	mh_int_t space_slot = mh_schema_space_find(schema, &space_key, NULL);
-	if (space_slot == mh_end(schema))
+	struct mh_schema_space_t *sschema = schema_obj->space_hash;
+	struct schema_key space_key = { (void *)&sid, sizeof(uint32_t), 0 };
+	mh_int_t space_slot = mh_schema_space_find(sschema, &space_key, NULL);
+	if (space_slot == mh_end(sschema))
 		return -1;
-	const struct schema_space_value *space = *mh_schema_space_node(schema,
+	const struct schema_space_value *space = *mh_schema_space_node(sschema,
 			space_slot);
-	int i = 0;
-	for (i = 0; i < space->schema_list_len; ++i) {
-		struct schema_field_value *val = &space->schema_list[i];
-		if (strncmp(val->field_name, field_name, field_name_len) == 0)
-			return val->field_number;
-	}
-	return -1;
+	struct schema_key field_key = { field_name, field_name_len, 0 };
+	struct mh_schema_field_t *fschema = space->schema_hash;
+	mh_int_t field_slot = mh_schema_field_find(fschema, &field_key, NULL);
+	if (field_slot == mh_end(fschema))
+		return -1;
+	const struct schema_field_value *field = *mh_schema_field_node(fschema,
+			field_slot);
+	return field->field_number;
 }
 
 struct tarantool_schema *tarantool_schema_new(int is_persistent) {
-	struct tarantool_schema *obj = pemalloc(sizeof(struct tarantool_schema *), 1);
+	struct tarantool_schema *obj = NULL;
+	obj = pemalloc(sizeof(struct tarantool_schema *), 1);
 	obj->space_hash = mh_schema_space_new();
 	return obj;
 }

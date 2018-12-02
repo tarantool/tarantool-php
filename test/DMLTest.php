@@ -1,5 +1,8 @@
 <?php
-class DMLTest extends PHPUnit_Framework_TestCase
+
+use PHPUnit\Framework\TestCase;
+
+final class DMLTest extends TestCase
 {
 		protected static $tarantool;
 
@@ -158,6 +161,9 @@ class DMLTest extends PHPUnit_Framework_TestCase
 			$this->assertEquals($result_tuple, $tuple[0]);
 		}
 
+		/**
+		 * @doesNotPerformAssertions
+		 */
 		public function test_07_update_no_error() {
 			self::$tarantool->update("test", 0, array());
 		}
@@ -439,6 +445,9 @@ class DMLTest extends PHPUnit_Framework_TestCase
 			];
 		}
 
+	/**
+	 * @doesNotPerformAssertions
+	 */
 	public function test_18_01_delete_loop() {
 		for ($i = 0; $i <= 1000; $i++) {
 			self::$tarantool->replace("pstring", array("test2" . $i, $i));
@@ -451,6 +460,9 @@ class DMLTest extends PHPUnit_Framework_TestCase
 		gc_collect_cycles();
 	}
 
+	/**
+	 * @doesNotPerformAssertions
+	 */
 	public function test_18_02_delete_loop() {
 		for ($i = 0; $i <= 1000; $i++) {
 			self::$tarantool->replace("pstring", array("test2" . $i, $i));
