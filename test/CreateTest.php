@@ -1,6 +1,8 @@
 <?php
 
-class CreateTest extends PHPUnit_Framework_TestCase
+use PHPUnit\Framework\TestCase;
+
+final class CreateTest extends TestCase
 {
 		protected static $port, $tm;
 
@@ -34,6 +36,9 @@ class CreateTest extends PHPUnit_Framework_TestCase
 			$c->close();
 		}
 
+		/**
+		 * @doesNotPerformAssertions
+		 */
 		public function test_01_01_double_disconnect() {
 			$a = new Tarantool('localhost', self::$port);
 			$a->disconnect();
@@ -42,7 +47,7 @@ class CreateTest extends PHPUnit_Framework_TestCase
 
 		/**
 		 * @expectedException TarantoolException
-		 * @expectedExceptionMessageRegExp /Name or service not known|nodename nor servname provided/
+		 * @expectedExceptionMessageRegExp /Name or service not known|nodename nor servname provided|getaddrinfo/
 		 */
 		public function test_02_create_error_host() {
 			(new Tarantool('very_bad_host'))->connect();

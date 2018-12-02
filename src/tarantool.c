@@ -391,6 +391,7 @@ static zend_object *tarantool_create(zend_class_entry *entry) {
 	obj = (tarantool_object *)pecalloc(1, sizeof(tarantool_object) +
 		sizeof(zval) * (entry->default_properties_count - 1), 0);
 	zend_object_std_init(&obj->zo, entry);
+	object_properties_init(&obj->zo, entry);
 	obj->zo.handlers = &tarantool_obj_handlers;
 
 	return &obj->zo;
@@ -1183,7 +1184,6 @@ PHP_METHOD(Tarantool, reconnect) {
 static int __tarantool_authenticate(tarantool_connection *obj) {
 	TSRMLS_FETCH();
 
-	tarantool_schema_flush(obj->schema);
 	tarantool_tp_update(obj->tps);
 	int batch_count = 3;
 	size_t passwd_len = (obj->passwd ? strlen(obj->passwd) : 0);
@@ -1231,7 +1231,9 @@ static int __tarantool_authenticate(tarantool_connection *obj) {
 			status = FAILURE;
 		}
 		if (status != FAILURE) {
-			if (resp.sync == space_sync && tarantool_schema_add_spaces(
+			if (resp.sync == auth_sync) {
+				tarantool_schema_flush(obj->schema);
+			} else if (resp.sync == space_sync && tarantool_schema_add_spaces(
 					obj->schema,
 					resp.data,
 					resp.data_len) == -1) {

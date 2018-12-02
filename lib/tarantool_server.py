@@ -95,17 +95,17 @@ class TarantoolAdmin(object):
         if not command:
             return
         cmd = command.replace('\n', ' ') + '\n'
-        self.socket.sendall(cmd)
+        self.socket.sendall(cmd.encode())
 
         bufsiz = 4096
-        res = ""
+        res = b''
 
         while True:
             buf = self.socket.recv(bufsiz)
             if not buf:
                 break
             res = res + buf
-            if (res.rfind("\n...\n") >= 0 or res.rfind("\r\n...\r\n") >= 0):
+            if (res.rfind(b'\n...\n') >= 0 or res.rfind(b'\r\n...\r\n') >= 0):
                 break
 
         return yaml.load(res)
@@ -245,7 +245,7 @@ class TarantoolServer(object):
         self.generate_configuration()
         if self.script:
             shutil.copy(self.script, self.script_dst)
-            os.chmod(self.script_dst, 0777)
+            os.chmod(self.script_dst, 0o777)
         args = self.prepare_args()
         self.process = subprocess.Popen(args,
                 cwd = self.vardir,
