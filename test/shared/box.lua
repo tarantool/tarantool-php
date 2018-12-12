@@ -17,7 +17,9 @@ local compat = {
     string       = 'string',
 }
 
-if (tonumber(_TARANTOOL:split('-')[1]:split('.')[2]) < 7) then
+local major = tonumber(_TARANTOOL:split('-')[1]:split('.')[1])
+local minor = tonumber(_TARANTOOL:split('-')[1]:split('.')[2])
+if major <= 1 and minor <= 6 then
     compat.log          = 'logger'
     compat.memtx_memory = 'slab_alloc_arena'
     compat.unsigned     = 'NUM'
