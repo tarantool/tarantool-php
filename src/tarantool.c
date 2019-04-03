@@ -1155,7 +1155,7 @@ PHP_METHOD(Tarantool, __construct) {
 		memset(&le, 0, sizeof(zend_resource));
 		le.type = php_tarantool_list_entry();
 		le.ptr  = obj;
-		GC_REFCOUNT(&le) = 1;
+		GC_SET_REFCOUNT(&le, 1);
 
 		assert(plist_id != NULL);
 		if (zend_hash_update_mem(&EG(persistent_list), plist_id,
