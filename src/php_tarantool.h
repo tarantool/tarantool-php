@@ -29,6 +29,62 @@
 #  define smart_string_free_ex(...) smart_str_free_ex(__VA_ARGS__)
 #endif
 
+#if PHP_VERSION_ID < 70300
+#  define GC_SET_REFCOUNT(p, rc) do { \
+	GC_REFCOUNT((p)) = (rc);      \
+} while(0)
+#endif /* PHP_VERSION_ID < 70300 */
+
+#if PHP_VERSION_ID < 70300
+
+#  define ARRAY_PROTECT_RECURSION(data) do {                \
+	if (Z_TYPE_P((data)) == IS_ARRAY &&                 \
+	    ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P((data)))) \
+	{                                                   \
+		Z_ARRVAL_P((data))->u.v.nApplyCount++;      \
+	}                                                   \
+} while(0)
+
+#  define ARRAY_UNPROTECT_RECURSION(data) do {              \
+	if (Z_TYPE_P((data)) == IS_ARRAY &&                 \
+	    ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P((data)))) \
+	{                                                   \
+		Z_ARRVAL_P((data))->u.v.nApplyCount--;      \
+	}                                                   \
+} while(0)
+
+#  define ARRAY_IS_RECURSIVE(data) (                      \
+	Z_TYPE_P(data) == IS_ARRAY &&                     \
+	ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P((data))) && \
+	Z_ARRVAL_P((data))->u.v.nApplyCount > 1           \
+)
+
+#else /* PHP_VERSION_ID < 70300 */
+
+#  define ARRAY_PROTECT_RECURSION(data) do {                \
+	if (Z_TYPE_P((data)) == IS_ARRAY &&                 \
+	    !(GC_FLAGS(Z_ARRVAL_P((data))) & GC_IMMUTABLE)) \
+	{                                                   \
+		GC_PROTECT_RECURSION(Z_ARRVAL_P((data)));   \
+	}                                                   \
+} while(0)
+
+#  define ARRAY_UNPROTECT_RECURSION(data)  do {             \
+	if (Z_TYPE_P((data)) == IS_ARRAY &&                 \
+	    !(GC_FLAGS(Z_ARRVAL_P((data))) & GC_IMMUTABLE)) \
+	{                                                   \
+		GC_UNPROTECT_RECURSION(Z_ARRVAL_P((data))); \
+	}                                                   \
+} while(0)
+
+#  define ARRAY_IS_RECURSIVE(data) (                      \
+	Z_TYPE_P((data)) == IS_ARRAY &&                   \
+	!(GC_FLAGS(Z_ARRVAL_P((data))) & GC_IMMUTABLE) && \
+	GC_IS_RECURSIVE(Z_ARRVAL_P((data)))               \
+)
+
+#endif /* !(PHP_VERSION_ID < 70300)) */
+
 extern zend_module_entry tarantool_module_entry;
 #define phpext_tarantool_ptr &tarantool_module_entry
 

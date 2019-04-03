@@ -122,16 +122,12 @@ void php_mp_pack_array_recursively(smart_string *str, zval *val) {
 	size_t key_index = 0;
 	for (; key_index < n; ++key_index) {
 		data = zend_hash_index_find(ht, key_index);
-		if (!data || data == val || (Z_TYPE_P(data) == IS_ARRAY &&
-					     ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data)) &&
-					     Z_ARRVAL_P(data)->u.v.nApplyCount > 1)) {
+		if (!data || data == val || ARRAY_IS_RECURSIVE(data)) {
 			php_mp_pack_nil(str);
 		} else {
-			if (Z_TYPE_P(data) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data)))
-				Z_ARRVAL_P(data)->u.v.nApplyCount++;
+			ARRAY_PROTECT_RECURSION(data);
 			php_mp_pack(str, data);
-			if (Z_TYPE_P(data) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data)))
-				Z_ARRVAL_P(data)->u.v.nApplyCount--;
+			ARRAY_UNPROTECT_RECURSION(data);
 		}
 	}
 }
@@ -165,16 +161,12 @@ void php_mp_pack_hash_recursively(smart_string *str, zval *val) {
 			break;
 		}
 		data = zend_hash_get_current_data_ex(ht, &pos);
-		if (!data || data == val || (Z_TYPE_P(data) == IS_ARRAY &&
-					    ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data)) &&
-					    Z_ARRVAL_P(data)->u.v.nApplyCount > 1)) {
+		if (!data || data == val || ARRAY_IS_RECURSIVE(data)) {
 			php_mp_pack_nil(str);
 		} else {
-			if (Z_TYPE_P(data) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data)))
-				Z_ARRVAL_P(data)->u.v.nApplyCount++;
+			ARRAY_PROTECT_RECURSION(data);
 			php_mp_pack(str, data);
-			if (Z_TYPE_P(data) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data)))
-				Z_ARRVAL_P(data)->u.v.nApplyCount--;
+			ARRAY_UNPROTECT_RECURSION(data);
 		}
 	}
 }
@@ -407,15 +399,12 @@ size_t php_mp_sizeof_array_recursively(zval *val) {
 
 	for (; key_index < n; ++key_index) {
 		data = zend_hash_index_find(ht, key_index);
-		if (!data || data == val ||
-				(Z_TYPE_P(data) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data)) && Z_ARRVAL_P(data)->u.v.nApplyCount > 1)) {
+		if (!data || data == val || ARRAY_IS_RECURSIVE(data)) {
 			needed += php_mp_sizeof_nil();
 		} else {
-			if (Z_TYPE_P(data) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data)))
-				Z_ARRVAL_P(data)->u.v.nApplyCount++;
+			ARRAY_PROTECT_RECURSION(data);
 			needed += php_mp_sizeof(data);
-			if (Z_TYPE_P(data) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data)))
-				Z_ARRVAL_P(data)->u.v.nApplyCount--;
+			ARRAY_UNPROTECT_RECURSION(data);
 		}
 	}
 	return needed;
@@ -451,15 +440,12 @@ size_t php_mp_sizeof_hash_recursively(zval *val) {
 			break;
 		}
 		data = zend_hash_get_current_data_ex(ht, &pos);
-		if (!data || data == val ||
-				(Z_TYPE_P(data) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data)) && Z_ARRVAL_P(data)->u.v.nApplyCount > 1)) {
+		if (!data || data == val || ARRAY_IS_RECURSIVE(data)) {
 			needed += php_mp_sizeof_nil();
 		} else {
-			if (Z_TYPE_P(data) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data)))
-				Z_ARRVAL_P(data)->u.v.nApplyCount++;
+			ARRAY_PROTECT_RECURSION(data);
 			needed += php_mp_sizeof(data);
-			if (Z_TYPE_P(data) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data)))
-				Z_ARRVAL_P(data)->u.v.nApplyCount--;
+			ARRAY_UNPROTECT_RECURSION(data);
 		}
 	}
 	return needed;
