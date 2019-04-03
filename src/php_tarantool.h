@@ -29,6 +29,39 @@
 #  define smart_string_free_ex(...) smart_str_free_ex(__VA_ARGS__)
 #endif
 
+#if PHP_VERSION_ID < 70300
+#define GC_ADDREF(p)            ++GC_REFCOUNT(p)
+#define GC_DELREF(p)            --GC_REFCOUNT(p)
+#define GC_SET_REFCOUNT(p, rc)  GC_REFCOUNT(p) = rc
+#endif
+
+
+#if PHP_VERSION_ID < 70300
+#define ARRAY_PROTECT_RECURSION(data) \
+    if (Z_TYPE_P(data) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data))) \
+        Z_ARRVAL_P(data)->u.v.nApplyCount++;
+
+#define ARRAY_UNPROTECT_RECURSION(data) \
+    if (Z_TYPE_P(data) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data))) \
+        Z_ARRVAL_P(data)->u.v.nApplyCount--;
+
+#define ARRAY_IS_PROTECT_RECURSION(data) \
+    (Z_TYPE_P(data) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data)) && Z_ARRVAL_P(data)->u.v.nApplyCount > 1)
+
+#else
+#define ARRAY_PROTECT_RECURSION(data) \
+    if (Z_TYPE_P(data) == IS_ARRAY && !(GC_FLAGS(Z_ARRVAL_P(data)) & GC_IMMUTABLE)) \
+        GC_PROTECT_RECURSION(Z_ARRVAL_P(data));
+
+#define ARRAY_UNPROTECT_RECURSION(data) \
+    if (Z_TYPE_P(data) == IS_ARRAY && !(GC_FLAGS(Z_ARRVAL_P(data)) & GC_IMMUTABLE)) \
+        GC_UNPROTECT_RECURSION(Z_ARRVAL_P(data));
+
+#define ARRAY_IS_PROTECT_RECURSION(data) \
+    (Z_TYPE_P(data) == IS_ARRAY && !(GC_FLAGS(Z_ARRVAL_P(data)) & GC_IMMUTABLE) && GC_IS_RECURSIVE(Z_ARRVAL_P(data)))
+
+#endif
+
 extern zend_module_entry tarantool_module_entry;
 #define phpext_tarantool_ptr &tarantool_module_entry
 
