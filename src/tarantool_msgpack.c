@@ -164,9 +164,9 @@ void php_mp_pack_hash_recursively(smart_string *str, zval *val) {
 		if (!data || data == val || ARRAY_IS_PROTECT_RECURSION(data)) {
 			php_mp_pack_nil(str);
 		} else {
-            ARRAY_PROTECT_RECURSION(data);
-            php_mp_pack(str, data);
-            ARRAY_UNPROTECT_RECURSION(data);
+			ARRAY_PROTECT_RECURSION(data);
+			php_mp_pack(str, data);
+			ARRAY_UNPROTECT_RECURSION(data);
 		}
 	}
 }
@@ -402,9 +402,9 @@ size_t php_mp_sizeof_array_recursively(zval *val) {
 		if (!data || data == val || ARRAY_IS_PROTECT_RECURSION(data)) {
 			needed += php_mp_sizeof_nil();
 		} else {
-            ARRAY_PROTECT_RECURSION(data);
-            needed += php_mp_sizeof(data);
-            ARRAY_UNPROTECT_RECURSION(data);
+			ARRAY_PROTECT_RECURSION(data);
+			needed += php_mp_sizeof(data);
+			ARRAY_UNPROTECT_RECURSION(data);
 		}
 	}
 	return needed;
@@ -443,9 +443,9 @@ size_t php_mp_sizeof_hash_recursively(zval *val) {
 		if (!data || data == val || ARRAY_IS_PROTECT_RECURSION(data)) {
 			needed += php_mp_sizeof_nil();
 		} else {
-            ARRAY_PROTECT_RECURSION(data);
-            needed += php_mp_sizeof(data);
-            ARRAY_UNPROTECT_RECURSION(data);
+			ARRAY_PROTECT_RECURSION(data);
+			needed += php_mp_sizeof(data);
+			ARRAY_UNPROTECT_RECURSION(data);
 		}
 	}
 	return needed;

@@ -38,27 +38,27 @@
 
 #if PHP_VERSION_ID < 70300
 #define ARRAY_PROTECT_RECURSION(data) \
-    if (Z_TYPE_P(data) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data))) \
-        Z_ARRVAL_P(data)->u.v.nApplyCount++;
+	if (Z_TYPE_P(data) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data))) \
+		Z_ARRVAL_P(data)->u.v.nApplyCount++;
 
 #define ARRAY_UNPROTECT_RECURSION(data) \
-    if (Z_TYPE_P(data) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data))) \
-        Z_ARRVAL_P(data)->u.v.nApplyCount--;
+	if (Z_TYPE_P(data) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data))) \
+		Z_ARRVAL_P(data)->u.v.nApplyCount--;
 
 #define ARRAY_IS_PROTECT_RECURSION(data) \
-    (Z_TYPE_P(data) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data)) && Z_ARRVAL_P(data)->u.v.nApplyCount > 1)
+	(Z_TYPE_P(data) == IS_ARRAY && ZEND_HASH_APPLY_PROTECTION(Z_ARRVAL_P(data)) && Z_ARRVAL_P(data)->u.v.nApplyCount > 1)
 
 #else
 #define ARRAY_PROTECT_RECURSION(data) \
-    if (Z_TYPE_P(data) == IS_ARRAY && !(GC_FLAGS(Z_ARRVAL_P(data)) & GC_IMMUTABLE)) \
-        GC_PROTECT_RECURSION(Z_ARRVAL_P(data));
+	if (Z_TYPE_P(data) == IS_ARRAY && !(GC_FLAGS(Z_ARRVAL_P(data)) & GC_IMMUTABLE)) \
+		GC_PROTECT_RECURSION(Z_ARRVAL_P(data));
 
 #define ARRAY_UNPROTECT_RECURSION(data) \
-    if (Z_TYPE_P(data) == IS_ARRAY && !(GC_FLAGS(Z_ARRVAL_P(data)) & GC_IMMUTABLE)) \
-        GC_UNPROTECT_RECURSION(Z_ARRVAL_P(data));
+	if (Z_TYPE_P(data) == IS_ARRAY && !(GC_FLAGS(Z_ARRVAL_P(data)) & GC_IMMUTABLE)) \
+		GC_UNPROTECT_RECURSION(Z_ARRVAL_P(data));
 
 #define ARRAY_IS_PROTECT_RECURSION(data) \
-    (Z_TYPE_P(data) == IS_ARRAY && !(GC_FLAGS(Z_ARRVAL_P(data)) & GC_IMMUTABLE) && GC_IS_RECURSIVE(Z_ARRVAL_P(data)))
+	(Z_TYPE_P(data) == IS_ARRAY && !(GC_FLAGS(Z_ARRVAL_P(data)) & GC_IMMUTABLE) && GC_IS_RECURSIVE(Z_ARRVAL_P(data)))
 
 #endif
 
