@@ -16,6 +16,7 @@ Architecture: any
 Priority: optional
 Conflicts: libtarantool-php
 Replaces: libtarantool-php
+Provides: php-tarantool
 Depends: ${php:Depends}, ${misc:Depends}, ${shlibs:Depends}
 Suggests: tarantool
 Description: PECL PHP driver for Tarantool/Box
