@@ -10,25 +10,65 @@ local yaml = require('yaml')
 log.info(fio.cwd())
 log.info("admin: %s, primary: %s", os.getenv('ADMIN_PORT'), os.getenv('PRIMARY_PORT'))
 
-local compat = {
-    log          = 'log',
-    memtx_memory = 'memtx_memory',
-    unsigned     = 'unsigned',
-    string       = 'string',
-}
+-- {{{ Compatibility layer between different tarantool versions
 
-if (tonumber(_TARANTOOL:split('-')[1]:split('.')[2]) < 7) then
-    compat.log          = 'logger'
-    compat.memtx_memory = 'slab_alloc_arena'
-    compat.unsigned     = 'NUM'
-    compat.string       = 'STR'
+local function parse_tarantool_version(component)
+    local pattern = '^(%d+).(%d+).(%d+)-(%d+)-g[0-9a-f]+$'
+    return tonumber((select(component, _TARANTOOL:match(pattern))))
 end
+
+local _TARANTOOL_MAJOR = parse_tarantool_version(1)
+local _TARANTOOL_MINOR = parse_tarantool_version(2)
+local _TARANTOOL_PATCH = parse_tarantool_version(3)
+local _TARANTOOL_REV = parse_tarantool_version(4)
+
+local function tarantool_version_at_least(major, minor, patch, rev)
+    if _TARANTOOL_MAJOR < major then return false end
+    if _TARANTOOL_MAJOR > major then return true end
+
+    if _TARANTOOL_MINOR < minor then return false end
+    if _TARANTOOL_MINOR > minor then return true end
+
+    if _TARANTOOL_PATCH < patch then return false end
+    if _TARANTOOL_PATCH > patch then return true end
+
+    if _TARANTOOL_REV < rev then return false end
+    if _TARANTOOL_REV > rev then return true end
+
+    return true
+end
+
+local compat = {}
+
+if tarantool_version_at_least(1, 7, 3, 351) then
+    compat.log = 'log'
+    compat.memtx_memory = 'memtx_memory'
+    compat.memtx_memory_transform = function(v)
+        return v
+    end
+else
+    compat.log = 'logger'
+    compat.memtx_memory = 'slab_alloc_arena'
+    compat.memtx_memory_transform = function(v)
+        return v / 1024 ^ 3
+    end
+end
+
+if tarantool_version_at_least(1, 7, 1, 147) then
+    compat.unsigned = 'unsigned'
+    compat.string = 'string'
+else
+    compat.unsigned = 'NUM'
+    compat.string = 'STR'
+end
+
+-- }}}
 
 box.cfg{
     listen                = os.getenv('PRIMARY_PORT'),
     log_level             = 5,
     [compat.log]          = 'tarantool.log',
-    [compat.memtx_memory] = 400 * 1024 * 1024
+    [compat.memtx_memory] = compat.memtx_memory_transform(400 * 1024 * 1024),
 }
 
 box.once('initialization', function()
