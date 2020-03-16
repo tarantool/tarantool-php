@@ -70,8 +70,13 @@ def main():
 
         for php_ini in [
             'test/shared/tarantool-1.ini',
-            'test/shared/tarantool-2.ini',
-            'test/shared/tarantool-3.ini'
+            # Temporary disabled testing configuration with
+            # persistent connections due to gh-113 ('Receiving
+            # trash from persistent connect when there was timeout
+            # before').
+            #
+            # 'test/shared/tarantool-2.ini',
+            # 'test/shared/tarantool-3.ini'
         ]:
             cmd = ''
             shutil.copy(php_ini, os.path.join(test_cwd, 'tarantool.ini'))
