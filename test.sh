@@ -1,10 +1,17 @@
-curl http://download.tarantool.org/tarantool/1.6/gpgkey | sudo apt-key add -
+#!/bin/sh
+
+set -exu  # Strict shell (w/o -o pipefail)
+
+TARANTOOL_VERSION=${TARANTOOL_VERSION:-1.10}
+
+curl http://download.tarantool.org/tarantool/${TARANTOOL_VERSION}/gpgkey | \
+    sudo apt-key add -
 release=`lsb_release -c -s`
 
 # append two lines to a list of source repositories
 sudo rm -f /etc/apt/sources.list.d/*tarantool*.list
-sudo tee /etc/apt/sources.list.d/tarantool_1_6.list <<- EOF
-deb http://download.tarantool.org/tarantool/1.6/ubuntu/ $release main
+sudo tee /etc/apt/sources.list.d/tarantool_${TARANTOOL_VERSION}.list <<- EOF
+deb http://download.tarantool.org/tarantool/${TARANTOOL_VERSION}/ubuntu/ $release main
 EOF
 
 # install
