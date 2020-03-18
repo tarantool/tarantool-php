@@ -1,5 +1,8 @@
 <?php
-class AssertTest extends PHPUnit_Framework_TestCase
+
+use PHPUnit\Framework\TestCase;
+
+class AssertTest extends TestCase
 {
 	protected static $tarantool, $tm;
 
@@ -39,6 +42,9 @@ class AssertTest extends PHPUnit_Framework_TestCase
 		self::$tarantool->select("test");
 	}
 
+	/**
+	 * @doesNotPerformAssertions
+	 */
 	public function test_01_closed_connection() {
 		for ($i = 0; $i < 20000; $i++) {
 			try {

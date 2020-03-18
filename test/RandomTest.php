@@ -10,7 +10,9 @@ function generateRandomString($length = 10) {
 	return $randomString;
 }
 
-class RandomTest extends PHPUnit_Framework_TestCase
+use PHPUnit\Framework\TestCase;
+
+class RandomTest extends TestCase
 {
 		protected static $tarantool;
 
@@ -39,6 +41,10 @@ class RandomTest extends PHPUnit_Framework_TestCase
 				$this->assertEquals($i, count($result));
 			}
 		}
+
+		/**
+		 * @doesNotPerformAssertions
+		 */
 		public function test_04_get_strange_response() {
 			self::$tarantool->select("_schema", "12345");
 		}
