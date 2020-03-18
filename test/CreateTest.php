@@ -140,6 +140,13 @@ class CreateTest extends PHPUnit_Framework_TestCase
 			$this->assertTrue($c->ping());
 		}
 
+		public function test_09_inheritance() {
+			$c = new class ('localhost', self::$port) extends Tarantool {
+				public $property = 42;
+			};
+			$this->assertSame(42, $c->property);
+		}
+
 		public static function provideGoodCredentials()
 		{
 				return [
