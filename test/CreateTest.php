@@ -42,7 +42,7 @@ class CreateTest extends PHPUnit_Framework_TestCase
 
 		/**
 		 * @expectedException TarantoolException
-		 * @expectedExceptionMessageRegExp /Name or service not known|nodename nor servname provided/
+		 * @expectedExceptionMessageRegExp /Name or service not known|nodename nor servname provided|Temporary failure in name resolution/
 		 */
 		public function test_02_create_error_host() {
 			(new Tarantool('very_bad_host'))->connect();
