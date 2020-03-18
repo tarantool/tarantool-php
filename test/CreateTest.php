@@ -53,7 +53,7 @@ class CreateTest extends PHPUnit_Framework_TestCase
 		 * @expectedExceptionMessageRegExp /Connection refused|Network is unreachable/
 		 */
 		public function test_03_00_create_error_port() {
-			(new Tarantool('localhost', 65500))->connect();
+			(new Tarantool('127.0.0.1', 65500))->connect();
 		}
 
 		/**
