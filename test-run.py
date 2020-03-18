@@ -30,15 +30,19 @@ def find_php_bin():
         return '~/.phpenv/versions/{0}/bin/php'.format(version.strip())
     return path
 
+def find_phpunit_bin():
+    path = read_popen('which phpunit').strip()
+    if not path:
+        raise RuntimeError('Unable to find phpunit binary in PATH: ' +
+                           os.environ['PATH'])
+    return path
+
 def prepare_env(php_ini):
     if os.path.isdir('var'):
         shutil.rmtree('var')
     if not os.path.isdir('var') and not os.path.exists('var'):
         os.mkdir('var')
     shutil.copy('test/shared/phpunit.xml', 'var')
-    test_dir_path = os.path.abspath(os.path.join(os.getcwd(), 'test'))
-    test_lib_path = os.path.join(test_dir_path, 'phpunit.phar')
-#    shutil.copy('test/shared/tarantool.ini', 'var')
     shutil.copy(php_ini, 'var')
     shutil.copy('modules/tarantool.so', 'var')
 
@@ -54,13 +58,15 @@ def main():
     srv = TarantoolServer()
     srv.script = 'test/shared/box.lua'
     srv.start()
-    test_dir_path = os.path.abspath(os.path.join(os.getcwd(), 'test'))
     test_cwd = os.path.dirname(srv.vardir)
-    test_lib_path = ""
     try:
         shutil.copy('test/shared/phpunit.xml', os.path.join(test_cwd, 'phpunit.xml'))
         shutil.copy('modules/tarantool.so', test_cwd)
-        test_lib_path = os.path.join(test_dir_path, 'phpunit.phar')
+        try:
+            test_lib_path = find_phpunit_bin()
+        except RuntimeError as e:
+            print(str(e))
+            return 1
 
         version = read_popen_config('--version').strip(' \n\t') + '.'
         version1 = read_popen_config('--extension-dir').strip(' \n\t')

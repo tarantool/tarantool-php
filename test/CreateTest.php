@@ -1,6 +1,8 @@
 <?php
 
-class CreateTest extends PHPUnit_Framework_TestCase
+use PHPUnit\Framework\TestCase;
+
+class CreateTest extends TestCase
 {
 		protected static $port, $tm;
 
@@ -34,6 +36,9 @@ class CreateTest extends PHPUnit_Framework_TestCase
 			$c->close();
 		}
 
+		/**
+		 * @doesNotPerformAssertions
+		 */
 		public function test_01_01_double_disconnect() {
 			$a = new Tarantool('localhost', self::$port);
 			$a->disconnect();

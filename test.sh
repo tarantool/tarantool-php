@@ -56,6 +56,36 @@ if [ "${ACTUAL_TARANTOOL_VERSION}" != "${TARANTOOL_VERSION}" ]; then
     exit 1
 fi
 
+# Determine PHP interpreter version.
+PHP_VERSION_PATTERN='^PHP \([0-9]\+\.[0-9]\+\)\.[0-9]\+ .*$'
+PHP_VERSION="$(php --version | head -n 1 | sed "s/${PHP_VERSION_PATTERN}/\\1/")"
+
+# Choose maximal phpunit version supported by installed PHP
+# interpreter.
+#
+# https://phpunit.de/supported-versions.html
+case "${PHP_VERSION}" in
+7.0) PHPUNIT_VERSION=6 ;;
+7.1) PHPUNIT_VERSION=7 ;;
+7.2) PHPUNIT_VERSION=8 ;;
+7.3) PHPUNIT_VERSION=9 ;;
+7.4) PHPUNIT_VERSION=9 ;;
+*)
+    echo "Unable to choose phpunit version for PHP ${PHP_VERSION}"
+    exit 1
+    ;;
+esac
+
+# Install phpunit.
+PHPUNIT_URL="https://phar.phpunit.de/phpunit-${PHPUNIT_VERSION}.phar"
+PHPUNIT_DIR="/usr/local/phpunit-${PHPUNIT_VERSION}"
+PHPUNIT_FILE="${PHPUNIT_DIR}/phpunit"
+${SUDO} mkdir -p "${PHPUNIT_DIR}"
+${SUDO} curl -SsLf -o "${PHPUNIT_FILE}" "${PHPUNIT_URL}"
+${SUDO} chmod a+x "${PHPUNIT_FILE}"
+export PATH="${PHPUNIT_DIR}:${PATH}"
+phpunit --version
+
 phpize && ./configure
 make
 make install

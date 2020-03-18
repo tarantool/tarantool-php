@@ -1,5 +1,8 @@
 <?php
-class MsgPackTest extends PHPUnit_Framework_TestCase
+
+use PHPUnit\Framework\TestCase;
+
+class MsgPackTest extends TestCase
 {
     protected static $tarantool;
 
@@ -48,6 +51,9 @@ class MsgPackTest extends PHPUnit_Framework_TestCase
         self::$tarantool->select("msgpack", array(3));
     }
 
+    /**
+     * @doesNotPerformAssertions
+     */
     public function test_04_msgpack_integer_keys_arrays() {
         self::$tarantool->replace("msgpack", array(4,
                 "Integer keys causing server to error",
@@ -70,11 +76,12 @@ class MsgPackTest extends PHPUnit_Framework_TestCase
         $this->assertTrue(True);
     }
 
-		public function test_06_msgpack_array_reference() {
-			$data = [
-					'key1' => 'value1',
-			];
-			$link = &$data['key1'];
-			self::$tarantool->call('test_4', [$data]);
-		}
+    /**
+     * @doesNotPerformAssertions
+     */
+    public function test_06_msgpack_array_reference() {
+        $data = array('key1' => 'value1');
+        $link = &$data['key1'];
+        self::$tarantool->call('test_4', [$data]);
+    }
 }
