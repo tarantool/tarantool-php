@@ -391,6 +391,7 @@ static zend_object *tarantool_create(zend_class_entry *entry) {
 	obj = (tarantool_object *)pecalloc(1, sizeof(tarantool_object) +
 		sizeof(zval) * (entry->default_properties_count - 1), 0);
 	zend_object_std_init(&obj->zo, entry);
+	object_properties_init(&obj->zo, entry);
 	obj->zo.handlers = &tarantool_obj_handlers;
 
 	return &obj->zo;
