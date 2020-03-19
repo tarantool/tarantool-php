@@ -5,6 +5,10 @@ language: php
 
 # gh-151: disable tarantoo-2.2 due to lack of support the new
 # _index format.
+#
+# Disable tarantool-1.6 and 1.7 on php 7.1-7.4, because
+# php-7.[1-4]-cli docker images are based on Debian Buster, but we
+# have no tarantool-1.[6-7] packages for this distribution.
 jobs:
   include:
     # PHP 7.0
@@ -25,6 +29,22 @@ jobs:
       env: TARANTOOL_VERSION=2.3
     - php: 7.0
       env: TARANTOOL_VERSION=2.4
+
+    # PHP 7.1
+    # -------
+    - php: 7.1
+      env: TARANTOOL_VERSION=1.9
+    - php: 7.1
+      env: TARANTOOL_VERSION=1.10
+    - php: 7.1
+      env: TARANTOOL_VERSION=2.1
+    # - php: 7.1
+    #   env: TARANTOOL_VERSION=2.2
+    - php: 7.1
+      env: TARANTOOL_VERSION=2.3
+    - php: 7.1
+      env: TARANTOOL_VERSION=2.4
+
 
 python:
   - 2.7
