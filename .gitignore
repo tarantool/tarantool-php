@@ -5,6 +5,7 @@ Makefile.in
 /aclocal.m4
 /compile
 /configure
+/configure.ac
 /depcomp
 /install-sh
 /missing
@@ -17,6 +18,7 @@ Makefile.in
 /config.guess
 /config.h
 /config.h.in
+/config.h.in~
 /config.log
 /config.nice
 /config.status
@@ -43,4 +45,4 @@ debian/php5-tarantool.debhelper.log
 debian/php5-tarantool.substvars
 debian/php5-tarantool/
 build
-.*.swp
+.*.sw[a-z]
