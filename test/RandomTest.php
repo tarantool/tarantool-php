@@ -14,9 +14,11 @@ use PHPUnit\Framework\TestCase;
 
 class RandomTest extends TestCase
 {
+		use TestCaseCompat;
+
 		protected static $tarantool;
 
-		public static function setUpBeforeClass() {
+		public static function doSetUpBeforeClass() {
 			self::$tarantool = new Tarantool('localhost', getenv('PRIMARY_PORT'), 'test', 'test');
 			self::$tarantool->ping();
 		}

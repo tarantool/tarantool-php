@@ -4,9 +4,11 @@ use PHPUnit\Framework\TestCase;
 
 class CreateTest extends TestCase
 {
+		use TestCaseCompat;
+
 		protected static $port, $tm;
 
-		public static function setUpBeforeClass() {
+		public static function doSetUpBeforeClass() {
 			self::$port = getenv('PRIMARY_PORT');
 			self::$tm = ini_get("tarantool.timeout");
 			// error_log("before setting tarantool timeout");
@@ -14,7 +16,7 @@ class CreateTest extends TestCase
 			// error_log("after setting tarantool timeout");
 		}
 
-		public static function tearDownAfterClass() {
+		public static function doTearDownAfterClass() {
 			ini_set("tarantool.timeout", self::$tm);
 		}
 

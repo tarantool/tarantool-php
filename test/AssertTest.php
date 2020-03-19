@@ -4,20 +4,22 @@ use PHPUnit\Framework\TestCase;
 
 class AssertTest extends TestCase
 {
+	use TestCaseCompat;
+
 	protected static $tarantool, $tm;
 
-	public static function setUpBeforeClass() {
+	public static function doSetUpBeforeClass() {
 		self::$tm = ini_get("tarantool.request_timeout");
 		ini_set("tarantool.request_timeout", "0.1");
 		self::$tarantool = new Tarantool('localhost', getenv('PRIMARY_PORT'));
 		self::$tarantool->authenticate('test', 'test');
 	}
 
-	public static function tearDownAfterClass() {
+	public static function doTearDownAfterClass() {
 		ini_set("tarantool.request_timeout", self::$tm);
 	}
 
-	protected function tearDown() {
+	protected function doTearDown() {
 		$tuples = self::$tarantool->select("test");
 		foreach($tuples as $value)
 			self::$tarantool->delete("test", Array($value[0]));
