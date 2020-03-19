@@ -4,14 +4,16 @@ use PHPUnit\Framework\TestCase;
 
 class DMLTest extends TestCase
 {
+		use TestCaseCompat;
+
 		protected static $tarantool;
 
-		public static function setUpBeforeClass()
+		public static function doSetUpBeforeClass()
 		{
 			self::$tarantool = new Tarantool('localhost', getenv('PRIMARY_PORT'), 'test', 'test');
 		}
 
-		protected function tearDown()
+		protected function doTearDown()
 		{
 			$tuples = self::$tarantool->select("test");
 			foreach($tuples as $value)

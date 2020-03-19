@@ -1,6 +1,7 @@
 <phpunit
   colors ="true"
   verbose="true"
+  bootstrap="test/bootstrap.php"
 >
   <testsuites>
     <testsuite name="Basic PHP Tests">
