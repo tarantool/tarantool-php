@@ -172,7 +172,7 @@ class DMLTest extends TestCase
 
 		/**
 		 * @expectedException TarantoolException
-		 * @ExpectedExceptionMessage No field 'nosuchfield' defined
+		 * @expectedExceptionMessage No field 'nosuchfield' defined
 		 */
 		public function test_08_update_error_nosuchfield() {
 			self::$tarantool->update("test", 0, array(
@@ -185,7 +185,7 @@ class DMLTest extends TestCase
 
 		/**
 		 * @expectedException TarantoolException
-		 * @ExpectedExceptionMessage Five fields
+		 * @expectedExceptionMessage Five fields
 		 */
 		public function test_08_update_error() {
 			self::$tarantool->update("test", 0, array(
@@ -200,7 +200,7 @@ class DMLTest extends TestCase
 
 		/**
 		 * @expectedException TarantoolException
-		 * @ExpectedExceptionMessage Field OP must be provided
+		 * @expectedExceptionMessage Field OP must be provided
 		 */
 		public function test_09_update_error() {
 			self::$tarantool->update("test", 0, array(
@@ -214,7 +214,7 @@ class DMLTest extends TestCase
 
 		/**
 		 * @expectedException TarantoolException
-		 * @ExpectedExceptionMessage Field OP must be provided
+		 * @expectedExceptionMessage Field OP must be provided
 		 */
 		public function test_10_update_error() {
 			self::$tarantool->update("test", 0, array(
@@ -227,7 +227,7 @@ class DMLTest extends TestCase
 
 		/**
 		 * @expectedException TarantoolException
-		 * @ExpectedExceptionMessage Three fields must be provided
+		 * @expectedExceptionMessage Three fields must be provided
 		 */
 		public function test_11_update_error() {
 			self::$tarantool->update("test", 0,
