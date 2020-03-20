@@ -2,6 +2,7 @@
   colors ="true"
   verbose="true"
   bootstrap="test/bootstrap.php"
+  cacheResult="false"
 >
   <testsuites>
     <testsuite name="Basic PHP Tests">

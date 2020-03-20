@@ -29,27 +29,21 @@ class MsgPackTest extends TestCase
         $this->assertEquals($resp[0][0], 2);
     }
 
-    /**
-     * @expectedException TarantoolException
-     * @expectedExceptionMessage Bad key type for PHP Array
-     **/
     public function test_01_msgpack_array_key() {
+        $this->expectException(TarantoolException::class);
+        $this->expectExceptionMessage('Bad key type for PHP Array');
         self::$tarantool->select("msgpack", array(2));
     }
 
-    /**
-     * @expectedException TarantoolException
-     * @expectedExceptionMessage Bad key type for PHP Array
-     **/
     public function test_02_msgpack_float_key() {
+        $this->expectException(TarantoolException::class);
+        $this->expectExceptionMessage('Bad key type for PHP Array');
         self::$tarantool->select("msgpack", array(1));
     }
 
-    /**
-     * @expectedException TarantoolException
-     * @expectedExceptionMessage Bad key type for PHP Array
-     **/
     public function test_03_msgpack_array_of_float_as_key() {
+        $this->expectException(TarantoolException::class);
+        $this->expectExceptionMessage('Bad key type for PHP Array');
         self::$tarantool->select("msgpack", array(3));
     }
 

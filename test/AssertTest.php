@@ -36,7 +36,8 @@ class AssertTest extends TestCase
 			$this->assertFalse(True);
 		} catch (TarantoolException $e) {
 			// print($e->getMessage());
-			$this->assertContains("Failed to read", $e->getMessage());
+			$this->assertStringContainsString(
+				"Failed to read", $e->getMessage());
 		}
 
 		/* We can reconnect and everything will be ok */

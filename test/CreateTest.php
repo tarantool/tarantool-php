@@ -47,27 +47,29 @@ class CreateTest extends TestCase
 			$a->disconnect();
 		}
 
-		/**
-		 * @expectedException TarantoolException
-		 * @expectedExceptionMessageRegExp /Name or service not known|nodename nor servname provided|Temporary failure in name resolution/
-		 */
 		public function test_02_create_error_host() {
-			(new Tarantool('very_bad_host'))->connect();
+			$c = new Tarantool('very_bad_host');
+
+			$this->expectException(TarantoolException::class);
+			$this->expectExceptionMessageRegExp(
+				'/Name or service not known' .
+				'|nodename nor servname provided' .
+				'|Temporary failure in name resolution/');
+			$c->connect();
 		}
 
-		/**
-		 * @expectedException TarantoolException
-		 * @expectedExceptionMessageRegExp /Connection refused|Network is unreachable/
-		 */
 		public function test_03_00_create_error_port() {
-			(new Tarantool('127.0.0.1', 65500))->connect();
+			$c = new Tarantool('127.0.0.1', 65500);
+
+			$this->expectException(TarantoolException::class);
+			$this->expectExceptionMessageRegExp(
+				'/Connection refused|Network is unreachable/');
+			$c->connect();
 		}
 
-		/**
-		 * @expectedException TarantoolException
-		 * @expectedExceptionMessage Invalid primary port value
-		 */
 		public function test_03_01_create_error_port() {
+			$this->expectException(TarantoolException::class);
+			$this->expectExceptionMessage('Invalid primary port value');
 			new Tarantool('localhost', 123456);
 		}
 
@@ -99,38 +101,38 @@ class CreateTest extends TestCase
 			$c->flush_schema();
 		}
 
-		/**
-		 * @expectedException TarantoolClientError
-		 * @expectedExceptionMessage Incorrect password supplied for user
-		 */
 		public function test_06_bad_credentials() {
 				$c = new Tarantool('localhost', self::$port);
 				$c->connect();
 				$this->assertTrue($c->ping());
+
+				$this->expectException(TarantoolClientError::class);
+				$this->expectExceptionMessage(
+					'Incorrect password supplied for user');
 				$c->authenticate('test', 'bad_password');
 		}
 
-		/**
-		 * @expectedException TarantoolClientError
-		 * @expectedExceptionMessage Incorrect password supplied for user
-		 */
 		public function test_07_bad_guest_credentials() {
 			$c = new Tarantool('localhost', self::$port);
 			$c->connect();
 			$this->assertTrue($c->ping());
+
+			$this->expectException(TarantoolClientError::class);
+			$this->expectExceptionMessage(
+				'Incorrect password supplied for user');
 			$c->authenticate('guest', 'guest');
 		}
 
-		/**
-		 * @expectedException TarantoolClientError
-		 * @expectedExceptionMessage Incorrect password supplied for user
-		 */
 		/**
 		 * Comment this, since behaviour of authentication with 'empty password' has changed
 		public function test_07_01_bad_guest_credentials() {
 			$c = new Tarantool('localhost', self::$port);
 			$c->connect();
 			$this->assertTrue($c->ping());
+
+			$this->expectException(TarantoolClientError::class);
+			$this->expectExceptionMessage(
+				'Incorrect password supplied for user');
 			$c->authenticate('guest', '');
 		}
 		*/
