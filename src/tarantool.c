@@ -795,8 +795,10 @@ int get_fieldno_by_name(tarantool_connection *obj, uint32_t space_no,
 	fid = tarantool_schema_get_fid_by_string(obj->schema, space_no,
 						 Z_STRVAL_P(name),
 						 Z_STRLEN_P(name));
-	if (fid == FAILURE)
+	if (fid == FAILURE) {
 		THROW_EXC("No field '%s' defined", Z_STRVAL_P(name));
+		return FAILURE;
+	}
 	return fid + 1;
 }
 
@@ -825,6 +827,8 @@ int tarantool_uwrite_op(tarantool_connection *obj, zval *op, uint32_t pos,
 		goto cleanup;
 	}
 	op_pos = get_fieldno_by_name(obj, space_id, z_op_pos);
+	if (op_pos == FAILURE)
+		goto cleanup;
 	zval *oparg, *splice_len, *splice_val;
 	switch(Z_STRVAL_P(opstr)[0]) {
 	case ':':
