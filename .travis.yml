@@ -45,6 +45,20 @@ jobs:
     - php: 7.1
       env: TARANTOOL_VERSION=2.4
 
+    # PHP 7.2
+    # -------
+    - php: 7.2
+      env: TARANTOOL_VERSION=1.9
+    - php: 7.2
+      env: TARANTOOL_VERSION=1.10
+    - php: 7.2
+      env: TARANTOOL_VERSION=2.1
+    # - php: 7.2
+    #   env: TARANTOOL_VERSION=2.2
+    - php: 7.2
+      env: TARANTOOL_VERSION=2.3
+    - php: 7.2
+      env: TARANTOOL_VERSION=2.4
 
 python:
   - 2.7
