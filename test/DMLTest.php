@@ -78,12 +78,11 @@ class DMLTest extends TestCase
 			$this->devastate(100);
 		}
 
-		/**
-		 * @expectedException TarantoolClientError
-		 * @expectedExceptionMessage Duplicate key exists
-		 **/
 		public function test_03_insert_error() {
 			self::$tarantool->insert("test", array(1, 2, "smth"));
+
+			$this->expectException(TarantoolClientError::class);
+			$this->expectExceptionMessage('Duplicate key exists');
 			self::$tarantool->insert("test", array(1, 2, "smth"));
 		}
 
@@ -170,11 +169,9 @@ class DMLTest extends TestCase
 			self::$tarantool->update("test", 0, array());
 		}
 
-		/**
-		 * @expectedException TarantoolException
-		 * @expectedExceptionMessage No field 'nosuchfield' defined
-		 */
 		public function test_08_update_error_nosuchfield() {
+			$this->expectException(TarantoolException::class);
+			$this->expectExceptionMessage("No field 'nosuchfield' defined");
 			self::$tarantool->update("test", 0, array(
 				array(
 					"field" => "nosuchfield",
@@ -183,11 +180,9 @@ class DMLTest extends TestCase
 			));
 		}
 
-		/**
-		 * @expectedException TarantoolException
-		 * @expectedExceptionMessage Five fields
-		 */
 		public function test_08_update_error() {
+			$this->expectException(TarantoolException::class);
+			$this->expectExceptionMessage('Five fields');
 			self::$tarantool->update("test", 0, array(
 				array(
 					"field" => 2,
@@ -198,11 +193,9 @@ class DMLTest extends TestCase
 			));
 		}
 
-		/**
-		 * @expectedException TarantoolException
-		 * @expectedExceptionMessage Field OP must be provided
-		 */
 		public function test_09_update_error() {
+			$this->expectException(TarantoolException::class);
+			$this->expectExceptionMessage('Field OP must be provided');
 			self::$tarantool->update("test", 0, array(
 					array(
 							"field" => 2,
@@ -212,11 +205,9 @@ class DMLTest extends TestCase
 			));
 		}
 
-		/**
-		 * @expectedException TarantoolException
-		 * @expectedExceptionMessage Field OP must be provided
-		 */
 		public function test_10_update_error() {
+			$this->expectException(TarantoolException::class);
+			$this->expectExceptionMessage('Field OP must be provided');
 			self::$tarantool->update("test", 0, array(
 					array(
 							"field" => 2,
@@ -225,11 +216,9 @@ class DMLTest extends TestCase
 			));
 		}
 
-		/**
-		 * @expectedException TarantoolException
-		 * @expectedExceptionMessage Three fields must be provided
-		 */
 		public function test_11_update_error() {
+			$this->expectException(TarantoolException::class);
+			$this->expectExceptionMessage('Three fields must be provided');
 			self::$tarantool->update("test", 0,
 				array(
 					array(
@@ -374,7 +363,7 @@ class DMLTest extends TestCase
 				self::$tarantool->select($spc, null, null, null, null, $itype);
 				$this->assertFalse(True);
 			} catch (TarantoolException $e) {
-				$this->assertContains($xcmsg, $e->getMessage());
+				$this->assertStringContainsString($xcmsg, $e->getMessage());
 			}
 		}
 
@@ -386,7 +375,7 @@ class DMLTest extends TestCase
 				self::$tarantool->select($spc, null, null, null, null, $itype);
 				$this->assertTrue(True);
 			} catch (Exception $e) {
-				$this->assertContains($xcmsg, $e->getMessage());
+				$this->assertStringContainsString($xcmsg, $e->getMessage());
 			}
 		}
 
