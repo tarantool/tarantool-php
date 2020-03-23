@@ -51,7 +51,7 @@ class CreateTest extends TestCase
 			$c = new Tarantool('very_bad_host');
 
 			$this->expectException(TarantoolException::class);
-			$this->expectExceptionMessageRegExp(
+			$this->expectExceptionMessageMatches(
 				'/Name or service not known' .
 				'|nodename nor servname provided' .
 				'|Temporary failure in name resolution/');
@@ -62,7 +62,7 @@ class CreateTest extends TestCase
 			$c = new Tarantool('127.0.0.1', 65500);
 
 			$this->expectException(TarantoolException::class);
-			$this->expectExceptionMessageRegExp(
+			$this->expectExceptionMessageMatches(
 				'/Connection refused|Network is unreachable/');
 			$c->connect();
 		}
