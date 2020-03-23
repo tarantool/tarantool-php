@@ -157,7 +157,8 @@ static char *pid_gen(const char *host, int port, const char *login,
 	len = spprintf(&plist_id, 0, "tarantool-%s:id=%s:%d-%s", prefix, host,
 		       port, login) + 1;
 	if (suffix) {
-		len = spprintf(&tmp,0,"%s[%.*s]",plist_id,suffix_len,suffix);
+		len = spprintf(&tmp, 0, "%s[%.*s]", plist_id, (int) suffix_len,
+			       suffix);
 		efree(plist_id);
 		plist_id = tmp;
 	}
