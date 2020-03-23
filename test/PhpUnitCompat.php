@@ -7,12 +7,13 @@
  * different phpunit versions (phpunit-6 and phpunit-7 at the
  * moment).
  *
- * Now it contains workarounds for two problems:
+ * Now it contains workarounds for the following problems:
  *
  * - phpunit-7 requirement to use `void` return type declaration
  *   for several methods.
  * - phpunit-8 deprecation warning re using assertContains() for
  *   search a substring in a string.
+ * - phpunit-9 removes expectExceptionMessageRegExp() method.
  *
  * Usage: add `use TestCaseCompat;` in a TestCase derived class
  * and follow instructions and examples below.
@@ -74,6 +75,13 @@
  * substring in a string. Add `use TestCaseCompat;` to a TestCase
  * derived class and use assertStringContainsString() on any
  * phpunit-6+ version.
+ *
+ * expectExceptionMessageRegExp() removal
+ * --------------------------------------
+ *
+ * phpunit-8 and newer provides the same function under
+ * expectExceptionMessageMatches() name. phpunit-9 removes the old
+ * expectExceptionMessageRegExp() alias.
  */
 
 use PHPUnit\Framework\TestCase;
@@ -201,6 +209,28 @@ if ($testCaseRef->hasMethod('assertStringContainsString')) {
 }
 
 /*
+ * ExpectExceptionMessageMatchesTrait (private).
+ *
+ * phpunit-8 provides the new name for
+ * expectExceptionMessageRegExp() method:
+ * expectExceptionMessageMatches(). phpunit-9 removes the old name.
+ *
+ * This trait adds expectExceptionMessageMatches() method for
+ * phpunit-6 and phpunit-7.
+ */
+if ($testCaseRef->hasMethod('expectExceptionMessageMatches')) {
+    trait ExpectExceptionMessageMatchesTrait {
+        /* Nothing to define. */
+    }
+} else {
+    trait ExpectExceptionMessageMatchesTrait {
+        public function expectExceptionMessageMatches($regularExpression) {
+            self::expectExceptionMessageRegExp($regularExpression);
+        }
+    }
+}
+
+/*
  * TestCaseCompat (public).
  *
  * This trait accumulates all hacks defined above.
@@ -209,4 +239,5 @@ trait TestCaseCompat
 {
     use SetUpTearDownTrait;
     use AssertStringContainsStringTrait;
+    use ExpectExceptionMessageMatchesTrait;
 }
