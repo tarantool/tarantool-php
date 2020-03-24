@@ -90,8 +90,38 @@ jobs:
     - php: 7.4
       env: TARANTOOL_VERSION=2.4
 
+    # RPM packages
+    # ------------
+    # Note: CentOS 6 & 7 do not provide PHP 7.*.
+    # Note: Fedora < 25 do not provide PHP 7.*.
+    - env: OS=el DIST=8
+    - env: OS=fedora DIST=25
+    - env: OS=fedora DIST=26
+    - env: OS=fedora DIST=27
+    - env: OS=fedora DIST=28
+    - env: OS=fedora DIST=29
+    - env: OS=fedora DIST=30
+    - env: OS=fedora DIST=31
+
 python:
   - 2.7
 
 script:
-  - ./test.sh
+  - |
+    if [ -n "${TARANTOOL_VERSION}" ]; then
+        ./test.sh
+    elif [ -n "${OS}" ] && [ -n "${DIST}" ]; then
+        git clone --depth 1 https://github.com/packpack/packpack.git
+        ./packpack/packpack
+        if [ "${OS}" = "el" ]; then
+            export OS=centos
+        fi
+        docker run \
+            --volume "$(realpath .):/tarantool-php" \
+            --workdir /tarantool-php                \
+            --rm                                    \
+            "${OS}:${DIST}"                         \
+            ./test.pkg.sh
+    else
+        exit 1
+    fi
