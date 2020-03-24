@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 
 import os
 import sys
@@ -15,7 +15,7 @@ from pprint import pprint
 def read_popen(cmd):
     path = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     path.wait()
-    return path.stdout.read()
+    return path.stdout.read().decode()
 
 def read_popen_config(cmd):
     cmd = os.environ.get('PHP_CONFIG', 'php-config') + ' ' + cmd
@@ -111,9 +111,9 @@ def main():
                 cmd = cmd + 'sudo dtruss ' + find_php_bin()
                 cmd = cmd + ' -c tarantool.ini {0}'.format(test_lib_path)
             else:
-                print find_php_bin()
+                print(find_php_bin())
                 cmd = '{0} -c tarantool.ini {1}'.format(find_php_bin(), test_lib_path)
-                print cmd
+                print(cmd)
 
             print('Running "%s" with "%s"' % (cmd, php_ini))
             proc = subprocess.Popen(cmd, shell=True, cwd=test_cwd)
