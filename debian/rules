@@ -2,27 +2,32 @@
 
 include /usr/share/cdbs/1/rules/debhelper.mk
 
-phpapi	= $(shell php-config7.0 --phpapi)
+DEB_PACKAGE := $(strip $(shell egrep '^Package: ' debian/control | \
+	cut -f 2 -d ':'))
+
+phpversion = $(shell echo $(DEB_PACKAGE) | \
+	sed -e 's/^php\([0-9.]\+\)-tarantool$$/\1/')
+phpapi	= $(shell php-config$(phpversion) --phpapi)
 version = $(shell dpkg-parsechangelog \
 	|grep ^Version|awk '{print $$2}'|sed 's/-.*//')
 
-makebuilddir/php7.0-tarantool::
+makebuilddir/php$(phpversion)-tarantool::
 	phpize
 	./configure
 	make
-	echo "php:Depends=phpapi-$(phpapi)" > debian/php7.0-tarantool.substvars
+	echo "php:Depends=phpapi-$(phpapi)" > debian/php$(phpversion)-tarantool.substvars
 
-install/php7.0-tarantool::
-	install -m 0755 -d debian/php7.0-tarantool/usr/lib/php/$(phpapi)/
-	install -m 0755 -d debian/php7.0-tarantool/etc/php/7.0/mods-available/
+install/php$(phpversion)-tarantool::
+	install -m 0755 -d debian/php$(phpversion)-tarantool/usr/lib/php/$(phpapi)/
+	install -m 0755 -d debian/php$(phpversion)-tarantool/etc/php/$(phpversion)/mods-available/
 	install -m 0755 modules/tarantool.so \
-		debian/php7.0-tarantool/usr/lib/php/$(phpapi)/
+		debian/php$(phpversion)-tarantool/usr/lib/php/$(phpapi)/
 	echo extension=tarantool.so \
-		> debian/php7.0-tarantool/etc/php/7.0/mods-available/tarantool.ini
+		> debian/php$(phpversion)-tarantool/etc/php/$(phpversion)/mods-available/tarantool.ini
 	# Enable the extension.
-	install -m 0755 -d debian/php7.0-tarantool/etc/php/7.0/cli/conf.d
-	ln -s /etc/php/7.0/mods-available/tarantool.ini \
-		debian/php7.0-tarantool/etc/php/7.0/cli/conf.d/50-tarantool.ini
+	install -m 0755 -d debian/php$(phpversion)-tarantool/etc/php/$(phpversion)/cli/conf.d
+	ln -s /etc/php/$(phpversion)/mods-available/tarantool.ini \
+		debian/php$(phpversion)-tarantool/etc/php/$(phpversion)/cli/conf.d/50-tarantool.ini
 
 clean::
 	phpize --clean
