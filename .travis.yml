@@ -108,7 +108,11 @@ jobs:
     # Debian < 8 (Stretch) do not provide PHP 7.*.
     # Ubuntu < 16.04 (Xenial) do not provide PHP 7.*.
     - env: OS=debian DIST=stretch
+    - env: OS=debian DIST=buster
     - env: OS=ubuntu DIST=xenial
+    - env: OS=ubuntu DIST=bionic
+    - env: OS=ubuntu DIST=disco
+    - env: OS=ubuntu DIST=eoan
 
 python:
   - 2.7

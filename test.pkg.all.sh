@@ -12,7 +12,11 @@ distros="
     fedora:30
     fedora:31
     debian:stretch
+    debian:buster
     ubuntu:xenial
+    ubuntu:bionic
+    ubuntu:disco
+    ubuntu:eoan
 "
 
 if ! type packpack; then
