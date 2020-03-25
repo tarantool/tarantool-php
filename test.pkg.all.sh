@@ -11,6 +11,8 @@ distros="
     fedora:29
     fedora:30
     fedora:31
+    debian:stretch
+    ubuntu:xenial
 "
 
 if ! type packpack; then

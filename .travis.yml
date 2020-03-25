@@ -103,6 +103,13 @@ jobs:
     - env: OS=fedora DIST=30
     - env: OS=fedora DIST=31
 
+    # Deb packages
+    # ------------
+    # Debian < 8 (Stretch) do not provide PHP 7.*.
+    # Ubuntu < 16.04 (Xenial) do not provide PHP 7.*.
+    - env: OS=debian DIST=stretch
+    - env: OS=ubuntu DIST=xenial
+
 python:
   - 2.7
 
