@@ -2,7 +2,7 @@ Source: php-tarantool
 Priority: optional
 Maintainer: Dmitry E. Oboukhov <unera@debian.org>
 Build-Depends: debhelper (>= 8),
-               php7.0-dev | php-all-dev,
+               php-all-dev,
                pkg-config
 Section: php
 Standards-Version: 3.9.4
@@ -10,7 +10,8 @@ Homepage: https://github.com/tarantool/tarantool-php
 VCS-Browser: https://github.com/tarantool/tarantool-php
 VCS-Git: git://github.com/tarantool/tarantool-php.git
 
-Package: php7.0-tarantool
+# Package name is preprocessed in debian/prebuild.sh.
+Package: php${phpversion}-tarantool
 Architecture: any
 Priority: optional
 Conflicts: libtarantool-php
