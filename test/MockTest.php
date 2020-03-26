@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use PHPUnit\Framework\TestCase;
 
 class MockTest extends TestCase
@@ -14,7 +16,8 @@ class MockTest extends TestCase
     public function testDoo()
     {
         try {
-            (new Tarantool('localhost', getenv('PRIMARY_PORT')))->select('_vindex', [], 'name');
+            $port = testHelpers::getTarantoolPort();
+            (new Tarantool('localhost', $port))->select('_vindex', [], 'name');
             $this->assertFalse(True);
         } catch (Exception $e) {
            $this->assertTrue(True);

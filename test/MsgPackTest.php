@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use PHPUnit\Framework\TestCase;
 
 class MsgPackTest extends TestCase
@@ -10,7 +12,8 @@ class MsgPackTest extends TestCase
 
     public static function doSetUpBeforeClass()
     {
-        self::$tarantool = new Tarantool('localhost', getenv('PRIMARY_PORT'), 'test', 'test');
+        $port = TestHelpers::getTarantoolPort();
+        self::$tarantool = new Tarantool('localhost', $port, 'test', 'test');
         self::$tarantool->ping();
     }
 

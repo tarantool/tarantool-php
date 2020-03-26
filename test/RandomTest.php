@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 function generateRandomString($length = 10) {
     $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
     $charactersLength = strlen($characters);
@@ -19,7 +21,8 @@ class RandomTest extends TestCase
     protected static $tarantool;
 
     public static function doSetUpBeforeClass() {
-        self::$tarantool = new Tarantool('localhost', getenv('PRIMARY_PORT'), 'test', 'test');
+        $port = TestHelpers::getTarantoolPort();
+        self::$tarantool = new Tarantool('localhost', $port, 'test', 'test');
         self::$tarantool->ping();
     }
 
