@@ -1308,12 +1308,12 @@ PHP_METHOD(Tarantool, ping) {
 
 PHP_METHOD(Tarantool, select) {
 	zval *space = NULL, *index = NULL, *key = NULL;
-	zval *zlimit = NULL, *ziterator = NULL;
+	zval *zlimit = NULL, *zoffset = NULL, *ziterator = NULL;
 	long limit = LONG_MAX - 1, offset = 0, iterator = 0;
 	zval key_new = {0};
 
-	TARANTOOL_FUNCTION_BEGIN(obj, id, "z|zzzlz", &space, &key, &index,
-				 &zlimit, &offset, &ziterator);
+	TARANTOOL_FUNCTION_BEGIN(obj, id, "z|zzzzz", &space, &key, &index,
+				 &zlimit, &zoffset, &ziterator);
 	TARANTOOL_CONNECT_ON_DEMAND(obj);
 
 	if (zlimit != NULL &&
@@ -1324,6 +1324,16 @@ PHP_METHOD(Tarantool, select) {
 		RETURN_FALSE;
 	} else if (zlimit != NULL && Z_TYPE_P(zlimit) == IS_LONG) {
 		limit = Z_LVAL_P(zlimit);
+	}
+
+	if (zoffset != NULL &&
+	    Z_TYPE_P(zoffset) != IS_NULL &&
+	    Z_TYPE_P(zoffset) != IS_LONG) {
+		THROW_EXC("wrong type of 'offset' - expected long/null, "
+			  "got '%s'", zend_zval_type_name(zoffset));
+		RETURN_FALSE;
+	} else if (zoffset != NULL && Z_TYPE_P(zoffset) == IS_LONG) {
+		offset = Z_LVAL_P(zoffset);
 	}
 
 	/* Obtain space number */
