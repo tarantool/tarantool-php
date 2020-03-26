@@ -9,7 +9,7 @@ class CreateTest extends TestCase
     protected static $port, $tm;
 
     public static function doSetUpBeforeClass() {
-        self::$port = getenv('PRIMARY_PORT');
+        self::$port = TestHelpers::getTarantoolPort();
         self::$tm = ini_get("tarantool.timeout");
         // error_log("before setting tarantool timeout");
         ini_set("tarantool.timeout", "0.1");

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use PHPUnit\Framework\TestCase;
 
 class AssertTest extends TestCase
@@ -11,7 +13,8 @@ class AssertTest extends TestCase
     public static function doSetUpBeforeClass() {
         self::$tm = ini_get("tarantool.request_timeout");
         ini_set("tarantool.request_timeout", "0.1");
-        self::$tarantool = new Tarantool('localhost', getenv('PRIMARY_PORT'));
+        $port = TestHelpers::getTarantoolPort();
+        self::$tarantool = new Tarantool('localhost', $port);
         self::$tarantool->authenticate('test', 'test');
     }
 
