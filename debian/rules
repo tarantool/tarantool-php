@@ -24,10 +24,6 @@ install/php$(phpversion)-tarantool::
 		debian/php$(phpversion)-tarantool/usr/lib/php/$(phpapi)/
 	echo extension=tarantool.so \
 		> debian/php$(phpversion)-tarantool/etc/php/$(phpversion)/mods-available/tarantool.ini
-	# Enable the extension.
-	install -m 0755 -d debian/php$(phpversion)-tarantool/etc/php/$(phpversion)/cli/conf.d
-	ln -s /etc/php/$(phpversion)/mods-available/tarantool.ini \
-		debian/php$(phpversion)-tarantool/etc/php/$(phpversion)/cli/conf.d/50-tarantool.ini
 
 clean::
 	phpize --clean

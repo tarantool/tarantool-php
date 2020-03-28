@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+if [ "$1" = "remove" ]; then
+    if [ -e /usr/lib/php/php-maintscript-helper ] ; then
+	. /usr/lib/php/php-maintscript-helper
+	php_invoke dismod ${phpversion} ALL tarantool
+    fi
+fi
+
+exit 0
