@@ -468,4 +468,41 @@ class DMLTest extends TestCase
         gc_collect_cycles();
         gc_collect_cycles();
     }
+
+    public function test_19_select_space_no_index_name_known() {
+        /*
+         * gh-42: 'Failed to parse schema (index)' at select()
+         * error when a space is passed as a number, but an index
+         * is passed as a name.
+         *
+         * The problem appears when a schema is not fetched yet,
+         * so let's test it on a new client instance.
+         */
+        $port = TestHelpers::getTarantoolPort();
+        $tarantool = new Tarantool('localhost', $port, 'test');
+
+        $vindex_id = 289;
+        $res = $tarantool->select($vindex_id, [$vindex_id], 'primary', 1);
+        $this->assertEquals($res[0][0], $vindex_id);
+    }
+
+    public function test_20_select_space_no_index_name_unknown() {
+        /*
+         * Related to gh-42, see above. This case is to verify
+         * that the client gives an error in the case when unknown
+         * space id is passed (together with some index name).
+         *
+         * One of transient versions of gh-42 patch had a mistake
+         * on the error path that cause a segfault. This case
+         * triggers execution of the corresponding code.
+         */
+        $port = TestHelpers::getTarantoolPort();
+        $tarantool = new Tarantool('localhost', $port, 'test');
+
+        $this->expectException(TarantoolException::class);
+        $this->expectExceptionMessage('No space 1024 defined');
+
+        $unknown_space_id = 1024;
+        $tarantool->select($unknown_space_id, [], 'primary');
+    }
 }
