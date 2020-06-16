@@ -117,7 +117,7 @@ PHP_INI_BEGIN()
 	STD_PHP_INI_ENTRY("tarantool.request_timeout", "3600.0", PHP_INI_ALL,
 			  OnUpdateReal, request_timeout, zend_tarantool_globals,
 			  tarantool_globals)
-	STD_PHP_INI_ENTRY("tarantool.retry_count", "1", PHP_INI_ALL,
+	STD_PHP_INI_ENTRY("tarantool.retry_count", "0", PHP_INI_ALL,
 			  OnUpdateLong, retry_count, zend_tarantool_globals,
 			  tarantool_globals)
 	STD_PHP_INI_ENTRY("tarantool.retry_sleep", "10", PHP_INI_ALL,
@@ -252,7 +252,12 @@ static int __tarantool_connect(tarantool_object *t_obj) {
 	TSRMLS_FETCH();
 	tarantool_connection *obj = t_obj->obj;
 	int status = SUCCESS;
-	long count = TARANTOOL_G(retry_count);
+	/*
+	 * Amount of connection attempts is always 1 more than
+	 * `retry_count` option value, since the option means
+	 * amount of attempts after the first one.
+	 */
+	long count = TARANTOOL_G(retry_count) + 1;
 	struct timespec sleep_time = {0};
 	double_to_ts(INI_FLT("retry_sleep"), &sleep_time);
 	char *err = NULL;
@@ -962,7 +967,7 @@ PHP_RINIT_FUNCTION(tarantool) {
 
 static void php_tarantool_init_globals(zend_tarantool_globals *tarantool_globals) {
 	tarantool_globals->sync_counter    = 0;
-	tarantool_globals->retry_count     = 1;
+	tarantool_globals->retry_count     = 0;
 	tarantool_globals->retry_sleep     = 10;
 	tarantool_globals->timeout         = 3600.0;
 	tarantool_globals->request_timeout = 3600.0;

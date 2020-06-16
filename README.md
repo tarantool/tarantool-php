@@ -67,7 +67,7 @@ Place it into project library path in your IDE.
 
 * `tarantool.persistent` - Enable persistent connections (don't close connections between sessions) (defaults: True, **can't be changed in runtime**)
 * `tarantool.timeout` - Connection timeout (defaults: 10 seconds, can be changed in runtime)
-* `tarantool.retry_count` - Count of retries for connecting (defaults: 1, can be changed in runtime)
+* `tarantool.retry_count` - Count of retries for connecting (defaults: 0, can be changed in runtime). 0 means do not retry in case the connection was failed the first time.
 * `tarantool.retry_sleep` - Sleep between connecting retries (defaults: 0.1 second, can be changed in runtime)
 * `tarantool.request_timeout` - Read/write timeout for requests (defaults: 10 second, can be changed in runtime)
 

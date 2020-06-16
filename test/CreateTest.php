@@ -163,5 +163,28 @@ class CreateTest extends TestCase
             ['guest', null],
         ];
     }
+
+    public function test_10_zero_retry_exception() {
+        /*
+         * gh-83: An attempt to connection with `retry_count = 0`
+         * gives the following error:
+         *
+         *  | Uncaught TarantoolIOException: (null)
+         *
+         * Now the option means amount of attempts to connect
+         * after the first one, not an overall attempts to
+         * connect. So zero becomes valid value.
+         */
+
+        $saved_retry_count = ini_get('tarantool.retry_count');
+        ini_set('tarantool.retry_count', 0);
+
+        try {
+            $c = new Tarantool('localhost', self::$port);
+            $this->assertEquals($c->ping(), true);
+        } finally {
+            ini_set('tarantool.retry_count', $saved_retry_count);
+        }
+    }
 }
 
