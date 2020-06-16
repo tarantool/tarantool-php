@@ -558,6 +558,25 @@ tarantool_schema_get_sid_by_string(
 }
 
 int32_t
+tarantool_schema_get_sid_by_number(
+		struct tarantool_schema *schema_obj,
+		uint32_t sid
+) {
+	struct mh_schema_space_t *schema = schema_obj->space_hash;
+	struct schema_key space_key = {
+		(void *)&sid,
+		sizeof(uint32_t),
+		sid, /* ignored */
+	};
+	mh_int_t space_slot = mh_schema_space_find(schema, &space_key, NULL);
+	if (space_slot == mh_end(schema))
+		return -1;
+	const struct schema_space_value *space =
+		*mh_schema_space_node(schema, space_slot);
+	return space->space_number;
+}
+
+int32_t
 tarantool_schema_get_iid_by_string(
 		struct tarantool_schema *schema_obj, uint32_t sid,
 		const char *index_name, uint32_t index_name_len

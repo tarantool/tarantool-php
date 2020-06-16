@@ -56,6 +56,8 @@ int32_t
 tarantool_schema_get_sid_by_string(struct tarantool_schema *, const char *,
 				   uint32_t);
 int32_t
+tarantool_schema_get_sid_by_number(struct tarantool_schema *, uint32_t);
+int32_t
 tarantool_schema_get_iid_by_string(struct tarantool_schema *, uint32_t,
 				   const char *, uint32_t);
 int32_t
