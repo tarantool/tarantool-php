@@ -12,6 +12,8 @@ from lib.tarantool_server import TarantoolServer
 
 from pprint import pprint
 
+PHPUNIT_PHAR = 'phpunit.phar'
+
 def read_popen(cmd):
     path = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     path.wait()
@@ -22,7 +24,7 @@ def read_popen_config(cmd):
     return read_popen(cmd)
 
 def find_php_bin():
-    path = read_popen('which php').strip()
+    path = read_popen('which php').strip().decode()
     if (path.find('phpenv') != -1):
         version = read_popen('phpenv global')
         if (version.find('system') != -1):
@@ -68,8 +70,8 @@ def main():
             print(str(e))
             return 1
 
-        version = read_popen_config('--version').strip(' \n\t') + '.'
-        version1 = read_popen_config('--extension-dir').strip(' \n\t')
+        version = read_popen_config('--version').decode().strip(' \n\t') + '.'
+        version1 = read_popen_config('--extension-dir').decode().strip(' \n\t')
         version += '\n' + ('With' if version1.find('non-zts') == -1 else 'Without') + ' ZTS'
         version += '\n' + ('With' if version1.find('no-debug') == -1 else 'Without') + ' Debug'
         print('Running against ' + version)

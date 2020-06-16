@@ -14,7 +14,7 @@ function generateRandomString($length = 10) {
 
 use PHPUnit\Framework\TestCase;
 
-class RandomTest extends TestCase
+final class RandomTest extends TestCase
 {
     use TestCaseCompat;
 

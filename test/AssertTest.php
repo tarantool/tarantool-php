@@ -1,10 +1,9 @@
 <?php
-
 declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 
-class AssertTest extends TestCase
+final class AssertTest extends TestCase
 {
     use TestCaseCompat;
 

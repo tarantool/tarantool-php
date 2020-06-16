@@ -631,21 +631,30 @@ error:
 }
 
 int get_spaceno_by_name(tarantool_connection *obj, zval *name) {
-	if (Z_TYPE_P(name) == IS_LONG)
-		return Z_LVAL_P(name);
-	if (Z_TYPE_P(name) != IS_STRING) {
+	if (Z_TYPE_P(name) != IS_STRING && Z_TYPE_P(name) != IS_LONG) {
 		tarantool_throw_exception("Space ID must be String or Long");
 		return FAILURE;
 	}
-	int32_t space_no = tarantool_schema_get_sid_by_string(obj->schema,
-			Z_STRVAL_P(name), Z_STRLEN_P(name));
-	if (space_no != FAILURE)
-		return space_no;
-
+	int32_t space_no = -1;
 	tarantool_tp_update(obj->tps);
-	tp_select(obj->tps, SPACE_SPACE, INDEX_SPACE_NAME, 0, 4096);
-	tp_key(obj->tps, 1);
-	tp_encode_str(obj->tps, Z_STRVAL_P(name), Z_STRLEN_P(name));
+	if (Z_TYPE_P(name) == IS_LONG) {
+		space_no = tarantool_schema_get_sid_by_number(obj->schema,
+							      Z_LVAL_P(name));
+		if (space_no != FAILURE)
+			return space_no;
+		tp_select(obj->tps, SPACE_SPACE, INDEX_SPACE_NO, 0, 4096);
+		tp_key(obj->tps, 1);
+		tp_encode_uint(obj->tps, Z_LVAL_P(name));
+	} else {
+		space_no = tarantool_schema_get_sid_by_string(obj->schema,
+							      Z_STRVAL_P(name),
+							      Z_STRLEN_P(name));
+		if (space_no != FAILURE)
+			return space_no;
+		tp_select(obj->tps, SPACE_SPACE, INDEX_SPACE_NAME, 0, 4096);
+		tp_key(obj->tps, 1);
+		tp_encode_str(obj->tps, Z_STRVAL_P(name), Z_STRLEN_P(name));
+	}
 	tp_reqid(obj->tps, TARANTOOL_G(sync_counter)++);
 
 	obj->value->len = tp_used(obj->tps);
@@ -660,10 +669,11 @@ int get_spaceno_by_name(tarantool_connection *obj, zval *name) {
 	size_t body_size = php_mp_unpack_package_size(pack_len);
 	smart_string_ensure(obj->value, body_size);
 	if (tarantool_stream_read(obj, obj->value->c,
-				body_size) == FAILURE)
+				  body_size) == FAILURE)
 		return FAILURE;
 
-	struct tnt_response resp; memset(&resp, 0, sizeof(struct tnt_response));
+	struct tnt_response resp;
+	memset(&resp, 0, sizeof(struct tnt_response));
 	if (php_tp_response(&resp, obj->value->c, body_size) == -1) {
 		tarantool_throw_parsingexception("query");
 		return FAILURE;
@@ -679,10 +689,22 @@ int get_spaceno_by_name(tarantool_connection *obj, zval *name) {
 		tarantool_throw_parsingexception("schema (space)");
 		return FAILURE;
 	}
-	space_no = tarantool_schema_get_sid_by_string(obj->schema,
-			Z_STRVAL_P(name), Z_STRLEN_P(name));
-	if (space_no == FAILURE)
-		THROW_EXC("No space '%s' defined", Z_STRVAL_P(name));
+
+	if (Z_TYPE_P(name) == IS_LONG) {
+		space_no = tarantool_schema_get_sid_by_number(obj->schema,
+							      Z_LVAL_P(name));
+		if (space_no == FAILURE) {
+			THROW_EXC("No space '%s' defined", Z_STRVAL_P(name));
+		}
+	} else {
+		space_no = tarantool_schema_get_sid_by_string(obj->schema,
+							      Z_STRVAL_P(name),
+							      Z_STRLEN_P(name));
+		if (space_no == FAILURE) {
+			THROW_EXC("No space '%ul' defined", Z_LVAL_P(name));
+		}
+	}
+
 	return space_no;
 }
 
@@ -696,6 +718,7 @@ int get_indexno_by_name(tarantool_connection *obj, int space_no,
 		THROW_EXC("Index ID must be String or Long");
 		return FAILURE;
 	}
+
 	int32_t index_no = tarantool_schema_get_iid_by_string(obj->schema,
 			space_no, Z_STRVAL_P(name), Z_STRLEN_P(name));
 	if (index_no != FAILURE)
@@ -722,7 +745,8 @@ int get_indexno_by_name(tarantool_connection *obj, int space_no,
 	if (tarantool_stream_read(obj, obj->value->c, body_size) == FAILURE)
 		return FAILURE;
 
-	struct tnt_response resp; memset(&resp, 0, sizeof(struct tnt_response));
+	struct tnt_response resp;
+	memset(&resp, 0, sizeof(struct tnt_response));
 	if (php_tp_response(&resp, obj->value->c, body_size) == -1) {
 		tarantool_throw_parsingexception("query");
 		return FAILURE;
@@ -777,7 +801,8 @@ int get_fieldno_by_name(tarantool_connection *obj, uint32_t space_no,
 	if (tarantool_stream_read(obj, obj->value->c, body_size) == FAILURE)
 		return FAILURE;
 
-	struct tnt_response resp; memset(&resp, 0, sizeof(struct tnt_response));
+	struct tnt_response resp;
+	memset(&resp, 0, sizeof(struct tnt_response));
 	if (php_tp_response(&resp, obj->value->c, body_size) == -1) {
 		tarantool_throw_parsingexception("query");
 		return FAILURE;

@@ -1,10 +1,9 @@
 <?php
-
 declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 
-class MsgPackTest extends TestCase
+final class MsgPackTest extends TestCase
 {
     use TestCaseCompat;
 

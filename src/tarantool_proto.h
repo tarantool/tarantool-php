@@ -12,6 +12,8 @@
 #define SPACE_SPACE 281
 #define SPACE_INDEX 289
 
+#define INDEX_SPACE_NO      0
+#define INDEX_INDEX_NO      0
 #define INDEX_SPACE_NAME    2
 #define INDEX_INDEX_NAME    2
 

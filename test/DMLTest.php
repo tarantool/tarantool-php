@@ -1,10 +1,9 @@
 <?php
-
 declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 
-class DMLTest extends TestCase
+final class DMLTest extends TestCase
 {
     use TestCaseCompat;
 
