@@ -111,8 +111,8 @@ jobs:
     - env: OS=debian DIST=buster
     - env: OS=ubuntu DIST=xenial
     - env: OS=ubuntu DIST=bionic
-    - env: OS=ubuntu DIST=disco
     - env: OS=ubuntu DIST=eoan
+    - env: OS=ubuntu DIST=focal
 
 python:
   - 2.7

@@ -15,8 +15,8 @@ distros="
     debian:buster
     ubuntu:xenial
     ubuntu:bionic
-    ubuntu:disco
     ubuntu:eoan
+    ubuntu:focal
 "
 
 if ! type packpack; then
