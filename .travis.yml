@@ -129,20 +129,61 @@ python:
 
 script:
   - |
+    # Make shell strictier.
+    #
+    # - Exit with a failure on a first failed command.
+    # - Print each executed commmand.
+    set -ex
+
     if [ -n "${TARANTOOL_VERSION}" ]; then
         ./test.sh
     elif [ -n "${OS}" ] && [ -n "${DIST}" ]; then
         git clone --depth 1 https://github.com/packpack/packpack.git
         ./packpack/packpack
         if [ "${OS}" = "el" ]; then
-            export OS=centos
+            DOCKER_IMAGE="centos:${DIST}"
+        else
+            DOCKER_IMAGE="${OS}:${DIST}"
         fi
         docker run \
             --volume "$(realpath .):/tarantool-php" \
             --workdir /tarantool-php                \
             --rm                                    \
-            "${OS}:${DIST}"                         \
+            "${DOCKER_IMAGE}"                       \
             ./test.pkg.sh
     else
         exit 1
     fi
+
+    # Deploy
+    # ------
+
+    # Skip deployment when it is not expected.
+    if [ -z "${OS}" ] || [ -z "${DIST}" ]; then
+        echo "Skip deployment: it is pure testing job w/o any RPM / Deb artefacts"
+        exit 0
+    fi
+    if [ "${TRAVIS_REPO_SLUG}" != "tarantool/tarantool-php" ]; then
+        echo "Skip deployment: it is a fork, not the base repository"
+        exit 0
+    fi
+    if [ "${TRAVIS_EVENT_TYPE}" != "push" ]; then
+        echo "Skip deployment: event is not 'push', but ${TRAVIS_EVENT_TYPE}"
+        exit 0
+    fi
+
+    # Choose destination to push packages.
+    if [ "${TRAVIS_BRANCH}" == "master" ] || [ -n "${TRAVIS_TAG}" ]; then
+        echo "Set production deployment parameters"
+        configuration=production
+    else
+        echo "Set staging deployment parameters"
+        configuration=staging
+    fi
+
+    # Deploy to packagecloud repositories.
+    ./.travis/deploy_packagecloud.sh ${configuration}
+
+    # Deploy to S3 based repositories.
+    ./.travis/deploy_s3_dependencies.sh
+    ./.travis/deploy_s3.sh ${configuration}
