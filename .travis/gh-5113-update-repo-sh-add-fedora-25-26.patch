@@ -1,0 +1,11 @@
+--- a/update_repo.sh	2020-06-25 16:30:24.309988800 +0300
++++ b/update_repo.sh	2020-06-25 16:29:56.055990528 +0300
+@@ -30,7 +30,7 @@
+     elif [ "$os" == "el" ]; then
+         alldists='6 7 8'
+     elif [ "$os" == "fedora" ]; then
+-        alldists='27 28 29 30 31'
++        alldists='25 26 27 28 29 30 31'
+     fi
+ 
+     echo "$alldists"

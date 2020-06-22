@@ -1,0 +1,29 @@
+--- a/update_repo.sh	2020-06-09 17:35:03.332961335 +0300
++++ b/update_repo.sh	2020-06-23 02:26:55.532653673 +0300
+@@ -415,7 +415,7 @@
+     done
+     # resign the selfsigned InRelease file
+     $rm_file InRelease
+-    gpg --clearsign -o InRelease Release
++    gpg -u $GPG_SIGN_KEY --clearsign -o InRelease Release
+     # resign the Release file
+     $rm_file Release.gpg
+     gpg -u $GPG_SIGN_KEY -abs -o Release.gpg Release
+@@ -784,7 +784,7 @@
+ EOF
+     done
+     tail -n 1 repodata.adding/repomd.xml >>repodata/repomd.xml
+-    gpg --detach-sign --armor repodata/repomd.xml
++    gpg -u $GPG_SIGN_KEY --detach-sign --armor repodata/repomd.xml
+ 
+     # copy the packages to S3
+     for file in $pack_rpms ; do
+@@ -901,7 +901,7 @@
+     tail -n 1 repomd_saved.xml >>repomd.xml
+     rm -f repomd_saved.xml repomd.xml.asc
+     popd
+-    gpg --detach-sign --armor repodata/repomd.xml
++    gpg -u $GPG_SIGN_KEY --detach-sign --armor repodata/repomd.xml
+ 
+     # update the metadata at the S3
+     $aws_sync_public repodata "$bucket_path/$repopath/repodata"

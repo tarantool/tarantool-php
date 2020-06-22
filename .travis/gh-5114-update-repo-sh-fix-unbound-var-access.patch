@@ -1,0 +1,20 @@
+--- a/update_repo.sh	2020-06-25 19:15:52.899381514 +0300
++++ b/update_repo.sh	2020-06-25 19:16:29.222379292 +0300
+@@ -699,7 +699,7 @@
+             for metafile in repodata.base/other \
+                             repodata.base/filelists \
+                             repodata.base/primary ; do
+-                up_lines=''
++                up_full_lines=''
+                 if [ "$metafile" == "repodata.base/primary" ]; then
+                     up_full_lines='(\N+\n)*'
+                 fi
+@@ -845,7 +845,7 @@
+             #       entry in damaged file, to fix it all found entries
+             #       of this file need to be removed
+             for metafile in other filelists primary ; do
+-                up_lines=''
++                up_full_lines=''
+                 if [ "$metafile" == "primary" ]; then
+                     up_full_lines='(\N+\n)*'
+                 fi

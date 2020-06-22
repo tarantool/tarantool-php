@@ -46,3 +46,6 @@ debian/php5-tarantool.substvars
 debian/php5-tarantool/
 build
 .*.sw[a-z]
+
+# Unencrypted private GPG keys for deployment.
+.travis/*.asc

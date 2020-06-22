@@ -1,0 +1,26 @@
+--- a/packagecloud	2020-06-26 17:34:40.754468234 +0300
++++ b/packagecloud	2020-06-26 17:46:34.527424576 +0300
+@@ -93,6 +93,11 @@
+                 print('prune', pkgpath)
+                 self.apidelete('/api/v1/repos/' + pkgpath)
+ 
++    def list_repos(self):
++        repos = self.apiget('/api/v1/repos')
++        for repo in repos:
++            print(repo['name'])
++
+ 
+ if __name__ == '__main__':
+     # Initialize argument parser
+@@ -132,6 +137,11 @@
+     prune_parser.add_argument('--keep', type=int, default=2,
+         help='The number of package versions to keep.')
+ 
++    # Add 'list_repos' command
++    list_repos_parser = subparsers.add_parser('list_repos',
++        help='list repositories of a user (determined by a token)')
++    list_repos_parser.set_defaults(method=PackageCloud.list_repos)
++
+     args = parser.parse_args()
+     if not 'method' in args:
+         parser.print_help()
