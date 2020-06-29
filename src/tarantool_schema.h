@@ -15,8 +15,8 @@ enum field_type {
 
 struct schema_field_value {
 	uint32_t        field_number;
-	char           *field_name;
 	uint32_t        field_name_len;
+	char           *field_name;
 	enum field_type field_type;
 };
 
