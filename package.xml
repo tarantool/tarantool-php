@@ -17,10 +17,10 @@ http://pear.php.net/dtd/package-2.0.xsd">
     <email>bigbes@gmail.com</email>
     <active>yes</active>
   </lead>
-  <date>2018-04-18</date>
+  <date>2020-06-30</date>
   <version>
-    <release>0.3.2</release>
-    <api>0.3.2</api>
+    <release>0.3.3</release>
+    <api>0.3.3</api>
   </version>
   <stability>
     <release>beta</release>
@@ -91,6 +91,61 @@ http://pear.php.net/dtd/package-2.0.xsd">
   <providesextension>tarantool</providesextension>
   <extsrcrelease/>
   <changelog>
+    <release>
+      <stability><release>beta</release><api>beta</api></stability>
+      <version><release>0.3.3</release><api>0.3.3</api></version>
+      <date>2020-06-30</date>
+      <notes>
+        tarantool-php 0.3.3
+
+        ## Overview
+
+        This release revives the connector in fact: now it supports PHP 7.0-7.4 and
+        Tarantool 1.6-2.5 (except 2.2 for now due to #151). There are several
+        restrictions, however. Most notable are:
+
+        - Schema fetching fails on a space with `is_nullable` or `collation` index
+          part parameters (#151).
+        - New call_17 command is not supported yet (#101).
+
+        Those problem will be fixed in the next release. Anyway, this release allows
+        to upgrade PHP and Tarantool versions and keep existing PHP code, which uses
+        the connector, operational.
+
+        ## Breaking changes
+
+        This release should not break existing code.
+
+        ## New features
+
+        - Support PHP 7.3 and 7.4 (#139, #150).
+
+        ## Bugfixes
+
+        - Ignore unknown fields in a space format (PR #132).
+        - Fixed 'Undefined property' error at attempt to extend Tarantool class
+          (#135).
+        - Raise 'No field ... defined' at attempt to update by an unknown field name
+          (b3846f6a).
+        - Allow `null` as `offset` value for select() when strict types are enabled
+          (#154).
+
+        ## Testing and deployment
+
+        - Support both Python 2 and 3 in the test runner (9bc7fa5f).
+        - Use strict types mode in testing (da8ecba8).
+        - Support PHPUnit 6-9 for testing against different PHP versions.
+        - Enabled PHP 7.0-7.4 in testing.
+        - Enabled Tarantool 1.6-2.5 in testing (except 2.2 for now).
+        - Added 'php-tarantool' alias for Debian / Ubuntu packages (PR #155).
+        - Enable the extension by default on Debian / Ubuntu (40d8795a, PR #156).
+        - Deploy packages for Linux distributions with PHP 7 (#117):
+          - CentOS 8;
+          - Fedora 25-31;
+          - Debian: Stretch, Buster;
+          - Ubuntu: Xenial, Bionic, Eoan, Focal.
+      </notes>
+    </release>
     <release>
       <stability><release>beta</release><api>beta</api></stability>
       <version><release>0.3.2</release><api>0.3.2</api></version>
