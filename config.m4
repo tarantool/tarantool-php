@@ -1,4 +1,6 @@
 dnl config.m4 for extension tarantool
+dnl set C compiler to  C99 mode
+AC_PROG_CC_C99
 PHP_ARG_ENABLE(tarantool, for tarantool support,
 [  --enable-tarantool	Enable tarantool support])
 
