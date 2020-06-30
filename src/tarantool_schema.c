@@ -69,7 +69,7 @@ schema_index_value_free(const struct schema_index_value *val) {
 	}
 }
 
-static inline void
+static void
 schema_index_free(struct mh_schema_index_t *schema) {
 	int pos = 0;
 	mh_int_t index_slot = 0;
@@ -146,7 +146,7 @@ mh_spacecmp_key_eq(
 #define MH_DEBUG              1
 #include                      "third_party/mhash.h"
 
-static inline void
+static void
 schema_space_value_free(const struct schema_space_value *val) {
 	if (val) {
 		pefree(val->space_name, 1);
@@ -161,7 +161,7 @@ schema_space_value_free(const struct schema_space_value *val) {
 	}
 }
 
-static inline void
+static void
 schema_space_free(struct mh_schema_space_t *schema) {
 	int pos = 0;
 	mh_int_t space_slot = 0;
@@ -212,7 +212,7 @@ int parse_field_type(const char *sfield, size_t sfield_len) {
 	return FT_OTHER;
 }
 
-static inline int
+static int
 parse_schema_space_value_value(struct schema_field_value *fld,
 			       const char **tuple) {
 	uint32_t sfield_len = 0;
@@ -240,7 +240,7 @@ error:
 	return -1;
 }
 
-static inline int
+static int
 parse_schema_space_value(struct schema_space_value *space_string,
 			 const char **tuple) {
 	uint32_t fmp_tmp_len = 0;
@@ -269,7 +269,7 @@ error:
 	return -1;
 }
 
-static inline int
+static int
 parse_schema_index_value(struct schema_index_value *index_string,
 			 const char **tuple) {
 	if (mp_typeof(**tuple) != MP_ARRAY)
@@ -304,7 +304,7 @@ error:
 	return -1;
 }
 
-static inline int
+static int
 schema_add_space(
 		struct mh_schema_space_t *schema,
 		const char **data
@@ -421,7 +421,7 @@ error:
 	return -1;
 }
 
-static inline int schema_add_index(
+static int schema_add_index(
 	struct mh_schema_space_t *schema,
 	const char **data
 ) {
