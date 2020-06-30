@@ -198,18 +198,53 @@ schema_space_free(struct mh_schema_space_t *schema) {
 	}
 }
 
-int parse_field_type(const char *sfield, size_t sfield_len) {
-	if (sfield_len == 3) {
-		if (tolower(sfield[0]) == 's' &&
-		    tolower(sfield[1]) == 't' &&
-		    tolower(sfield[2]) == 'r')
-			return FT_STR;
-		if (tolower(sfield[0]) == 'n' &&
-		    tolower(sfield[1]) == 'u' &&
-		    tolower(sfield[2]) == 'm')
-			return FT_NUM;
+static const char *field_type_strs[] = {
+	/* [FIELD_TYPE_ANY]       = */ "any",
+	/* [FIELD_TYPE_UNSIGNED]  = */ "unsigned",
+	/* [FIELD_TYPE_STRING]    = */ "string",
+	/* [FIELD_TYPE_NUMBER]    = */ "number",
+	/* [FIELD_TYPE_DOUBLE]    = */ "double",
+	/* [FIELD_TYPE_INTEGER]   = */ "integer",
+	/* [FIELD_TYPE_BOOLEAN]   = */ "boolean",
+	/* [FIELD_TYPE_VARBINARY] = */"varbinary",
+	/* [FIELD_TYPE_SCALAR]    = */ "scalar",
+	/* [FIELD_TYPE_DECIMAL]   = */ "decimal",
+	/* [FIELD_TYPE_UUID]      = */ "uuid",
+	/* [FIELD_TYPE_ARRAY]     = */ "array",
+	/* [FIELD_TYPE_MAP]       = */ "map",
+};
+
+/**
+ * Find a string in an array of strings.
+ */
+static uint32_t
+strnindex(const char **haystack, const char *needle, uint32_t len, uint32_t hmax)
+{
+	if (len == 0)
+		return hmax;
+	for (unsigned index = 0; index != hmax && haystack[index]; ++index) {
+		if (strncasecmp(haystack[index], needle, len) == 0 &&
+		    strlen(haystack[index]) == len)
+			return index;
 	}
-	return FT_OTHER;
+	return hmax;
+}
+
+static enum field_type
+field_type_by_name(const char *name, size_t len)
+{
+	enum field_type field_type = strnindex(field_type_strs, name, len,
+					       field_type_MAX);
+	if (field_type != field_type_MAX)
+		return field_type;
+	/* 'num' and 'str' in _index are deprecated since Tarantool 1.7 */
+	if (strncasecmp(name, "num", len) == 0)
+		return FIELD_TYPE_UNSIGNED;
+	else if (strncasecmp(name, "str", len) == 0)
+		return FIELD_TYPE_STRING;
+	else if (len == 1 && name[0] == '*')
+		return FIELD_TYPE_ANY;
+	return field_type_MAX;
 }
 
 static int
@@ -231,7 +266,7 @@ parse_schema_space_value_value(struct schema_field_value *fld,
 		if (mp_typeof(**tuple) != MP_STR)
 			goto error;
 		sfield = mp_decode_str(tuple, &sfield_len);
-		fld->field_type = parse_field_type(sfield, sfield_len);
+		fld->field_type = field_type_by_name(sfield, sfield_len);
 	} else {
 		mp_next(tuple);
 	}
@@ -293,7 +328,7 @@ decode_index_parts_166(struct schema_field_value *parts, uint32_t part_count,
 			return -1;
 		uint32_t len;
 		const char *str = mp_decode_str(data, &len);
-		part->field_type = parse_field_type(str, len);
+		part->field_type = field_type_by_name(str, len);
 
 		for (uint32_t j = 2; j < item_count; ++j)
 			mp_next(data);

@@ -9,10 +9,25 @@ struct schema_key {
 	uint32_t number;
 };
 
+/**
+ * Possible field data types.
+ */
 enum field_type {
-	FT_STR   = 0,
-	FT_NUM   = 1,
-	FT_OTHER = 2
+	FIELD_TYPE_ANY = 0,
+	FIELD_TYPE_UNSIGNED,
+	FIELD_TYPE_STRING,
+	FIELD_TYPE_NUMBER,
+	FIELD_TYPE_DOUBLE,
+	FIELD_TYPE_INTEGER,
+	FIELD_TYPE_BOOLEAN,
+	FIELD_TYPE_VARBINARY,
+	FIELD_TYPE_SCALAR,
+	FIELD_TYPE_DECIMAL,
+	FIELD_TYPE_UUID,
+	FIELD_TYPE_ARRAY,
+	FIELD_TYPE_MAP,
+	/* Used for unknown type. */
+	field_type_MAX
 };
 
 #define COLL_NONE UINT32_MAX
