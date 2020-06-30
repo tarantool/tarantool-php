@@ -269,6 +269,38 @@ error:
 	return -1;
 }
 
+/**
+ * 1.6.6-1.7.5
+ * Decode parts array from tuple field.
+ */
+static int
+decode_index_parts_166(struct schema_field_value *parts, uint32_t part_count,
+		       const char **data)
+{
+	for (uint32_t i = 0; i < part_count; ++i) {
+		struct schema_field_value *part = &parts[i];
+		if (mp_typeof(**data) != MP_ARRAY)
+			return -1;
+		uint32_t item_count = mp_decode_array(data);
+		if (item_count < 2)
+			return -1;
+
+		if (mp_typeof(**data) != MP_UINT)
+			return -1;
+		part->field_number = mp_decode_uint(data);
+
+		if (mp_typeof(**data) != MP_STR)
+			return -1;
+		uint32_t len;
+		const char *str = mp_decode_str(data, &len);
+		part->field_type = parse_field_type(str, len);
+
+		for (uint32_t j = 2; j < item_count; ++j)
+			mp_next(data);
+	}
+	return 0;
+}
+
 static int
 parse_schema_index_value(struct schema_index_value *index_string,
 			 const char **tuple) {
@@ -283,23 +315,12 @@ parse_schema_index_value(struct schema_index_value *index_string,
 		goto error;
 	memset(index_string->index_parts, 0, part_count *
 	       sizeof(struct schema_field_value));
-	int i = 0;
-	for (i = 0; i < part_count; ++i) {
-		if (mp_typeof(**tuple) != MP_ARRAY)
-			goto error;
-		if (mp_decode_array(tuple) != 2)
-			goto error;
-		struct schema_field_value *val = &(index_string->index_parts[i]);
-		if (mp_typeof(**tuple) != MP_UINT)
-			goto error;
-		val->field_number = mp_decode_uint(tuple);
-		uint32_t sfield_len = 0;
-		if (mp_typeof(**tuple) != MP_STR)
-			goto error;
-		const char *sfield = mp_decode_str(tuple, &sfield_len);
-		val->field_type = parse_field_type(sfield, sfield_len);
+
+	if (mp_typeof(**tuple) == MP_ARRAY) {
+		return decode_index_parts_166(index_string->index_parts,
+					      part_count, tuple);
 	}
-	return 0;
+
 error:
 	return -1;
 }
