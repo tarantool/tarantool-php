@@ -134,6 +134,32 @@ box.once('initialization', function()
     local tuple = yaml.decode(yml)[1]
     tuple[1] = "12345"
     box.space._schema:insert(tuple)
+
+    -- gh-151: Support new _index system space format
+    -- After tarantool-1.7.5-153-g1651fc9be the new _index format
+    -- was introduced. When an index part uses is_nullable or
+    -- collation parameter, then the new format will be used.
+    if tarantool_version_at_least(1, 7, 6, 0) then
+        local test_index_part_176 = box.schema.space.create(
+            'test_index_part_176',
+            {
+                format = {
+                    {type = compat.unsigned, name = 'f1'},
+                    {type = compat.unsigned, name = 'f2', is_nullable = true},
+                    {type = compat.string, name = 'f3'},
+            }
+        })
+
+        test_index_part_176:create_index('primary', {
+            parts = {{1, compat.unsigned}}
+        })
+        test_index_part_176:create_index('secondary', {
+            parts = {
+                {2, compat.unsigned, is_nullable = true},
+                {3, compat.string, collation = 'unicode_ci'}
+            }
+        })
+    end
 end)
 
 function test_1()

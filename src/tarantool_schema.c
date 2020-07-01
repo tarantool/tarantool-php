@@ -230,6 +230,17 @@ strnindex(const char **haystack, const char *needle, uint32_t len, uint32_t hmax
 	return hmax;
 }
 
+/**
+ * Strict compare a null-terminated string with a length specified
+ * string.
+ */
+static inline bool
+strncmp_strict(const char *str, size_t str_len, const char *str_null_term)
+{
+	return (strncmp(str, str_null_term, str_len) == 0 &&
+		strlen(str_null_term) == str_len);
+}
+
 static enum field_type
 field_type_by_name(const char *name, size_t len)
 {
@@ -275,6 +286,18 @@ error:
 	return -1;
 }
 
+/**
+ * Initialization value.
+ */
+static const struct schema_field_value field_val_def = {
+	.field_number   = 0,
+	.field_name_len = 0,
+	.field_name     = NULL,
+	.field_type     = field_type_MAX,
+	.coll_id        = COLL_NONE,
+	.is_nullable    = false
+};
+
 static int
 parse_schema_space_value(struct schema_space_value *space_string,
 			 const char **tuple) {
@@ -314,6 +337,7 @@ decode_index_parts_166(struct schema_field_value *parts, uint32_t part_count,
 {
 	for (uint32_t i = 0; i < part_count; ++i) {
 		struct schema_field_value *part = &parts[i];
+		*part = field_val_def;
 		if (mp_typeof(**data) != MP_ARRAY)
 			return -1;
 		uint32_t item_count = mp_decode_array(data);
@@ -332,9 +356,69 @@ decode_index_parts_166(struct schema_field_value *parts, uint32_t part_count,
 
 		for (uint32_t j = 2; j < item_count; ++j)
 			mp_next(data);
-		/* Set default values. */
-		part->is_nullable = false;
-		part->coll_id = COLL_NONE;
+	}
+	return 0;
+}
+
+static int
+decode_index_part(struct schema_field_value *part, uint32_t map_size,
+		  const char **data)
+{
+	*part = field_val_def;
+	for (uint32_t i = 0; i < map_size; ++i) {
+		if (mp_typeof(**data) != MP_STR)
+			return -1;
+
+		uint32_t k_len;
+		const char *key = mp_decode_str(data, &k_len);
+		if (strncmp_strict(key, k_len, "type")) {
+			if (mp_typeof(**data) != MP_STR)
+				return -1;
+			uint32_t v_len;
+			const char *val = mp_decode_str(data, &v_len);
+			part->field_type = field_type_by_name(val, v_len);
+		} else if (strncmp_strict(key, k_len, "field")) {
+			if (mp_typeof(**data) != MP_UINT)
+				return -1;
+			part->field_number = mp_decode_uint(data);
+		} else if (strncmp_strict(key, k_len, "collation")) {
+			if (mp_typeof(**data) != MP_UINT)
+				return -1;
+			part->coll_id = mp_decode_uint(data);
+		} else if (strncmp_strict(key, k_len, "is_nullable")) {
+			if (mp_typeof(**data) != MP_BOOL)
+				return -1;
+			part->is_nullable = mp_decode_bool(data);
+		} else {
+			mp_next(data);
+		}
+	}
+
+	/* Collation is reasonable only for string and scalar parts. */
+	if (part->coll_id != COLL_NONE &&
+	    part->field_type != FIELD_TYPE_STRING &&
+	    part->field_type != FIELD_TYPE_SCALAR) {
+		return -1;
+	}
+
+	return 0;
+}
+
+/**
+ * Decode parts array from tuple field.
+ */
+static int
+decode_index_parts(struct schema_field_value *parts, uint32_t part_count,
+		   const char **data)
+{
+	for (uint32_t i = 0; i < part_count; ++i) {
+		struct schema_field_value *part = &parts[i];
+		if (mp_typeof(**data) != MP_MAP)
+			return -1;
+
+		uint32_t map_size = mp_decode_map(data);
+		if (decode_index_part(part, map_size, data) != 0)
+			return -1;
 	}
 	return 0;
 }
@@ -355,8 +439,13 @@ parse_schema_index_value(struct schema_index_value *index_string,
 	       sizeof(struct schema_field_value));
 
 	if (mp_typeof(**tuple) == MP_ARRAY) {
+		/* Base coding format is used. */
 		return decode_index_parts_166(index_string->index_parts,
 					      part_count, tuple);
+	} else {
+		/* Extended coding format is used. */
+		return decode_index_parts(index_string->index_parts,
+					  part_count, tuple);
 	}
 
 error:
