@@ -297,6 +297,9 @@ decode_index_parts_166(struct schema_field_value *parts, uint32_t part_count,
 
 		for (uint32_t j = 2; j < item_count; ++j)
 			mp_next(data);
+		/* Set default values. */
+		part->is_nullable = false;
+		part->coll_id = COLL_NONE;
 	}
 	return 0;
 }
