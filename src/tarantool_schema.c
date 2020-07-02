@@ -265,7 +265,7 @@ parse_schema_space_value_value(struct schema_field_value *fld,
 	if (mp_typeof(**tuple) != MP_STR)
 		goto error;
 	const char *sfield = mp_decode_str(tuple, &sfield_len);
-	if (memcmp(sfield, "name", sfield_len) == 0) {
+	if (strncmp_strict(sfield, sfield_len, "name")) {
 		if (mp_typeof(**tuple) != MP_STR)
 			goto error;
 		sfield = mp_decode_str(tuple, &fld->field_name_len);
@@ -273,11 +273,15 @@ parse_schema_space_value_value(struct schema_field_value *fld,
 		if (!fld->field_name)
 			goto error;
 		memcpy(fld->field_name, sfield, fld->field_name_len);
-	} else if (memcmp(sfield, "type", sfield_len) == 0) {
+	} else if (strncmp_strict(sfield, sfield_len, "type")) {
 		if (mp_typeof(**tuple) != MP_STR)
 			goto error;
 		sfield = mp_decode_str(tuple, &sfield_len);
 		fld->field_type = field_type_by_name(sfield, sfield_len);
+	} else if (strncmp_strict(sfield, sfield_len, "is_nullable")) {
+		if (mp_typeof(**tuple) != MP_BOOL)
+			goto error;
+		fld->is_nullable = mp_decode_bool(tuple);
 	} else {
 		mp_next(tuple);
 	}
@@ -313,6 +317,7 @@ parse_schema_space_value(struct schema_space_value *space_string,
 	int i = 0;
 	for (i = 0; i < fmt_len; ++i) {
 		struct schema_field_value *val = &(space_string->schema_list[i]);
+		*val = field_val_def;
 		if (mp_typeof(**tuple) != MP_MAP)
 			goto error;
 		uint32_t arrsz = mp_decode_map(tuple);
