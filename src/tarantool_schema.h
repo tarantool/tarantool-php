@@ -1,6 +1,8 @@
 #ifndef   PHP_TNT_SCHEMA_H
 #define   PHP_TNT_SCHEMA_H
 
+#include <stdint.h>
+
 struct schema_key {
 	const char *id;
 	uint32_t id_len;
@@ -13,11 +15,17 @@ enum field_type {
 	FT_OTHER = 2
 };
 
+#define COLL_NONE UINT32_MAX
+
 struct schema_field_value {
 	uint32_t        field_number;
 	uint32_t        field_name_len;
 	char           *field_name;
 	enum field_type field_type;
+	/* Collation ID for string comparison. */
+	uint32_t        coll_id;
+	/* True if a key part can store NULLs. */
+	bool            is_nullable;
 };
 
 struct schema_index_value {
