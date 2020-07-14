@@ -42,8 +42,19 @@ class RandomTest extends TestCase
 
     public function test_03_another_big_response() {
         for ($i = 100; $i <= 5200; $i += 100) {
-            $result = self::$tarantool->call('test_5', array($i));
+            $result = self::$tarantool->call('test_5', array($i),
+                                             array('call_16' => true));
             $this->assertEquals($i, count($result));
+        }
+
+        $check_call_17 = self::$tarantool->call('tarantool_version_at_least',
+                                                array(1,7,2,0));
+        if ($check_call_17[0][0]) {
+            for ($i = 100; $i <= 5200; $i += 100) {
+                $result = self::$tarantool->call('test_5', array($i),
+                                                 array('call_16' => false));
+                $this->assertEquals($i, count($result[0]));
+            }
         }
     }
 

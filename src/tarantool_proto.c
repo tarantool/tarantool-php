@@ -172,9 +172,9 @@ void php_tp_encode_delete(smart_string *str, uint32_t sync,
 	php_mp_pack(str, tuple);
 }
 
-size_t php_tp_sizeof_call(uint32_t sync,
-		uint32_t proc_len, zval *tuple) {
-	return  php_tp_sizeof_header(TNT_CALL, sync) +
+static size_t php_tp_sizeof_call(uint32_t sync, uint32_t proc_len,
+				 enum tnt_request_type type, zval *tuple) {
+	return  php_tp_sizeof_header(type, sync)     +
 		php_mp_sizeof_hash(2)                +
 		php_mp_sizeof_long(TNT_FUNCTION)     +
 		php_mp_sizeof_string(proc_len)       +
@@ -182,17 +182,27 @@ size_t php_tp_sizeof_call(uint32_t sync,
 		php_mp_sizeof(tuple)                 ;
 }
 
-void php_tp_encode_call(smart_string *str, uint32_t sync,
-		char *proc, uint32_t proc_len, zval *tuple) {
-	size_t packet_size = php_tp_sizeof_call(sync,
-			proc_len, tuple);
+static void php_tp_encode_call_impl(smart_string *str, uint32_t sync,
+				    char *proc, uint32_t proc_len,
+				    enum tnt_request_type type, zval *tuple) {
+	size_t packet_size = php_tp_sizeof_call(sync, proc_len, type, tuple);
 	smart_string_ensure(str, packet_size + 5);
-	php_tp_pack_header(str, packet_size, TNT_CALL, sync);
+	php_tp_pack_header(str, packet_size, type, sync);
 	php_mp_pack_hash(str, 2);
 	php_mp_pack_long(str, TNT_FUNCTION);
 	php_mp_pack_string(str, proc, proc_len);
 	php_mp_pack_long(str, TNT_TUPLE);
 	php_mp_pack(str, tuple);
+}
+
+void php_tp_encode_call(smart_string *str, uint32_t sync, char *proc,
+			uint32_t proc_len, zval *tuple) {
+	php_tp_encode_call_impl(str,sync, proc, proc_len, TNT_CALL, tuple);
+}
+
+void php_tp_encode_call_16(smart_string *str, uint32_t sync, char *proc,
+			   uint32_t proc_len, zval *tuple) {
+	php_tp_encode_call_impl(str,sync, proc, proc_len, TNT_CALL_16, tuple);
 }
 
 size_t php_tp_sizeof_eval(uint32_t sync,

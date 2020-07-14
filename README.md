@@ -122,7 +122,7 @@ Tarantool {
     public array Tarantool::select (mixed $space [, mixed $key = array() [, mixed $index = 0 [, int $limit = PHP_INT_MAX [, int $offset = 0 [, $iterator = Tarantool::ITERATOR_EQ ] ] ] ] ] )
     public array Tarantool::insert (mixed $space, array $tuple)
     public array Tarantool::replace (mixed $space, array $tuple)
-    public array Tarantool::call (string $procedure [, mixed args] )
+    public array Tarantool::call (string $procedure [, mixed args [, array $opts ] ] )
     public array Tarantool::evaluate (string $expression [, mixed args] )
     public array Tarantool::delete (mixed $space, mixed $key [, mixed $index] )
     public array Tarantool::update (mixed $space, mixed $key, array $ops [, number $index] )
@@ -299,27 +299,47 @@ $tnt->replace("test", array(1, 3, "smth completely different"));
 ### Tarantool::call
 
 ``` php
-public array Tarantool::call(string $procedure [, mixed args])
+public array Tarantool::call(string $procedure [, mixed args [, array $opts]])
 ```
 
 _**Description**_: Call stored procedure
 
 _**Parameters**_
 * `procedure`: String, procedure to call (mandatory)
-* `args`: Any value to pass to procdure as arguments (empty by default)
+* `args`: Any value to pass to procedure as arguments (empty by default)
+* `opts`: Array, options
+
+_**Options**_
+* call_16<br />
+  If true - call_16 mode of "call" will be used
+  (returned data converted to tuples).<br />
+  If false - call_17 mode of "call" will be used
+  (returned data has an arbitrary structure). Since tarantool 1.7.2.<br />
+  Default - call_16 mode.
+  ```
+  array(
+    "call_16" => <bool>
+  ),
+  ```
 
 _**Return Value**_
+
+**BOOL**: False and raises `Exception` in case of error.
+
+call_16 mode (default):
 
 **Array of arrays** in case of success - tuples that were returned by stored
  procedure.
 
-**BOOL**: False and raises `Exception` in case of error.
+call_17 mode:
+
+**Any value**, that was returned by stored procedure.
 
 #### Example
 
 ``` php
 $tnt->call("test_2");
-$tnt->call("test_3", array(3, 4));
+$tnt->call("test_3", array(3, 4), array('call_16' => false));
 ```
 
 ### Tarantool::evaluate
