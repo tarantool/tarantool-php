@@ -180,5 +180,22 @@ function test_6(...)
     return ...
 end
 
+iproto_connect_counter = 0
+function iproto_connect_count()
+    return iproto_connect_counter
+end
+
+box.session.on_connect(function()
+    -- box.session.type() was introduced in 1.7.4-370-g0bce2472b.
+    --
+    -- We're interested in iproto sessions, but it is okay for our
+    -- usage scenario to count replication and console sessions
+    -- too: we only see to a delta and AFAIK our testing harness
+    -- does not perform any background reconnections.
+    if box.session.type == nil or box.session.type() == 'binary' then
+        iproto_connect_counter = iproto_connect_counter + 1
+    end
+end)
+
 require('console').listen(os.getenv('ADMIN_PORT'))
 

@@ -163,5 +163,33 @@ class CreateTest extends TestCase
             ['guest', null],
         ];
     }
+
+    public function test_10_zero_retry_exception() {
+        /* A connection to call iproto_connect_count(). */
+        $tarantool = new Tarantool('localhost', self::$port, 'test', 'test');
+        $iproto_connect_count_before =
+            $tarantool->call('iproto_connect_count')[0][0];
+
+        $saved_retry_count = ini_get('tarantool.retry_count');
+        ini_set('tarantool.retry_count', 0);
+
+        $exp_err = 'tarantool.retry_count should be 1 or above';
+        try {
+            $c = new Tarantool('localhost', self::$port);
+            $c->connect();
+            $this->assertFalse(true);
+        } catch (Exception $e) {
+            $this->assertInstanceOf(TarantoolException::class, $e);
+            $this->assertEquals($exp_err, $e->getMessage());
+        } finally {
+            ini_set('tarantool.retry_count', $saved_retry_count);
+        }
+
+        /* Verify that no connection attempts were performed. */
+        $iproto_connect_count_after =
+            $tarantool->call('iproto_connect_count')[0][0];
+        $this->assertEquals($iproto_connect_count_before,
+                            $iproto_connect_count_after);
+    }
 }
 
