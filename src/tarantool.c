@@ -257,6 +257,11 @@ static int __tarantool_connect(tarantool_object *t_obj) {
 	double_to_ts(INI_FLT("retry_sleep"), &sleep_time);
 	char *err = NULL;
 
+	if (count < 1) {
+		THROW_EXC("tarantool.retry_count should be 1 or above");
+		return FAILURE;
+	}
+
 	if (t_obj->is_persistent) {
 		if (!obj->persistent_id)
 			obj->persistent_id = pid_pzsgen(obj->host, obj->port,
