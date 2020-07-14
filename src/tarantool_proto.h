@@ -87,10 +87,11 @@ enum tnt_request_type {
 	TNT_REPLACE = 0x03,
 	TNT_UPDATE  = 0x04,
 	TNT_DELETE  = 0x05,
-	TNT_CALL    = 0x06,
+	TNT_CALL_16 = 0x06,
 	TNT_AUTH    = 0x07,
 	TNT_EVAL    = 0x08,
 	TNT_UPSERT  = 0x09,
+	TNT_CALL    = 0x0a,
 	TNT_PING    = 0x40
 };
 
@@ -138,6 +139,8 @@ void php_tp_encode_delete(smart_string *str, uint32_t sync, uint32_t space_no,
 			  uint32_t index_no, zval *tuple);
 void php_tp_encode_call(smart_string *str, uint32_t sync, char *proc,
 			uint32_t proc_len, zval *tuple);
+void php_tp_encode_call_16(smart_string *str, uint32_t sync, char *proc,
+			   uint32_t proc_len, zval *tuple);
 void php_tp_encode_eval(smart_string *str, uint32_t sync, char *proc,
 			uint32_t proc_len, zval *tuple);
 

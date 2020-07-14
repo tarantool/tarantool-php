@@ -235,7 +235,8 @@ class DMLTest extends TestCase
     }
 
     public function test_12_call() {
-        $result = self::$tarantool->call("test_6", array(true, false, false));
+        $result = self::$tarantool->call("test_6", array(true, false, false),
+                                         array('call_16' => true));
         $this->assertEquals(array(array(true), array(false), array(false)), $result);
         $this->assertEquals(
             array(
@@ -243,10 +244,28 @@ class DMLTest extends TestCase
                     '0' => array('k1' => 'v2', 'k2' => 'v')
                 )
             ),
-            self::$tarantool->call("test_2")
+            self::$tarantool->call("test_2", array(), array('call_16' => true))
         );
         $this->assertEquals(
-            self::$tarantool->call("test_3", array(3, 4)), array('0' => array('0' => 7)));
+            self::$tarantool->call("test_3", array(3, 4), array('call_16' => true)),
+            array('0' => array('0' => 7))
+        );
+
+        $check_call_17 = self::$tarantool->call('tarantool_version_at_least',
+                                                array(1, 7, 2, 0));
+        if ($check_call_17[0][0]) {
+            $result = self::$tarantool->call("test_6", array(true, false, false),
+                                             array('call_16' => false));
+            $this->assertEquals(array(true, false, false), $result);
+            $this->assertEquals(
+                array('0' => array('k1' => 'v2', 'k2' => 'v')),
+                self::$tarantool->call("test_2", array(), array('call_16' => false))
+            );
+            $this->assertEquals(
+                self::$tarantool->call("test_3", array(3, 4), array('call_16' => false)),
+                array('0' => 7)
+            );
+        }
     }
 
     public function test_13_eval() {

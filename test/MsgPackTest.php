@@ -22,14 +22,31 @@ class MsgPackTest extends TestCase
             '4TL2tLIXqMqyGQm_kiE7mRrS96I5E8nqU', 'B627', 0, [
                 'browser_stats_first_session_hits' => 1
             ]
-        ]);
+        ], ['call_16' => true]);
         $this->assertEquals($resp[0][0], 2);
         $resp = self::$tarantool->call('test_4', [
             '4TL2tLIXqMqyGQm_kiE7mRrS96I5E8nqU', 'B627', 0, [
                 'browser_stats_first_session_hit' => 1
             ]
-        ]);
+        ], ['call_16' => true]);
         $this->assertEquals($resp[0][0], 2);
+
+        $check_call_17 = self::$tarantool->call('tarantool_version_at_least',
+                                                array(1,7,2,0));
+        if ($check_call_17[0][0]) {
+            $resp = self::$tarantool->call('test_4', [
+                '4TL2tLIXqMqyGQm_kiE7mRrS96I5E8nqU', 'B627', 0, [
+                    'browser_stats_first_session_hits' => 1
+                ]
+            ], ['call_16' => false]);
+            $this->assertEquals($resp[0], 2);
+            $resp = self::$tarantool->call('test_4', [
+                '4TL2tLIXqMqyGQm_kiE7mRrS96I5E8nqU', 'B627', 0, [
+                    'browser_stats_first_session_hit' => 1
+                ]
+            ], ['call_16' => false]);
+            $this->assertEquals($resp[0], 2);
+        }
     }
 
     public function test_01_msgpack_array_key() {
@@ -81,6 +98,6 @@ class MsgPackTest extends TestCase
     public function test_06_msgpack_array_reference() {
         $data = array('key1' => 'value1');
         $link = &$data['key1'];
-        self::$tarantool->call('test_4', [$data]);
+        self::$tarantool->call('test_4', [$data], ['call_16' => true]);
     }
 }

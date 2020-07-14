@@ -223,5 +223,8 @@ box.session.on_connect(function()
     end
 end)
 
+-- export tarantool_version_at_least function
+_G.tarantool_version_at_least = tarantool_version_at_least
+
 require('console').listen(os.getenv('ADMIN_PORT'))
 

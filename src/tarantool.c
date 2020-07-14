@@ -1,6 +1,7 @@
 #include <time.h>
 #include <stdio.h>
 #include <limits.h>
+#include <string.h>
 
 #include "php_tarantool.h"
 #include "tarantool_internal.h"
@@ -548,10 +549,17 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_tarantool_delete, 0, 0, 2)
 	ZEND_ARG_INFO(0, index)
 ZEND_END_ARG_INFO()
 
-/* call, eval */
+/* eval */
 ZEND_BEGIN_ARG_INFO_EX(arginfo_tarantool_proc_tuple, 0, 0, 1)
 	ZEND_ARG_INFO(0, proc)
 	ZEND_ARG_INFO(0, tuple)
+ZEND_END_ARG_INFO()
+
+/* call */
+ZEND_BEGIN_ARG_INFO_EX(arginfo_tarantool_proc_call, 0, 0, 1)
+	ZEND_ARG_INFO(0, proc)
+	ZEND_ARG_INFO(0, tuple)
+	ZEND_ARG_INFO(0, opts)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_tarantool_update, 0, 0, 3)
@@ -580,7 +588,7 @@ const zend_function_entry Tarantool_methods[] = {
 	TNT_MEP(select,                     arginfo_tarantool_select       )
 	TNT_MEP(insert,                     arginfo_tarantool_space_tuple  )
 	TNT_MEP(replace,                    arginfo_tarantool_space_tuple  )
-	TNT_MEP(call,                       arginfo_tarantool_proc_tuple   )
+	TNT_MEP(call,                       arginfo_tarantool_proc_call    )
 	TNT_MEP(eval,                       arginfo_tarantool_proc_tuple   )
 	TNT_MEP(delete,                     arginfo_tarantool_delete       )
 	TNT_MEP(update,                     arginfo_tarantool_update       )
@@ -1485,17 +1493,69 @@ PHP_METHOD(Tarantool, delete) {
 	TARANTOOL_RETURN_DATA(&body, &header, &body);
 }
 
+/**
+ * "call" options.
+ */
+struct call_opts {
+	bool call_16;
+};
+
+/**
+ * Initialization value for "call" options.
+ */
+static const struct call_opts call_opts_default = {
+	.call_16 = true
+};
+
+static int parse_call_opts(zval *opts, struct call_opts *res) {
+	HashTable *ht = HASH_OF(opts);
+	if (ht == NULL) {
+		THROW_EXC("call(): bad type of \"options\"."
+			  " Should be an array.");
+		return FAILURE;
+	}
+
+	zval *call_16_zval = zend_hash_str_find(ht, "call_16",
+						strlen("call_16"));
+	if (call_16_zval != NULL) {
+		if (Z_TYPE_P(call_16_zval) == IS_TRUE) {
+			res->call_16 = true;
+		} else if (Z_TYPE_P(call_16_zval) == IS_FALSE) {
+			res->call_16 = false;
+		} else {
+			THROW_EXC("call(): bad type of call_16 option."
+				  " Should be a boolean.");
+			return FAILURE;
+		}
+	}
+
+	return SUCCESS;
+}
+
 PHP_METHOD(Tarantool, call) {
 	char *proc; size_t proc_len;
 	zval *tuple = NULL, tuple_new;
+	zval *opts = NULL;
 
-	TARANTOOL_FUNCTION_BEGIN(obj, id, "s|z", &proc, &proc_len, &tuple);
+	TARANTOOL_FUNCTION_BEGIN(obj, id, "s|zz", &proc, &proc_len,
+				 &tuple, &opts);
 	TARANTOOL_CONNECT_ON_DEMAND(obj);
+
+	struct call_opts call_opts = call_opts_default;
+	if (opts != NULL && parse_call_opts(opts, &call_opts) == FAILURE) {
+		RETURN_FALSE;
+	}
 
 	pack_key(tuple, 1, &tuple_new);
 
 	long sync = TARANTOOL_G(sync_counter)++;
-	php_tp_encode_call(obj->value, sync, proc, proc_len, &tuple_new);
+	if (call_opts.call_16) {
+		php_tp_encode_call_16(obj->value, sync, proc, proc_len,
+				      &tuple_new);
+	} else {
+		php_tp_encode_call(obj->value, sync, proc, proc_len,
+				   &tuple_new);
+	}
 	zval_ptr_dtor(&tuple_new);
 	if (tarantool_stream_send(obj) == FAILURE)
 		RETURN_FALSE;
