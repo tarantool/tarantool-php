@@ -333,7 +333,7 @@ _**Description**_: Evaluate given lua code (demands current user to have
 
 _**Parameters**_
 * `expression`: String, Lua code to evaluate (mandatory)
-* `args`: Any value to pass to procdure as arguments (empty by default)
+* `args`: Any value to pass to procedure as arguments (empty by default)
 
 _**Return Value**_
 
