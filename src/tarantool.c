@@ -694,6 +694,7 @@ int get_spaceno_by_name(tarantool_connection *obj, zval *name) {
 							      Z_LVAL_P(name));
 		if (space_no == -1) {
 			THROW_EXC("No space %d defined", Z_LVAL_P(name));
+			return FAILURE;
 		}
 	} else {
 		space_no = tarantool_schema_get_sid_by_string(obj->schema,
@@ -701,6 +702,7 @@ int get_spaceno_by_name(tarantool_connection *obj, zval *name) {
 							      Z_STRLEN_P(name));
 		if (space_no == -1) {
 			THROW_EXC("No space '%s' defined", Z_STRVAL_P(name));
+			return FAILURE;
 		}
 	}
 
