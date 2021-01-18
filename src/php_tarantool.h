@@ -35,6 +35,16 @@
 } while(0)
 #endif /* PHP_VERSION_ID < 70300 */
 
+#if PHP_VERSION_ID >= 80000
+#ifndef TSRMLS_D
+#define TSRMLS_D void
+#define TSRMLS_DC
+#define TSRMLS_C
+#define TSRMLS_CC
+#define TSRMLS_FETCH()
+#endif
+#endif /* PHP_VERSION_ID >= 80000 */
+
 #if PHP_VERSION_ID < 70300
 
 #  define ARRAY_PROTECT_RECURSION(data) do {                \
