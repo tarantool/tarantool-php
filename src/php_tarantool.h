@@ -29,6 +29,13 @@
 #  define smart_string_free_ex(...) smart_str_free_ex(__VA_ARGS__)
 #endif
 
+#if PHP_VERSION_ID >= 80000
+/* These macroses were removed in PHP 8. */
+#  define TSRMLS_CC
+#  define TSRMLS_DC
+#  define TSRMLS_FETCH()
+#endif /* PHP_VERSION_ID >= 80000 */
+
 #if PHP_VERSION_ID < 70300
 #  define GC_SET_REFCOUNT(p, rc) do { \
 	GC_REFCOUNT((p)) = (rc);      \
