@@ -96,7 +96,10 @@ void php_mp_pack_array(smart_string *str, size_t len) {
 int php_mp_is_hash(zval *val) {
 	HashTable *ht = Z_ARRVAL_P(val);
 	int count = zend_hash_num_elements(ht);
-	if (count != ht->nNextFreeElement) {
+	if (count == 0) {
+		/* An empty array is considered as a list. */
+		return 0;
+	} else if (count != ht->nNextFreeElement) {
 		return 1;
 	} else {
 		HashPosition pos = {0};
