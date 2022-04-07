@@ -11,6 +11,16 @@ PECL PHP driver for Tarantool.
 
 If you're looking for 1.5 version, check out branch 'stable'.
 
+## Deprecation note
+
+This driver is in a slow deprecation status. We don't implement new features,
+but have to fix bugs and keep it working on newer PHP versions. The reason to
+keep such partial support is to don't push existing application to rewrite code
+that interacts with Tarantool.
+
+We recommend [tarantool-php/client](https://github.com/tarantool-php/client)
+for new applications and, if possible, migration of existing projects to it.
+The new client is easier to install, much more feature-rich and nicely tested.
 
 ## Build
 
