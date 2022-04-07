@@ -4,8 +4,8 @@
 <a href="https://travis-ci.org/tarantool/tarantool-php">
   <img src="https://travis-ci.org/tarantool/tarantool-php.png?branch=master" align="right">
 </a>
-PHP driver for Tarantool 1.6
-============================
+
+# PHP driver for Tarantool
 
 PECL PHP driver for Tarantool.
 
