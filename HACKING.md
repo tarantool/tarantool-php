@@ -2,6 +2,22 @@
 
 A set of recipes, which may ease developer's work on the connector.
 
+## Verify all configurations locally
+
+```shell
+$ ./test.all.sh
+```
+
+The script runs the whole test suite for the connector on all supported
+tarantool and php versions.
+
+The script runs docker containers based on the `php:<version>-cli` images for
+each configuration. Within container the `test.sh` script is invoked. It
+installs tarantool and php, builds the driver and runs tests.
+
+Note: APT repositories updating takes significant time and it is performed for
+each configuration.
+
 ## Packaging (obsolete)
 
 Those packaging recipes are likely outdated. Kept to revisit them later.
