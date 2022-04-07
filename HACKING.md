@@ -41,6 +41,195 @@ Note: The `packpack` script should be available in `PATH` directories.
 5. Go to the releases page on GitHub and publish a new release. Place the
    release notes into the description.
 
+## Build a package against ppa:ondrej/php (Ubuntu)
+
+For ones who needs custom builds for php-7.3 or php-7.4 from `ppa:ondrej/php`
+repository for Ubuntu Bionic.
+
+Apply the following patch:
+
+<details>
+<summary>For php-7.3</summary>
+
+```diff
+diff --git a/debian/prebuild.sh b/debian/prebuild.sh
+index c17d14c..b33595f 100755
+--- a/debian/prebuild.sh
++++ b/debian/prebuild.sh
+@@ -11,6 +11,12 @@ SUDO="sudo -E"
+ ${SUDO} apt-get update > /dev/null
+ ${SUDO} apt-get -y install php-all-dev
+
++# Build against php7.3 on Ubuntu Bionic.
++${SUDO} apt-get install software-properties-common
++${SUDO} add-apt-repository -y ppa:ondrej/php
++${SUDO} apt-get update > /dev/null
++${SUDO} apt-get install -y php7.3-dev
++
+ phpversion=$(php-config --version | sed 's/^\([0-9]\+\.[0-9]\).*/\1/')
+
+ cd /build/php-tarantool-*
+diff --git a/test.pkg.all.sh b/test.pkg.all.sh
+index fd74685..388cc62 100755
+--- a/test.pkg.all.sh
++++ b/test.pkg.all.sh
+@@ -3,27 +3,9 @@
+ set -exu  # Strict shell (w/o -o pipefail)
+
+ distros="
+-    el:8
+-    fedora:25
+-    fedora:26
+-    fedora:27
+-    fedora:28
+-    fedora:29
+-    fedora:30
+-    fedora:31
+-    debian:stretch
+-    debian:buster
+-    ubuntu:xenial
+     ubuntu:bionic
+-    ubuntu:disco
+-    ubuntu:eoan
+ "
+
+-if ! type packpack; then
+-    echo "Unable to find packpack"
+-    exit 1
+-fi
+-
+ for distro in $distros; do
+     export OS="${distro%%:*}"
+     export DIST="${distro#*:}"
+@@ -31,9 +13,6 @@ for distro in $distros; do
+         export OS=centos
+     fi
+
+-    rm -rf build
+-    packpack
+-
+     docker run \
+         --volume "$(realpath .):/tarantool-php" \
+         --workdir /tarantool-php                \
+diff --git a/test.pkg.sh b/test.pkg.sh
+index 3c1c271..e80d587 100755
+--- a/test.pkg.sh
++++ b/test.pkg.sh
+@@ -29,8 +29,14 @@ fi
+ # Update available packages list.
+ ${PM_SYNC}
+
++# Verify against php7.3 on Ubuntu Bionic.
++apt-get -y install software-properties-common
++add-apt-repository -y ppa:ondrej/php
++apt-get update > /dev/null
++
+ # Install php interpreter.
+-${PM_INSTALL_NAME} php
++apt-get install -y php7.3
++php --version
+
+ # Install php-tarantool package.
+ ${PM_INSTALL_FILE} build/${PKG_GLOB}
+```
+</details>
+
+<details>
+<summary>For php-7.4</summary>
+
+```diff
+diff --git a/debian/prebuild.sh b/debian/prebuild.sh
+index c17d14c..b33595f 100755
+--- a/debian/prebuild.sh
++++ b/debian/prebuild.sh
+@@ -11,6 +11,12 @@ SUDO="sudo -E"
+ ${SUDO} apt-get update > /dev/null
+ ${SUDO} apt-get -y install php-all-dev
+
++# Build against php7.4 on Ubuntu Bionic.
++${SUDO} apt-get install software-properties-common
++${SUDO} add-apt-repository -y ppa:ondrej/php
++${SUDO} apt-get update > /dev/null
++${SUDO} apt-get install -y php7.4-dev
++
+ phpversion=$(php-config --version | sed 's/^\([0-9]\+\.[0-9]\).*/\1/')
+
+ cd /build/php-tarantool-*
+diff --git a/test.pkg.all.sh b/test.pkg.all.sh
+index fd74685..388cc62 100755
+--- a/test.pkg.all.sh
++++ b/test.pkg.all.sh
+@@ -3,27 +3,9 @@
+ set -exu  # Strict shell (w/o -o pipefail)
+
+ distros="
+-    el:8
+-    fedora:25
+-    fedora:26
+-    fedora:27
+-    fedora:28
+-    fedora:29
+-    fedora:30
+-    fedora:31
+-    debian:stretch
+-    debian:buster
+-    ubuntu:xenial
+     ubuntu:bionic
+-    ubuntu:disco
+-    ubuntu:eoan
+ "
+
+-if ! type packpack; then
+-    echo "Unable to find packpack"
+-    exit 1
+-fi
+-
+ for distro in $distros; do
+     export OS="${distro%%:*}"
+     export DIST="${distro#*:}"
+@@ -31,9 +13,6 @@ for distro in $distros; do
+         export OS=centos
+     fi
+
+-    rm -rf build
+-    packpack
+-
+     docker run \
+         --volume "$(realpath .):/tarantool-php" \
+         --workdir /tarantool-php                \
+diff --git a/test.pkg.sh b/test.pkg.sh
+index 3c1c271..e80d587 100755
+--- a/test.pkg.sh
++++ b/test.pkg.sh
+@@ -29,8 +29,14 @@ fi
+ # Update available packages list.
+ ${PM_SYNC}
+
++# Verify against php7.4 on Ubuntu Bionic.
++apt-get -y install software-properties-common
++add-apt-repository -y ppa:ondrej/php
++apt-get update > /dev/null
++
+ # Install php interpreter.
+-${PM_INSTALL_NAME} php
++apt-get install -y php7.4
++php --version
+
+ # Install php-tarantool package.
+ ${PM_INSTALL_FILE} build/${PKG_GLOB}
+```
+</details>
+
+Steps:
+
+```sh
+$ OS=ubuntu DIST=bionic /path/to/packpack/packpack # build
+$ ./test.pkg.all.sh # verify
+```
+
+A package is in `build/` directory, named like
+`php7.4-tarantool_0.3.0.40-1_amd64.deb`.
+
 ## Packaging (obsolete)
 
 Those packaging recipes are likely outdated. Kept to revisit them later.
