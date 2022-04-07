@@ -30,6 +30,17 @@ main class of the extension (Tarantool) is available from the PHP interpreter.
     
 Note: The `packpack` script should be available in `PATH` directories.
 
+## Release a new version
+
+1. Write release notes. Look at `git show 0.3.3` for example.
+2. Update `package.xml` and `src/php_tarantool.h` (see `git show 0.3.3` for
+   example).
+3. Open a pull request, get it merged. Checkout the fresh master.
+4. Add **annotated** tag (`git tag -a --cleanup verbatim X.Y.Z`), place the
+   release notes into the annotation. Push the tag (`git push --tags`).
+5. Go to the releases page on GitHub and publish a new release. Place the
+   release notes into the description.
+
 ## Packaging (obsolete)
 
 Those packaging recipes are likely outdated. Kept to revisit them later.
