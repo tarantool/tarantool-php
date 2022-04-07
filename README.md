@@ -56,11 +56,6 @@ pecl install Tarantool-PHP/Tarantool-beta
 For building packages - please, read `README.PACK.md`
 
 
-## IDE autocompletion
-
-Stubs can be found at [tarantool/tarantool-php-stubs](https://github.com/tarantool/tarantool-php-stubs).
-Place it into project library path in your IDE.
-
 # API and Configuration
 
 ## Configuration file
