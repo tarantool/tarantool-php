@@ -230,6 +230,196 @@ $ ./test.pkg.all.sh # verify
 A package is in `build/` directory, named like
 `php7.4-tarantool_0.3.0.40-1_amd64.deb`.
 
+## Build a package against remi-php71 (CentOS)
+
+For ones who needs a custom build for php-7.1 or php-7.3 from `remi-php71` (or
+`remi-php73`) repository for CentOS 7.
+
+Apply the following patch:
+
+<details>
+<summary>For php-7.1</summary>
+
+```diff
+diff --git a/rpm/prebuild.sh b/rpm/prebuild.sh
+new file mode 100755
+index 0000000..c4420af
+--- /dev/null
++++ b/rpm/prebuild.sh
+@@ -0,0 +1,11 @@
++#!/bin/sh
++
++set -exu  # Strict shell (w/o -o pipefail)
++
++# Preserve environment variables (just in case).
++SUDO="sudo -E"
++
++${SUDO} yum install -y yum-utils
++${SUDO} yum install -y https://rpms.remirepo.net/enterprise/remi-release-7.rpm
++${SUDO} yum-config-manager --enable remi-php71
++${SUDO} yum update -y
+diff --git a/test.pkg.all.sh b/test.pkg.all.sh
+index 138a1b0..2e89b3b 100755
+--- a/test.pkg.all.sh
++++ b/test.pkg.all.sh
+@@ -3,27 +3,9 @@
+ set -exu  # Strict shell (w/o -o pipefail)
+ 
+ distros="
+-    el:8
+-    fedora:25
+-    fedora:26
+-    fedora:27
+-    fedora:28
+-    fedora:29
+-    fedora:30
+-    fedora:31
+-    debian:stretch
+-    debian:buster
+-    ubuntu:xenial
+-    ubuntu:bionic
+-    ubuntu:eoan
+-    ubuntu:focal
++    el:7
+ "
+ 
+-if ! type packpack; then
+-    echo "Unable to find packpack"
+-    exit 1
+-fi
+-
+ for distro in $distros; do
+     export OS="${distro%%:*}"
+     export DIST="${distro#*:}"
+@@ -31,9 +13,6 @@ for distro in $distros; do
+         export OS=centos
+     fi
+ 
+-    rm -rf build
+-    packpack
+-
+     docker run \
+         --volume "$(realpath .):/tarantool-php" \
+         --workdir /tarantool-php                \
+diff --git a/test.pkg.sh b/test.pkg.sh
+index 3c1c271..5231ab5 100755
+--- a/test.pkg.sh
++++ b/test.pkg.sh
+@@ -29,8 +29,15 @@ fi
+ # Update available packages list.
+ ${PM_SYNC}
+ 
++# Verify against php7.1 on CentOS 7.
++yum install -y yum-utils
++yum install -y https://rpms.remirepo.net/enterprise/remi-release-7.rpm
++yum-config-manager --enable remi-php71
++yum update -y
++
+ # Install php interpreter.
+ ${PM_INSTALL_NAME} php
++php --version
+ 
+ # Install php-tarantool package.
+ ${PM_INSTALL_FILE} build/${PKG_GLOB}
+```
+</details>
+
+<details>
+<summary>For php-7.3</summary>
+
+```diff
+diff --git a/rpm/prebuild.sh b/rpm/prebuild.sh
+new file mode 100755
+index 0000000..54359fc
+--- /dev/null
++++ b/rpm/prebuild.sh
+@@ -0,0 +1,11 @@
++#!/bin/sh
++
++set -exu  # Strict shell (w/o -o pipefail)
++
++# Preserve environment variables (just in case).
++SUDO="sudo -E"
++
++${SUDO} yum install -y yum-utils
++${SUDO} yum install -y https://rpms.remirepo.net/enterprise/remi-release-7.rpm
++${SUDO} yum-config-manager --enable remi-php73
++${SUDO} yum update -y
+diff --git a/test.pkg.all.sh b/test.pkg.all.sh
+index 138a1b0..2e89b3b 100755
+--- a/test.pkg.all.sh
++++ b/test.pkg.all.sh
+@@ -3,27 +3,9 @@
+ set -exu  # Strict shell (w/o -o pipefail)
+ 
+ distros="
+-    el:8
+-    fedora:25
+-    fedora:26
+-    fedora:27
+-    fedora:28
+-    fedora:29
+-    fedora:30
+-    fedora:31
+-    debian:stretch
+-    debian:buster
+-    ubuntu:xenial
+-    ubuntu:bionic
+-    ubuntu:eoan
+-    ubuntu:focal
++    el:7
+ "
+ 
+-if ! type packpack; then
+-    echo "Unable to find packpack"
+-    exit 1
+-fi
+-
+ for distro in $distros; do
+     export OS="${distro%%:*}"
+     export DIST="${distro#*:}"
+@@ -31,9 +13,6 @@ for distro in $distros; do
+         export OS=centos
+     fi
+ 
+-    rm -rf build
+-    packpack
+-
+     docker run \
+         --volume "$(realpath .):/tarantool-php" \
+         --workdir /tarantool-php                \
+diff --git a/test.pkg.sh b/test.pkg.sh
+index 3c1c271..1df9354 100755
+--- a/test.pkg.sh
++++ b/test.pkg.sh
+@@ -29,8 +29,15 @@ fi
+ # Update available packages list.
+ ${PM_SYNC}
+ 
++# Verify against php7.3 on CentOS 7.
++yum install -y yum-utils
++yum install -y https://rpms.remirepo.net/enterprise/remi-release-7.rpm
++yum-config-manager --enable remi-php73
++yum update -y
++
+ # Install php interpreter.
+ ${PM_INSTALL_NAME} php
++php --version
+ 
+ # Install php-tarantool package.
+ ${PM_INSTALL_FILE} build/${PKG_GLOB}
+```
+</details>
+
+Steps:
+
+```sh
+$ OS=el DIST=7 /path/to/packpack/packpack # build
+$ ./test.pkg.all.sh # verify
+```
+
+A package is in `build/` directory.
+
 ## Packaging (obsolete)
 
 Those packaging recipes are likely outdated. Kept to revisit them later.
