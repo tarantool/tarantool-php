@@ -65,6 +65,10 @@ pecl install Tarantool-PHP/Tarantool-beta
 
 For building packages - please, read `README.PACK.md`
 
+## Hacking
+
+A set of recipes for developers of the driver is collected in the
+[HACKING.md](HACKING.md) file.
 
 # API and Configuration
 
