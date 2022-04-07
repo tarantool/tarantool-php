@@ -18,6 +18,18 @@ installs tarantool and php, builds the driver and runs tests.
 Note: APT repositories updating takes significant time and it is performed for
 each configuration.
 
+## Verify all distributions locally
+
+```shell
+$ ./test.pkg.all.sh
+```
+
+The script builds a RPM / Deb package using [packpack][packpack], installs it
+inside a docker container based on an appropriate image and verify that the
+main class of the extension (Tarantool) is available from the PHP interpreter.
+    
+Note: The `packpack` script should be available in `PATH` directories.
+
 ## Packaging (obsolete)
 
 Those packaging recipes are likely outdated. Kept to revisit them later.
@@ -43,3 +55,5 @@ To build a DEB package, run `fakeroot debian/rules binary` in the root.
 
 You must have PEAR/PECL Installed in your system, and then `pear package` in
 the root.
+
+[packpack]: https://github.com/packpack/packpack
