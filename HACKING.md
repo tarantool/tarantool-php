@@ -13,7 +13,7 @@ tarantool and php versions.
 
 The script runs docker containers based on the `php:<version>-cli` images for
 each configuration. Within container the `test.sh` script is invoked. It
-installs tarantool and php, builds the driver and runs tests.
+assumes php installed, installs tarantool, builds the driver and runs tests.
 
 Note: APT repositories updating takes significant time and it is performed for
 each configuration.
