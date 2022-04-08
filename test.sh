@@ -26,6 +26,14 @@ ${SUDO} apt-get -qy install python-yaml > /dev/null
 OS="$(lsb_release --id --short | tr '[:upper:]' '[:lower:]')"  # debian or ubuntu
 DIST="$(lsb_release --codename --short)"                   # stretch, xenial, ...
 
+# curl: (60) SSL certificate problem: certificate has expired
+#
+# https://serverfault.com/a/1079226/723755
+if [ "${OS}" = "debian" ] && [ "${DIST}" = "stretch" ]; then
+    sed -i '/^mozilla\/DST_Root_CA_X3/s/^/!/' /etc/ca-certificates.conf
+    update-ca-certificates -f
+fi
+
 # Setup tarantool repository.
 curl https://download.tarantool.org/tarantool/${TARANTOOL_VERSION}/gpgkey | \
     ${SUDO} apt-key add -
@@ -57,7 +65,7 @@ if [ "${ACTUAL_TARANTOOL_VERSION}" != "${TARANTOOL_VERSION}" ]; then
 fi
 
 # Determine PHP interpreter version.
-PHP_VERSION_PATTERN='^PHP \([0-9]\+\.[0-9]\+\)\.[0-9]\+ .*$'
+PHP_VERSION_PATTERN='^PHP \([0-9]\+\.[0-9]\+\)\.[0-9]\+[ -].*$'
 PHP_VERSION="$(php --version | head -n 1 | sed "s/${PHP_VERSION_PATTERN}/\\1/")"
 
 # Choose maximal phpunit version supported by installed PHP
@@ -88,5 +96,5 @@ phpunit --version
 
 phpize && ./configure
 make
-make install
+#make install
 /usr/bin/python test-run.py

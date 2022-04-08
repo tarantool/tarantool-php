@@ -1,0 +1,72 @@
+name: testing
+
+on: [push, pull_request]
+
+jobs:
+  ubuntu-latest:
+    # Run on push and external pull requests.
+    if: |
+      github.event_name == 'push' ||
+      github.event.pull_request.head.repo.full_name != github.repository
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php:
+          - '7.0'
+          - '7.1'
+          - '7.2'
+          - '7.3'
+          - '7.4'
+        tarantool:
+          - '1.9'
+          - '1.10'
+          - '2.2'
+          - '2.3'
+          - '2.4'
+          - '2.5'
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+        env:
+          fail-fast: true
+      - name: Clone the driver
+        uses: actions/checkout@v2
+      - name: Testing
+        run: ./test.sh
+        env:
+          TARANTOOL_VERSION: ${{ matrix.tarantool }}
+
+  debian-stretch:
+    # Run on push and external pull requests.
+    if: |
+      github.event_name == 'push' ||
+      github.event.pull_request.head.repo.full_name != github.repository
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php:
+          - '7.0'
+        tarantool:
+          - '1.6'
+          - '1.7'
+          - '2.1'
+
+    # We have no tarantool 1.6, 1.7, 2.1 packages for modern
+    # distros. However we have them for Debian Stretch, which is
+    # used in the php:7.0-cli image.
+    runs-on: ubuntu-latest
+    container:
+      image: php:${{ matrix.php }}-cli
+    steps:
+      - name: Clone the driver
+        uses: actions/checkout@v2
+      - name: Testing
+        run: ./test.sh
+        env:
+          TARANTOOL_VERSION: ${{ matrix.tarantool }}
