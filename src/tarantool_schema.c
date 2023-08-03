@@ -464,10 +464,10 @@ schema_add_space(
 ) {
 	const char *tuple = *data;
 	if (mp_typeof(*tuple) != MP_ARRAY)
-		goto error;
+		goto error_return;
 	uint32_t tuple_len = mp_decode_array(&tuple);
 	if (tuple_len < 6)
-		goto error;
+		goto error_return;
 	struct schema_space_value *space_number = NULL, *space_string = NULL;
 	space_string = pemalloc(sizeof(struct schema_space_value), 1);
 	if (space_string == NULL)
@@ -548,6 +548,7 @@ schema_add_space(
 	return 0;
 error:
 	schema_space_value_free(space_string);
+error_return:
 	return -1;
 }
 
