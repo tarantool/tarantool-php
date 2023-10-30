@@ -576,7 +576,9 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_tarantool_upsert, 0, 0, 3)
 ZEND_END_ARG_INFO()
 
 #define TNT_MEP(name, args)        PHP_ME    (Tarantool,        name, args, ZEND_ACC_PUBLIC)
+#define TNT_MES(name, args)        PHP_ME    (Tarantool,        name, args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 #define TNT_MAP(alias, name, args) PHP_MALIAS(Tarantool, alias, name, args, ZEND_ACC_PUBLIC)
+#define TNT_MAS(alias, name, args) PHP_MALIAS(Tarantool, alias, name, args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 const zend_function_entry Tarantool_methods[] = {
 	TNT_MEP(__construct,                arginfo_tarantool_construct    )
 	TNT_MEP(connect,                    arginfo_tarantool_void         )
@@ -596,10 +598,14 @@ const zend_function_entry Tarantool_methods[] = {
 	TNT_MAP(evaluate,     eval,         arginfo_tarantool_proc_tuple   )
 	TNT_MAP(flushSchema,  flush_schema, arginfo_tarantool_void         )
 	TNT_MAP(disconnect,   close,        arginfo_tarantool_void         )
+	TNT_MES(close_all,                  arginfo_tarantool_void         )
+	TNT_MAS(closeAll,     close_all,    arginfo_tarantool_void         )
 	{NULL, NULL, NULL}
 };
 #undef TNT_MEP
+#undef TNT_MES
 #undef TNT_MAP
+#undef TNT_MAS
 
 /* ####################### HELPERS ####################### */
 
@@ -1322,6 +1328,16 @@ PHP_METHOD(Tarantool, close) {
 	TARANTOOL_FUNCTION_BEGIN(obj, id, "");
 
 	RETURN_TRUE;
+}
+
+PHP_METHOD(Tarantool, close_all) {
+	zval *zle;
+
+	ZEND_HASH_FOREACH_VAL(&EG(persistent_list), zle) {
+		if (Z_RES_TYPE_P(zle) == php_tarantool_list_entry()) {
+			tarantool_stream_close((tarantool_connection *) Z_RES_VAL_P(zle));
+		}
+	} ZEND_HASH_FOREACH_END();
 }
 
 PHP_METHOD(Tarantool, ping) {
