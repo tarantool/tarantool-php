@@ -37,6 +37,7 @@ Makefile.in
 *.pyc
 *.out
 *.dSYM
+*.dep
 var*
 config.guess.cdbs-orig
 config.sub.cdbs-orig
