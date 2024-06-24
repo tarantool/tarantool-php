@@ -231,6 +231,28 @@ if ($testCaseRef->hasMethod('expectExceptionMessageMatches')) {
 }
 
 /*
+ * AssertMatchesRegularExpressionTrait (private).
+ *
+ * phpunit-8 provides the new name for the
+ * assertRegExp() method:
+ * assertMatchesRegularExpression(). phpunit-10 removes the old name.
+ *
+ * This trait adds assertMatchesRegularExpression() method for
+ * phpunit-6, phpunit-7, phpunit-8 and phpunit-9.
+ */
+if ($testCaseRef->hasMethod('assertMatchesRegularExpression')) {
+    trait AssertMatchesRegularExpressionTrait {
+        /* Nothing to define. */
+    }
+} else {
+    trait AssertMatchesRegularExpressionTrait {
+        public function assertMatchesRegularExpression($pattern, $string, $message = '') {
+            self::assertRegExp($pattern, $string, $message);
+        }
+    }
+}
+
+/*
  * TestCaseCompat (public).
  *
  * This trait accumulates all hacks defined above.
@@ -240,4 +262,5 @@ trait TestCaseCompat
     use SetUpTearDownTrait;
     use AssertStringContainsStringTrait;
     use ExpectExceptionMessageMatchesTrait;
+    use AssertMatchesRegularExpressionTrait;
 }
