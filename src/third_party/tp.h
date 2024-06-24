@@ -715,6 +715,9 @@ enum tp_request_type {
 
 static const uint32_t SCRAMBLE_SIZE = 20;
 
+static const char* CHAP_SHA1_AUTH_METHOD = "chap-sha1";
+static const uint32_t CHAP_SHA1_AUTH_METHOD_SIZE = 9;
+
 /**
  * Receive greetings from the server.
  * Note, the input buffer is not copied,
@@ -1289,7 +1292,7 @@ tp_auth(struct tp *p, const char *salt_base64, const char *user, int ulen, const
 		mp_sizeof_uint(TP_TUPLE);
 	if (!nopass)
 		sz += mp_sizeof_array(2) +
-		      mp_sizeof_str(0) +
+		      mp_sizeof_str(CHAP_SHA1_AUTH_METHOD_SIZE) +
 		      mp_sizeof_str(SCRAMBLE_SIZE);
 	else
 		sz += mp_sizeof_array(0);
@@ -1310,7 +1313,7 @@ tp_auth(struct tp *p, const char *salt_base64, const char *user, int ulen, const
 	h = mp_encode_uint(h, TP_TUPLE);
 	if (!nopass) {
 		h = mp_encode_array(h, 2);
-		h = mp_encode_str(h, 0, 0);
+		h = mp_encode_str(h, CHAP_SHA1_AUTH_METHOD, CHAP_SHA1_AUTH_METHOD_SIZE);
 
 		// char salt[64];
 		zend_string *salt = NULL;
