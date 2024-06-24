@@ -107,8 +107,8 @@ class CreateTest extends TestCase
         $this->assertTrue($c->ping());
 
         $this->expectException(TarantoolClientError::class);
-        $this->expectExceptionMessage(
-            'Incorrect password supplied for user');
+        $this->expectExceptionMessageMatches(
+            '/(Incorrect password supplied for user)|(User not found or supplied credentials are invalid)/');
         $c->authenticate('test', 'bad_password');
     }
 
@@ -118,8 +118,8 @@ class CreateTest extends TestCase
         $this->assertTrue($c->ping());
 
         $this->expectException(TarantoolClientError::class);
-        $this->expectExceptionMessage(
-            'Incorrect password supplied for user');
+        $this->expectExceptionMessageMatches(
+            '/(Incorrect password supplied for user)|(User not found or supplied credentials are invalid)/');
         $c->authenticate('guest', 'guest');
     }
 
