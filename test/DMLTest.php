@@ -361,7 +361,7 @@ class DMLTest extends TestCase
             self::$tarantool->select("test_hash", null, null, null, null, TARANTOOL::ITERATOR_EQ);
             $this->assertFalse(True);
         } catch (TarantoolClientError $e) {
-            $this->assertRegExp('(Invalid key part|via a partial key)', $e->getMessage());
+            $this->assertMatchesRegularExpression('(Invalid key part|via a partial key)', $e->getMessage());
         }
     }
 
@@ -373,7 +373,7 @@ class DMLTest extends TestCase
             self::$tarantool->select($spc, null, null, null, null, $itype);
             $this->assertFalse(True);
         } catch (TarantoolClientError $e) {
-            $this->assertRegExp($xcmsg, $e->getMessage());
+            $this->assertMatchesRegularExpression($xcmsg, $e->getMessage());
         }
     }
 
