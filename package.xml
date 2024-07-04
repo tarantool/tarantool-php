@@ -17,10 +17,10 @@ http://pear.php.net/dtd/package-2.0.xsd">
     <email>bigbes@gmail.com</email>
     <active>yes</active>
   </lead>
-  <date>2020-06-30</date>
+  <date>2024-07-04</date>
   <version>
-    <release>0.3.3</release>
-    <api>0.3.3</api>
+    <release>0.4.0</release>
+    <api>0.4.0</api>
   </version>
   <stability>
     <release>beta</release>
@@ -91,6 +91,35 @@ http://pear.php.net/dtd/package-2.0.xsd">
   <providesextension>tarantool</providesextension>
   <extsrcrelease/>
   <changelog>
+    <release>
+      <stability><release>beta</release><api>beta</api></stability>
+      <version><release>0.4.0</release><api>0.4.0</api></version>
+      <date>2024-07-04</date>
+      <notes>
+        tarantool-php 0.4.0
+
+        ## Overview
+
+        The release adds support for PHP 8.x and fixes incompatibility with
+        Tarantool 2.10+.
+
+        ## Breaking changes
+
+        This release should not break existing code.
+
+        ## New features
+
+        - Support PHP 8.x (#171).
+        - Support Tarantool 2.10+ (#175).
+        - Call IPROTO method (#101).
+        - Support new _index system space format (#151).
+
+        ## Bugfixes
+
+        - Give meaningful error when retry_count is zero (#83).
+        - select() by space_no and index_name (#42).
+      </notes>
+    </release>
     <release>
       <stability><release>beta</release><api>beta</api></stability>
       <version><release>0.3.3</release><api>0.3.3</api></version>
